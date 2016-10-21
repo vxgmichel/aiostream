@@ -2,7 +2,9 @@
 
 __all__ = ['Stream', 'Streamer']
 
+import functools
 from collections import AsyncIterable, AsyncIterator, Awaitable
+
 from .utils import aiter, anext, _await
 
 
