@@ -26,7 +26,7 @@ def from_aiterable(ait):
 def iterate(it):
     if isinstance(it, AsyncIterable):
         return from_aiterable(it)
-    if instance(it, Iterable):
+    if isinstance(it, Iterable):
         return from_iterable(it)
     raise TypeError("Not (async) iterable")
 
@@ -40,6 +40,8 @@ async def just(value):
 
 @operator
 async def throw(exc):
+    if False:
+        yield
     raise exc
 
 
@@ -51,6 +53,8 @@ async def empty():
 
 @operator
 async def never():
+    if False:
+        yield
     future = asyncio.Future()
     await future
 
@@ -58,12 +62,12 @@ async def never():
 # Counting operators
 
 @operator
-def range(*args, delay=0):
+def range(*args, interval=0):
     stream = from_iterable(builtins.range(*args))
-    return time.space_out(stream, delay) if delay else stream
+    return time.space_out(stream, interval) if interval else stream
 
 
 @operator
-def count(start=0, step=1, *, delay=0):
+def count(start=0, step=1, *, interval=0):
     stream = from_iterable(itertools.count(start, step))
-    return time.space_out(stream, delay) if delay else stream
+    return time.space_out(stream, interval) if interval else stream
