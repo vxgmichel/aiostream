@@ -2,13 +2,13 @@
 
 __all__ = []
 
-from . import operator
+from . import stream
 
 
 def update_pipe_module():
     """Populate the pipe module dynamically."""
     module_dir = __all__
-    operators = operator.__dict__
+    operators = stream.__dict__
     for key, value in operators.items():
         if getattr(value, 'pipe', None):
             globals()[key] = value.pipe

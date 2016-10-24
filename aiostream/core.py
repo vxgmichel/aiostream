@@ -8,6 +8,13 @@ from collections import AsyncIterable, AsyncIterator, Awaitable
 from .utils import aiter, anext, _await
 
 
+# Exception
+
+class StreamEmpty(Exception):
+    """Exception raised when awaiting an empty stream."""
+    pass
+
+
 # Helpers
 
 def operator(func=None, *, pipable=False, position=0):
@@ -35,8 +42,11 @@ async def wait_stream(stream):
     """Wait for a stream to finish and return the last item."""
     async with aiter(stream) as streamer:
         async for item in streamer:
-            pass
-        return item
+            item
+        try:
+            return item
+        except NameError:
+            raise StreamEmpty()
 
 
 # Core objects
@@ -45,8 +55,6 @@ class Stream(AsyncIterable, Awaitable):
     """Enhanced asynchronous iterable."""
 
     def __init__(self, factory):
-        if isinstance(factory, AsyncIterable):
-            factory = lambda aiter=factory: aiter
         self._factory = factory
 
     def __aiter__(self):
@@ -59,12 +67,12 @@ class Stream(AsyncIterable, Awaitable):
         return func(self)
 
     def __add__(self, value):
-        from operator import concat
-        return concat(self, value)
+        from .stream import chain
+        return chain(self, value)
 
     def __getitem__(self, value):
-        from operator import slice
-        return slice(self, value)
+        from .stream import slice
+        return slice(self, value.start, value.stop, value.step)
 
     stream = __aiter__
 
