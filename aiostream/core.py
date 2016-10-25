@@ -2,6 +2,7 @@
 
 __all__ = ['Stream', 'Streamer']
 
+import warnings
 import functools
 from collections import AsyncIterable, AsyncIterator, Awaitable
 
@@ -81,20 +82,28 @@ class Streamer(Stream, AsyncIterator):
     """"Enhanced asynchronous iterator."""
 
     def __init__(self, aiterable):
+        self._safe = False
         self._aiterator = aiter(aiterable)
+        if isinstance(self._aiterator, Streamer):
+            self._aiterator = self._aiterator._aiterator
 
     def __aiter__(self):
         return self
 
     def __anext__(self):
+        if not self._safe:
+            warnings.warn(
+                "Streamer is being iterated outside of its context")
         return anext(self._aiterator)
 
     def __await__(self):
         return _await(wait_stream(self))
 
     async def __aenter__(self):
+        self._safe = True
         return self
 
     async def __aexit__(self, *args):
+        self._safe = False
         if hasattr(self._aiterator, 'aclose'):
             await self._aiterator.aclose()
