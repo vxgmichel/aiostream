@@ -11,7 +11,9 @@ async def space_out(source, interval):
     loop = asyncio.get_event_loop()
     async with source.stream() as streamer:
         async for item in streamer:
-            await asyncio.sleep(timeout - loop.time())
+            delta = timeout - loop.time()
+            delay = delta if delta > 0 else 0
+            await asyncio.sleep(delay)
             yield item
             timeout = loop.time() + interval
 
@@ -27,3 +29,11 @@ async def timeout(source, timeout):
                 break
             else:
                 yield item
+
+
+@operator(pipable=True)
+async def delay(source, delay):
+    await asyncio.sleep(delay)
+    async with source.stream() as streamer:
+        async for item in streamer:
+            yield item

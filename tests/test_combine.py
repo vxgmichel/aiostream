@@ -24,7 +24,7 @@ async def test_zip(assert_run, event_loop):
     ys = xs | pipe.zip(xs, xs)
     expected = [(x,)*3 for x in range(5)]
     await assert_run(ys, expected)
-    assert event_loop.steps == [1, 0, 0]  #??
+    assert event_loop.steps == [1, 0, 0]  # ??
     event_loop.steps.clear()
 
 
@@ -49,22 +49,14 @@ async def test_map(assert_run, event_loop):
     xs = stream.range(1, 4)
     ys = xs | pipe.map(asyncio.sleep, xs)
     await assert_run(ys, [1, 2, 3])
-    len(event_loop.steps) == 5
     assert event_loop.steps == [1, 2, 3]
     event_loop.steps.clear()
 
 
 @pytest.mark.asyncio
-async def test_starmap(assert_run, event_loop):
-    xs = stream.range(5)
-    ys = stream.range(5)
-    zs = xs | pipe.zip(ys) | pipe.starmap(lambda x, y: x+y)
-    expected = [x*2 for x in range(5)]
-    await assert_run(zs, expected)
-
-    xs = stream.range(1, 4)
-    ys = stream.range(1, 4)
-    zs = xs | pipe.zip(ys) | pipe.starmap(asyncio.sleep)
-    await assert_run(zs, [1, 2, 3])
-    assert event_loop.steps == [1, 2, 3]
+async def test_merge(assert_run, event_loop):
+    xs = stream.range(1, 5, 2, interval=2) | pipe.delay(1)
+    ys = stream.range(0, 5, 2, interval=2) | pipe.merge(xs)
+    await assert_run(ys, [0, 1, 2, 3, 4])
+    assert event_loop.steps == [1, 2, 2, 2]
     event_loop.steps.clear()

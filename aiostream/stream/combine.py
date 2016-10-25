@@ -17,7 +17,7 @@ async def chain(*sources):
 @operator(pipable=True)
 async def zip(*sources):
     async with AsyncExitStack() as stack:
-        # Handler resources
+        # Handle resources
         streamers = []
         for source in sources:
             streamers.append(await stack.enter_context(source.stream()))
@@ -46,11 +46,28 @@ async def map(func, *sources):
                 yield func(*item)
 
 
-@operator(pipable=True, position=1)
-def starmap(func, source):
-    if asyncio.iscoroutinefunction(func):
-        async def starfunc(args):
-            return await func(*args)
-    else:
-        starfunc = lambda args: func(*args)
-    return map(starfunc, source)
+@operator(pipable=True)
+async def merge(*sources):
+    async with AsyncExitStack() as stack:
+        # Schedule first anext
+        streamers = {}
+        for source in sources:
+            streamer = await stack.enter_context(source.stream())
+            task = asyncio.ensure_future(anext(streamer))
+            streamers[task] = streamer
+        # Loop over events
+        while streamers:
+            done, pending = await asyncio.wait(
+                list(streamers), return_when="FIRST_COMPLETED")
+            # Loop over items
+            for task in done:
+                try:
+                    yield task.result()
+                # End of stream
+                except StopAsyncIteration:
+                    streamers.pop(task)
+                # Schedule next anext
+                else:
+                    streamer = streamers.pop(task)
+                    task = asyncio.ensure_future(anext(streamer))
+                    streamers[task] = streamer
