@@ -81,8 +81,12 @@ class Stream(AsyncIterable, Awaitable):
 class Streamer(Stream, AsyncIterator):
     """"Enhanced asynchronous iterator."""
 
+    _STANDBY = "STANDBY"
+    _RUNNING = "RUNNING"
+    _FINISHED = "FINISHED"
+
     def __init__(self, aiterable):
-        self._safe = False
+        self._state = self._STANDBY
         self._aiterator = aiter(aiterable)
         if isinstance(self._aiterator, Streamer):
             self._aiterator = self._aiterator._aiterator
@@ -91,7 +95,10 @@ class Streamer(Stream, AsyncIterator):
         return self
 
     def __anext__(self):
-        if not self._safe:
+        if self._state == self._FINISHED:
+            raise RuntimeError(
+                "Streamer is being iterated after the context has been closed")
+        if self._state == self._STANDBY:
             warnings.warn(
                 "Streamer is being iterated outside of its context")
         return anext(self._aiterator)
@@ -100,10 +107,10 @@ class Streamer(Stream, AsyncIterator):
         return _await(wait_stream(self))
 
     async def __aenter__(self):
-        self._safe = True
+        self._state = self._RUNNING
         return self
 
     async def __aexit__(self, *args):
-        self._safe = False
+        self._state = self._FINISHED
         if hasattr(self._aiterator, 'aclose'):
             await self._aiterator.aclose()
