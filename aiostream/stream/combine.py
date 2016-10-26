@@ -3,13 +3,13 @@ import asyncio
 import builtins
 
 from ..core import operator
-from ..utils import AsyncExitStack, anext
+from ..utils import AsyncExitStack, anext, aitercontext
 
 
 @operator(pipable=True)
 async def chain(*sources):
     for source in sources:
-        async with source.stream() as streamer:
+        async with aitercontext(source) as streamer:
             async for item in streamer:
                 yield item
 
@@ -20,7 +20,7 @@ async def zip(*sources):
         # Handle resources
         streamers = []
         for source in sources:
-            streamers.append(await stack.enter_context(source.stream()))
+            streamers.append(await stack.enter_context(aitercontext(source)))
         # Loop over items
         while True:
             try:
@@ -36,7 +36,7 @@ async def zip(*sources):
 async def map(func, *sources):
     iscorofunc = asyncio.iscoroutinefunction(func)
     source = zip(*sources) if len(sources) > 1 else sources[0]
-    async with source.stream() as streamer:
+    async with aitercontext(source) as streamer:
         async for item in streamer:
             if len(sources) == 1:
                 item = (item,)
@@ -52,7 +52,7 @@ async def merge(*sources):
         # Schedule first anext
         streamers = {}
         for source in sources:
-            streamer = await stack.enter_context(source.stream())
+            streamer = await stack.enter_context(aitercontext(source))
             task = asyncio.ensure_future(anext(streamer))
             streamers[task] = streamer
         # Loop over events

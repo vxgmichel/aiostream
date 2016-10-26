@@ -5,7 +5,6 @@ import itertools
 from collections import Iterable, AsyncIterable
 
 from ..core import operator
-from ..utils import aiter
 from ..stream import time
 
 

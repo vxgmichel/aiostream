@@ -1,15 +1,15 @@
 
 import asyncio
 
-from ..utils import anext
 from ..core import operator
+from ..utils import anext, aitercontext
 
 
 @operator(pipable=True)
 async def space_out(source, interval):
     timeout = 0
     loop = asyncio.get_event_loop()
-    async with source.stream() as streamer:
+    async with aitercontext(source) as streamer:
         async for item in streamer:
             delta = timeout - loop.time()
             delay = delta if delta > 0 else 0
@@ -20,8 +20,7 @@ async def space_out(source, interval):
 
 @operator(pipable=True)
 async def timeout(source, timeout):
-    loop = asyncio.get_event_loop()
-    async with source.stream() as streamer:
+    async with aitercontext(source) as streamer:
         while True:
             try:
                 item = await asyncio.wait_for(anext(streamer), timeout)
@@ -34,6 +33,6 @@ async def timeout(source, timeout):
 @operator(pipable=True)
 async def delay(source, delay):
     await asyncio.sleep(delay)
-    async with source.stream() as streamer:
+    async with aitercontext(source) as streamer:
         async for item in streamer:
             yield item
