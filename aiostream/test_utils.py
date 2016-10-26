@@ -4,13 +4,14 @@ import asyncio
 import asyncio.test_utils
 
 from . import stream
+from .utils import aitercontext
 from .core import StreamEmpty, operator
 
 
 @operator(pipable=True)
 async def add_resource(source, cleanup_time):
     try:
-        async with source.stream() as streamer:
+        async with aitercontext(source) as streamer:
             async for item in streamer:
                 yield item
     finally:
@@ -24,12 +25,12 @@ def compare_exceptions(exc1, exc2):
         exc1.__dict__ == exc2.__dict__)
 
 
-async def assert_aiter(xs, values, exception=None):
+async def assert_aiter(source, values, exception=None):
     result = []
     try:
-        async with xs.stream() as s:
-            async for x in s:
-                result.append(x)
+        async with aitercontext(source) as streamer:
+            async for item in streamer:
+                result.append(item)
     except Exception as exc:
         assert result == values
         assert compare_exceptions(exc, exception)
@@ -38,9 +39,9 @@ async def assert_aiter(xs, values, exception=None):
         assert exception is None
 
 
-async def assert_await(xs, values, exception=None):
+async def assert_await(source, values, exception=None):
     try:
-        result = await xs
+        result = await source
     except StreamEmpty:
         assert values == []
         assert exception is None
