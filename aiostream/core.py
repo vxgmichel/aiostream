@@ -1,12 +1,12 @@
 """Provide core objects for streaming."""
 
-__all__ = ['Stream', 'Streamer']
-
 import warnings
 import functools
 from collections import AsyncIterable, AsyncIterator, Awaitable
 
 from .utils import aiter, anext, _await
+
+__all__ = ['Stream', 'Streamer']
 
 
 # Exception
