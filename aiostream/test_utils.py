@@ -3,15 +3,15 @@ import pytest
 import asyncio
 import asyncio.test_utils
 
-from . import stream
-from .utils import aitercontext
-from .core import StreamEmpty, operator
+from .core import StreamEmpty, operator, streamcontext
+
+__all__ = ['add_resource', 'assert_run', 'event_loop']
 
 
 @operator(pipable=True)
 async def add_resource(source, cleanup_time):
     try:
-        async with aitercontext(source) as streamer:
+        async with streamcontext(source) as streamer:
             async for item in streamer:
                 yield item
     finally:
@@ -28,7 +28,7 @@ def compare_exceptions(exc1, exc2):
 async def assert_aiter(source, values, exception=None):
     result = []
     try:
-        async with aitercontext(source) as streamer:
+        async with streamcontext(source) as streamer:
             async for item in streamer:
                 result.append(item)
     except Exception as exc:
@@ -59,7 +59,7 @@ def assert_run(request):
     return request.param
 
 
-@pytest.fixture()
+@pytest.fixture
 def event_loop():
 
     def gen():
