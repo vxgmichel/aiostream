@@ -1,5 +1,5 @@
 
-__all__ = ['stream', 'pipe', 'operator', 'StreamEmpty']
-
 from . import stream, pipe
-from .core import StreamEmpty, operator
+from .core import StreamEmpty, operator, streamcontext
+
+__all__ = ['stream', 'pipe', 'operator', 'streamcontext', 'StreamEmpty']

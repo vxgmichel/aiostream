@@ -1,8 +1,8 @@
 """Gather the pipe operators."""
 
-__all__ = []
-
 from . import stream
+
+__all__ = []
 
 
 def update_pipe_module():
