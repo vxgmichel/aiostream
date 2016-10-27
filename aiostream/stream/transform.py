@@ -3,14 +3,15 @@ import asyncio
 import itertools
 
 from .combine import map
-from ..core import operator
-from ..utils import aitercontext
+from ..core import operator, streamcontext
+
+__all__ = ['map', 'enumerate', 'starmap']
 
 
 @operator(pipable=True)
 async def enumerate(source, start=0, step=1):
     count = itertools.count(start, step)
-    async with aitercontext(source) as streamer:
+    async with streamcontext(source) as streamer:
         async for item in streamer:
             yield next(count), item
 

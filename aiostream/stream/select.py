@@ -3,8 +3,10 @@ import builtins
 import collections
 
 from .. import stream
-from ..core import operator
-from ..utils import aitercontext
+from ..core import operator, streamcontext
+
+__all__ = ['take', 'take_last', 'skip', 'skip_last',
+           'filter_index', 'slice']
 
 
 @operator(pipable=True)
@@ -12,7 +14,7 @@ async def take(source, n):
     if n <= 0:
         return
     source = stream.enumerate(source)
-    async with aitercontext(source) as streamer:
+    async with streamcontext(source) as streamer:
         async for i, item in streamer:
             yield item
             if i >= n-1:
@@ -22,7 +24,7 @@ async def take(source, n):
 @operator(pipable=True)
 async def take_last(source, n):
     queue = collections.deque(maxlen=n if n > 0 else 0)
-    async with aitercontext(source) as streamer:
+    async with streamcontext(source) as streamer:
         async for item in streamer:
             queue.append(item)
         for item in queue:
@@ -32,7 +34,7 @@ async def take_last(source, n):
 @operator(pipable=True)
 async def skip(source, n):
     source = stream.enumerate(source)
-    async with aitercontext(source) as streamer:
+    async with streamcontext(source) as streamer:
         async for i, item in streamer:
             if i >= n:
                 yield item
@@ -41,7 +43,7 @@ async def skip(source, n):
 @operator(pipable=True)
 async def skip_last(source, n):
     queue = collections.deque(maxlen=n if n > 0 else 0)
-    async with aitercontext(source) as streamer:
+    async with streamcontext(source) as streamer:
         async for item in streamer:
             if n <= 0:
                 yield item
@@ -54,7 +56,7 @@ async def skip_last(source, n):
 @operator(pipable=True)
 async def filter_index(source, func):
     source = stream.enumerate(source)
-    async with aitercontext(source) as streamer:
+    async with streamcontext(source) as streamer:
         async for i, item in streamer:
             if func(i):
                 yield item
