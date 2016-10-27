@@ -16,14 +16,6 @@ def acontextmanager(func):
     return helper
 
 
-@acontextmanager
-async def empty(item):
-    """Empty async context manager."""
-    yield item
-acontextmanager.empty = empty
-del empty
-
-
 # Async context manager helper
 
 class AsyncGeneratorContextManager(object):

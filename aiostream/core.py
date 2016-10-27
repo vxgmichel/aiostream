@@ -1,12 +1,11 @@
 """Provide core objects for streaming."""
 
-import warnings
 import functools
-from collections import AsyncIterable, AsyncIterator, Awaitable
+from collections import AsyncIterable, Awaitable
 
-from .utils import aiter, anext, _await
+from .aiter_utils import _await, aitercontext, AsyncIteratorContext
 
-__all__ = ['Stream', 'Streamer']
+__all__ = ['Stream', 'Streamer', 'StreamEmpty', 'operator', 'streamcontext']
 
 
 # Exception
@@ -17,6 +16,55 @@ class StreamEmpty(Exception):
 
 
 # Helpers
+
+async def wait_stream(aiterable):
+    """Wait for a stream to finish and return the last item."""
+    async with streamcontext(aiterable) as streamer:
+        async for item in streamer:
+            item
+        try:
+            return item
+        except NameError:
+            raise StreamEmpty()
+
+
+# Core objects
+
+class Stream(AsyncIterable, Awaitable):
+    """Enhanced asynchronous iterable."""
+
+    def __init__(self, factory):
+        self._factory = factory
+
+    def __aiter__(self):
+        return streamcontext(self._factory())
+
+    def __await__(self):
+        return _await(wait_stream(self))
+
+    def __or__(self, func):
+        return func(self)
+
+    def __add__(self, value):
+        from .stream import chain
+        return chain(self, value)
+
+    def __getitem__(self, value):
+        from .stream import slice
+        return slice(self, value.start, value.stop, value.step)
+
+    stream = __aiter__
+
+
+class Streamer(AsyncIteratorContext, Stream):
+    """Enhanced asynchronous iterator."""
+    pass
+
+
+streamcontext = functools.partial(aitercontext, cls=Streamer)
+
+
+# Operator decorator
 
 def operator(func=None, *, pipable=False, position=0):
     """Return a decorator to wrap function into a stream operator."""
@@ -37,80 +85,3 @@ def operator(func=None, *, pipable=False, position=0):
         return wrapper
 
     return decorator if func is None else decorator(func)
-
-
-async def wait_stream(stream):
-    """Wait for a stream to finish and return the last item."""
-    async with aiter(stream) as streamer:
-        async for item in streamer:
-            item
-        try:
-            return item
-        except NameError:
-            raise StreamEmpty()
-
-
-# Core objects
-
-class Stream(AsyncIterable, Awaitable):
-    """Enhanced asynchronous iterable."""
-
-    def __init__(self, factory):
-        self._factory = factory
-
-    def __aiter__(self):
-        return Streamer(self._factory())
-
-    def __await__(self):
-        return _await(aiter(self))
-
-    def __or__(self, func):
-        return func(self)
-
-    def __add__(self, value):
-        from .stream import chain
-        return chain(self, value)
-
-    def __getitem__(self, value):
-        from .stream import slice
-        return slice(self, value.start, value.stop, value.step)
-
-    stream = __aiter__
-
-
-class Streamer(Stream, AsyncIterator):
-    """"Enhanced asynchronous iterator."""
-
-    _STANDBY = "STANDBY"
-    _RUNNING = "RUNNING"
-    _FINISHED = "FINISHED"
-
-    def __init__(self, aiterable):
-        self._state = self._STANDBY
-        self._aiterator = aiter(aiterable)
-        if isinstance(self._aiterator, Streamer):
-            self._aiterator = self._aiterator._aiterator
-
-    def __aiter__(self):
-        return self
-
-    def __anext__(self):
-        if self._state == self._FINISHED:
-            raise RuntimeError(
-                "Streamer is being iterated after the context has been closed")
-        if self._state == self._STANDBY:
-            warnings.warn(
-                "Streamer is being iterated outside of its context")
-        return anext(self._aiterator)
-
-    def __await__(self):
-        return _await(wait_stream(self))
-
-    async def __aenter__(self):
-        self._state = self._RUNNING
-        return self
-
-    async def __aexit__(self, *args):
-        self._state = self._FINISHED
-        if hasattr(self._aiterator, 'aclose'):
-            await self._aiterator.aclose()

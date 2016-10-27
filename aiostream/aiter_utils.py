@@ -1,9 +1,9 @@
 
-from .context import acontextmanager, AsyncExitStack
+import warnings
+from collections import AsyncIterator
 
-__all__ = [
-    'acontextmanager', 'AsyncExitStack'
-    'aiter', 'anext', '_await', 'aitercontext']
+__all__ = ['aiter', 'anext', '_await',
+           'AsyncIteratorContext', 'aitercontext']
 
 
 # Magic method shorcuts
@@ -23,15 +23,51 @@ def _await(obj):
     return obj.__await__()
 
 
-# Aiter helpers
+# Async iterator context
 
-def aitercontext(obj):
-    """Return an async context manager from an aiterable,
-    whether the corresponding aiterator supports it or not."""
-    ait = aiter(obj)
-    try:
-        ait.__enter__
-    except AttributeError:
-        return acontextmanager.empty(ait)
-    else:
-        return ait
+class AsyncIteratorContext(AsyncIterator):
+    """"Asynchronous iterator with context management."""
+
+    _STANDBY = "STANDBY"
+    _RUNNING = "RUNNING"
+    _FINISHED = "FINISHED"
+
+    def __init__(self, aiterator):
+        if not isinstance(aiterator, AsyncIterator):
+            raise TypeError('Expected an AsyncIterator')
+        if isinstance(aiterator, AsyncIteratorContext):
+            raise TypeError('Already an AsyncIteratorContext')
+        self._state = self._STANDBY
+        self._aiterator = aiterator
+
+    def __aiter__(self):
+        return self
+
+    def __anext__(self):
+        if self._state == self._FINISHED:
+            raise RuntimeError(
+                "AsyncIteratorContext is closed and cannot be iterated")
+        if self._state == self._STANDBY:
+            warnings.warn(
+                "AsyncIteratorContext is iterated outside of its context")
+        return anext(self._aiterator)
+
+    async def __aenter__(self):
+        if self._state == self._FINISHED:
+            raise RuntimeError(
+                "AsyncIteratorContext is closed and cannot be iterated")
+        self._state = self._RUNNING
+        return self
+
+    async def __aexit__(self, *args):
+        self._state = self._FINISHED
+        if hasattr(self._aiterator, 'aclose'):
+            await self._aiterator.aclose()
+
+
+def aitercontext(aiterable, *, cls=AsyncIteratorContext):
+    """Return an async context manager from an aiterable."""
+    aiterator = aiter(aiterable)
+    if isinstance(aiterator, cls):
+        return aiterator
+    return cls(aiterator)
