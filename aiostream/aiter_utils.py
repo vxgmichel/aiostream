@@ -60,9 +60,12 @@ class AsyncIteratorContext(AsyncIterator):
         return self
 
     async def __aexit__(self, *args):
-        self._state = self._FINISHED
-        if hasattr(self._aiterator, 'aclose'):
-            await self._aiterator.aclose()
+        try:
+            if self._state != self._FINISHED and \
+               hasattr(self._aiterator, 'aclose'):
+                await self._aiterator.aclose()
+        finally:
+            self._state = self._FINISHED
 
 
 def aitercontext(aiterable, *, cls=AsyncIteratorContext):
