@@ -1,4 +1,5 @@
 
+import asyncio
 import builtins
 import collections
 
@@ -6,15 +7,15 @@ from .. import stream
 from ..core import operator, streamcontext
 
 __all__ = ['take', 'take_last', 'skip', 'skip_last',
-           'filter_index', 'slice']
+           'filter_index', 'slice', 'filter']
 
 
 @operator(pipable=True)
 async def take(source, n):
-    if n <= 0:
-        return
     source = stream.enumerate(source)
     async with streamcontext(source) as streamer:
+        if n <= 0:
+            return
         async for i, item in streamer:
             yield item
             if i >= n-1:
@@ -85,6 +86,18 @@ def slice(source, *args):
         if step > 1:
             source = filter_index(source, lambda i: i % step == 0)
         elif step < 0:
-            raise TypeError("Negative step not supported")
+            raise ValueError("Negative step not supported")
     # Return
     return source
+
+
+@operator(pipable=True, position=1)
+async def filter(func, source):
+    iscorofunc = asyncio.iscoroutinefunction(func)
+    async with streamcontext(source) as streamer:
+        async for item in streamer:
+            if iscorofunc:
+                if await func(item):
+                    yield item
+            elif func(item):
+                yield item
