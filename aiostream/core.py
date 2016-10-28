@@ -82,6 +82,7 @@ def operator(func=None, *, pipable=False, position=0):
 
         wrapper.operator = True
         wrapper.pipe = pipe if pipable else None
+        wrapper.raw = func
         return wrapper
 
     return decorator if func is None else decorator(func)
