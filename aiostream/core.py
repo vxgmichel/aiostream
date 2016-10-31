@@ -50,8 +50,8 @@ class Stream(AsyncIterable, Awaitable):
         return chain(self, value)
 
     def __getitem__(self, value):
-        from .stream import slice
-        return slice(self, value.start, value.stop, value.step)
+        from .stream import get_item
+        return get_item(self, value)
 
     stream = __aiter__
 

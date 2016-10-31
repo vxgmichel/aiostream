@@ -78,12 +78,67 @@ async def test_slice(assert_run, event_loop):
         await assert_run(xs, [15, 17])
 
     xs = stream.range(10, 20) | pipe.slice(5, 1, -1)
-    exc = ValueError('Positive stop and negative start is not supported',)
+    exc = ValueError('Negative step not supported')
     await assert_run(xs, [], exc)
 
     xs = stream.range(10, 20) | pipe.slice(-8, 8)
-    exc = ValueError('Positive stop and negative start is not supported',)
+    exc = ValueError('Positive stop and negative start is not supported')
     await assert_run(xs, [], exc)
+
+
+@pytest.mark.asyncio
+async def test_item_at(assert_run, event_loop):
+    with event_loop.assert_cleanup():
+        xs = stream.range(5) | add_resource.pipe(1) | pipe.item_at(2)
+        await assert_run(xs, [2])
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(5) | add_resource.pipe(1) | pipe.item_at(-2)
+        await assert_run(xs, [3])
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(5) | add_resource.pipe(1) | pipe.item_at(10)
+        exception = IndexError('Index out of range',)
+        await assert_run(xs, [], exception)
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(5) | add_resource.pipe(1) | pipe.item_at(-10)
+        exception = IndexError('Index out of range',)
+        await assert_run(xs, [], exception)
+
+
+@pytest.mark.asyncio
+async def test_get_item(assert_run, event_loop):
+    with event_loop.assert_cleanup():
+        xs = stream.range(5) | add_resource.pipe(1) | pipe.get_item(2)
+        await assert_run(xs, [2])
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(5) | add_resource.pipe(1)
+        await assert_run(xs[2], [2])
+
+    with event_loop.assert_cleanup():
+        s = slice(1, 3)
+        xs = stream.range(5) | add_resource.pipe(1) | pipe.get_item(s)
+        await assert_run(xs, [1, 2])
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(5) | add_resource.pipe(1)
+        await assert_run(xs[1:3], [1, 2])
+
+    with event_loop.assert_cleanup():
+        s = slice(1, 5, 2)
+        xs = stream.range(5) | add_resource.pipe(1) | pipe.get_item(s)
+        await assert_run(xs, [1, 3])
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(5) | add_resource.pipe(1)
+        await assert_run(xs[1:5:2], [1, 3])
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(5) | add_resource.pipe(1)
+        exception = TypeError('Not a valid index (int or slice)')
+        await assert_run(xs[None], [], exception)
 
 
 @pytest.mark.asyncio

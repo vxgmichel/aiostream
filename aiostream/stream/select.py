@@ -3,16 +3,17 @@ import asyncio
 import builtins
 import collections
 
-from .. import stream
+from . import transform
+from ..aiter_utils import anext
 from ..core import operator, streamcontext
 
 __all__ = ['take', 'take_last', 'skip', 'skip_last',
-           'filter_index', 'slice', 'filter']
+           'filter_index', 'slice', 'item_at', 'get_item', 'filter']
 
 
 @operator(pipable=True)
 async def take(source, n):
-    source = stream.enumerate(source)
+    source = transform.enumerate.raw(source)
     async with streamcontext(source) as streamer:
         if n <= 0:
             return
@@ -34,7 +35,7 @@ async def take_last(source, n):
 
 @operator(pipable=True)
 async def skip(source, n):
-    source = stream.enumerate(source)
+    source = transform.enumerate.raw(source)
     async with streamcontext(source) as streamer:
         async for i, item in streamer:
             if i >= n:
@@ -56,7 +57,7 @@ async def skip_last(source, n):
 
 @operator(pipable=True)
 async def filter_index(source, func):
-    source = stream.enumerate(source)
+    source = transform.enumerate.raw(source)
     async with streamcontext(source) as streamer:
         async for i, item in streamer:
             if func(i):
@@ -89,6 +90,39 @@ def slice(source, *args):
             raise ValueError("Negative step not supported")
     # Return
     return source
+
+
+@operator(pipable=True)
+async def item_at(source, index):
+    # Prepare
+    if index >= 0:
+        source = skip.raw(source, index)
+    else:
+        source = take_last(source, abs(index))
+    async with streamcontext(source) as streamer:
+        # Get first item
+        try:
+            result = await anext(streamer)
+        except StopAsyncIteration:
+            raise IndexError("Index out of range")
+        # Check length
+        if index < 0:
+            count = 1
+            async for _ in streamer:
+                count += 1
+            if count != abs(index):
+                raise IndexError("Index out of range")
+        # Yield result
+        yield result
+
+
+@operator(pipable=True)
+def get_item(source, index):
+    if isinstance(index, builtins.slice):
+        return slice.raw(source, index.start, index.stop, index.step)
+    if isinstance(index, int):
+        return item_at.raw(source, index)
+    raise TypeError("Not a valid index (int or slice)")
 
 
 @operator(pipable=True, position=1)
