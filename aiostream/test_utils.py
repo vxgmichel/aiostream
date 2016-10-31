@@ -27,7 +27,7 @@ def compare_exceptions(exc1, exc2):
     return (
         exc1 == exc2 or
         exc1.__class__ == exc2.__class__ and
-        exc1.__dict__ == exc2.__dict__)
+        exc1.args == exc2.args)
 
 
 async def assert_aiter(source, values, exception=None):
