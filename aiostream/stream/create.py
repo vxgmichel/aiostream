@@ -27,9 +27,9 @@ def from_aiterable(ait):
 @operator
 def iterate(it):
     if isinstance(it, AsyncIterable):
-        return from_aiterable(it)
+        return from_aiterable.raw(it)
     if isinstance(it, Iterable):
-        return from_iterable(it)
+        return from_iterable.raw(it)
     raise TypeError("Not (async) iterable")
 
 
@@ -65,11 +65,11 @@ async def never():
 
 @operator
 def range(*args, interval=0):
-    stream = from_iterable(builtins.range(*args))
-    return time.space_out(stream, interval) if interval else stream
+    stream = from_iterable.raw(builtins.range(*args))
+    return time.space_out.raw(stream, interval) if interval else stream
 
 
 @operator
 def count(start=0, step=1, *, interval=0):
-    stream = from_iterable(itertools.count(start, step))
-    return time.space_out(stream, interval) if interval else stream
+    stream = from_iterable.raw(itertools.count(start, step))
+    return time.space_out.raw(stream, interval) if interval else stream

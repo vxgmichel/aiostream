@@ -24,4 +24,4 @@ def starmap(func, source):
     else:
         def starfunc(args):
             return func(*args)
-    return map(starfunc, source)
+    return map.raw(starfunc, source)

@@ -43,10 +43,10 @@ async def map(func, *sources):
         async for item in streamer:
             if len(sources) == 1:
                 item = (item,)
+            result = func(*item)
             if iscorofunc:
-                yield await func(*item)
-            else:
-                yield func(*item)
+                result = await result
+            yield result
 
 
 @operator(pipable=True)

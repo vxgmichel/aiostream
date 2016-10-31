@@ -69,22 +69,22 @@ def slice(source, *args):
     start, stop, step = s.start or 0, s.stop, s.step or 1
     # Filter the first items
     if start < 0:
-        source = take_last(source, abs(start))
+        source = take_last.raw(source, abs(start))
     elif start > 0:
-        source = skip(source, start)
+        source = skip.raw(source, start)
     # Filter the last items
     if stop is not None:
         if stop >= 0 and start < 0:
             raise ValueError(
                 "Positive stop and negative start is not supported")
         elif stop >= 0:
-            source = take(source, stop - start)
+            source = take.raw(source, stop - start)
         else:
-            source = skip_last(source, abs(stop))
+            source = skip_last.raw(source, abs(stop))
     # Filter step items
     if step is not None:
         if step > 1:
-            source = filter_index(source, lambda i: i % step == 0)
+            source = filter_index.raw(source, lambda i: i % step == 0)
         elif step < 0:
             raise ValueError("Negative step not supported")
     # Return
