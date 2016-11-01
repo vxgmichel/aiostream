@@ -1,12 +1,5 @@
 language: python
-
-python:
-  - 3.6-dev
-
-install:
-  - pip install pytest pytest-runner pytest-asyncio pytest-cov coveralls
-
+python: 3.6-dev
+install: pip install coveralls
 script: python setup.py test
-
-after_success:
-  - coveralls
+after_success: coveralls
