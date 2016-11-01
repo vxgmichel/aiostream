@@ -1,8 +1,8 @@
 import asyncio
 from aiostream import stream, pipe
 
-# This awaitable computes 11² + 13² in 1.5 second
-observable = (
+# This stream computes 11² + 13² in 1.5 second
+xs = (
     stream.count(interval=0.1)         # Count from zero every 0.1 s
     | pipe.skip(10)                    # Skip the first 10 numbers
     | pipe.take(5)                     # Take the following 5
@@ -12,13 +12,13 @@ observable = (
 )
 
 
-# Run the awaitable
+# The stream can be awaited
 loop = asyncio.get_event_loop()
-result = loop.run_until_complete(observable)
+result = loop.run_until_complete(xs)
 print('11² + 13² = ', result)
 
-# Can run several times
-result = loop.run_until_complete(observable)
+# The stream can run several times
+result = loop.run_until_complete(xs)
 print('11² + 13² = ', result)
 
 # Clean up
