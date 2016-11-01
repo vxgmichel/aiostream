@@ -3,12 +3,12 @@ import sys
 import functools
 import collections
 
-__all__ = ['acontextmanager', 'AsyncExitStack']
+__all__ = ['async_context_manager', 'AsyncExitStack']
 
 
 # Async context manager
 
-def acontextmanager(func):
+def async_context_manager(func):
     """@acontextmanager decorator."""
     @functools.wraps(func)
     def helper(*args, **kwargs):
@@ -42,7 +42,7 @@ class AsyncGeneratorContextManager(object):
             if value is None:
                 # Need to force instantiation so we can reliably
                 # tell if we get the same exception back
-                value = type()
+                value = type()  # pragma: no cover
             try:
                 await self.gen.athrow(type, value, traceback)
                 raise RuntimeError("generator didn't stop after throw()")
@@ -158,7 +158,7 @@ class AsyncExitStack:
                     return
                 if exc_context is None or exc_context is frame_exc:
                     break
-                new_exc = exc_context
+                new_exc = exc_context  # pragma: no cover
             # Change the end of the chain to point to the exception
             # we expect it to reference
             new_exc.__context__ = old_exc
