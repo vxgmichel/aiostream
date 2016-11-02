@@ -12,7 +12,7 @@ with open("README.rst") as f:
 
 setup(
     name='aiostream',
-    version='0.1.0',
+    version='0.1.1',
 
     packages=['aiostream', 'aiostream.stream'],
     setup_requires=['pytest-runner' if TESTING else ''],
