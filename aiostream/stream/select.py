@@ -8,7 +8,8 @@ from ..aiter_utils import anext
 from ..core import operator, streamcontext
 
 __all__ = ['take', 'take_last', 'skip', 'skip_last',
-           'filter_index', 'slice', 'item_at', 'get_item', 'filter']
+           'filter_index', 'slice', 'item_at', 'get_item',
+           'filter', 'dropwhile', 'takewhile']
 
 
 @operator(pipable=True)
@@ -20,7 +21,7 @@ async def take(source, n):
         async for i, item in streamer:
             yield item
             if i >= n-1:
-                break
+                return
 
 
 @operator(pipable=True)
@@ -130,8 +131,36 @@ async def filter(func, source):
     iscorofunc = asyncio.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
+            result = func(item)
             if iscorofunc:
-                if await func(item):
-                    yield item
-            elif func(item):
+                result = await result
+            if result:
                 yield item
+
+
+@operator(pipable=True, position=1)
+async def takewhile(func, source):
+    iscorofunc = asyncio.iscoroutinefunction(func)
+    async with streamcontext(source) as streamer:
+        async for item in streamer:
+            result = func(item)
+            if iscorofunc:
+                result = await result
+            if not result:
+                return
+            yield item
+
+
+@operator(pipable=True, position=1)
+async def dropwhile(func, source):
+    iscorofunc = asyncio.iscoroutinefunction(func)
+    async with streamcontext(source) as streamer:
+        async for item in streamer:
+            result = func(item)
+            if iscorofunc:
+                result = await result
+            if not result:
+                yield item
+                break
+        async for item in streamer:
+            yield item
