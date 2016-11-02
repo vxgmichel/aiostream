@@ -81,7 +81,7 @@ Operators
     - filter_index
     - slice
     - item_at
-    - get_item (index
+    - get_item
     - filter
     - dropwhile
     - takewhile
