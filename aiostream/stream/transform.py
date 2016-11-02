@@ -5,7 +5,7 @@ import itertools
 from .combine import map
 from ..core import operator, streamcontext
 
-__all__ = ['map', 'enumerate', 'starmap']
+__all__ = ['map', 'enumerate', 'starmap', 'cycle']
 
 
 @operator(pipable=True)
@@ -25,3 +25,13 @@ def starmap(func, source):
         def starfunc(args):
             return func(*args)
     return map.raw(starfunc, source)
+
+
+@operator(pipable=True)
+async def cycle(source):
+    while True:
+        async with streamcontext(source) as streamer:
+            async for item in streamer:
+                yield item
+            # Prevent blocking while loop if the stream is empty
+            await asyncio.sleep(0)
