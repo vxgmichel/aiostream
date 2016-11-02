@@ -11,7 +11,6 @@ xs = (
     | pipe.reduce(lambda x, y: x + y)  # Add the numbers together
 )
 
-
 # The stream can be awaited
 loop = asyncio.get_event_loop()
 result = loop.run_until_complete(xs)
