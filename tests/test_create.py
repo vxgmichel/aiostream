@@ -36,6 +36,15 @@ async def test_never(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
+async def test_repeat(assert_run):
+    xs = stream.repeat(1, 3)
+    await assert_run(xs, [1, 1, 1])
+
+    xs = stream.repeat(2)[:4]
+    await assert_run(xs, [2, 2, 2, 2])
+
+
+@pytest.mark.asyncio
 async def test_range(assert_run, event_loop):
     xs = stream.range(3, 10, 2, interval=1.0)
     await assert_run(xs, [3, 5, 7, 9])

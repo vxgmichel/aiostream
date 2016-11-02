@@ -19,8 +19,10 @@ async def add_resource(source, cleanup_time):
             async for item in streamer:
                 yield item
     finally:
-        await asyncio.sleep(cleanup_time)
-        loop.open_resources -= 1
+        try:
+            await asyncio.sleep(cleanup_time)
+        finally:
+            loop.open_resources -= 1
 
 
 def compare_exceptions(exc1, exc2):

@@ -3,7 +3,7 @@ import pytest
 import asyncio
 
 from aiostream import stream, pipe
-from aiostream.test_utils import assert_run, event_loop
+from aiostream.test_utils import assert_run, event_loop, add_resource
 
 # Pytest fixtures
 assert_run, event_loop
@@ -24,3 +24,24 @@ async def test_starmap(assert_run, event_loop):
         zs = xs | pipe.zip(ys) | pipe.starmap(asyncio.sleep)
         await assert_run(zs, [1, 2, 3])
         assert event_loop.steps == [1, 2, 3]
+
+
+@pytest.mark.asyncio
+async def test_cycle(assert_run, event_loop):
+    with event_loop.assert_cleanup():
+        xs = stream.empty() | pipe.cycle() | pipe.timeout(1)
+        await assert_run(xs, [], asyncio.TimeoutError())
+
+    with event_loop.assert_cleanup():
+        xs = (
+            stream.empty()
+            | add_resource.pipe(1)
+            | pipe.cycle()
+            | pipe.timeout(1)
+        )
+        await assert_run(xs, [], asyncio.TimeoutError())
+
+    with event_loop.assert_cleanup():
+        xs = stream.just(1) | add_resource.pipe(1) | pipe.cycle()
+        await assert_run(xs[:5], [1]*5)
+        assert event_loop.steps == [1]*5
