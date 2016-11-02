@@ -8,7 +8,8 @@ from ..core import operator
 from ..stream import time
 
 __all__ = ['from_iterable', 'from_aiterable', 'iterate',
-           'just', 'throw', 'empty', 'never', 'range', 'count']
+           'just', 'throw', 'empty', 'never', 'repeat',
+           'range', 'count']
 
 
 # Convert regular iterables
@@ -59,6 +60,13 @@ async def never():
         yield
     future = asyncio.Future()
     await future
+
+
+@operator
+def repeat(value, times=None):
+    args = () if times is None else (times,)
+    it = itertools.repeat(value, *args)
+    return from_iterable.raw(it)
 
 
 # Counting operators
