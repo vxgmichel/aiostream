@@ -1,8 +1,7 @@
 """Run a TCP server that computes euclidean norm of vectors for its clients."""
 
 import asyncio
-import functools
-from aiostream import stream, pipe, operator, streamcontext
+from aiostream import stream, pipe
 
 # Constants
 
@@ -22,34 +21,6 @@ RESULT = """\
 -> Euclidean norm: {}
 """
 
-# Extra operators
-
-
-@operator(pipable=True)
-async def until(source, cond):
-    async with streamcontext(source) as streamer:
-        async for item in streamer:
-            if cond(item):
-                break
-            yield item
-pipe.until = until.pipe
-
-
-@operator(pipable=True)
-def action(source, func):
-    def innerfunc(arg):
-        func(arg)
-        return arg
-    return stream.map.raw(innerfunc, source)
-pipe.action = action.pipe
-
-
-@operator(pipable=True)
-def print_operator(source, *args, **kwargs):
-    func = functools.partial(print, *args, **kwargs)
-    return action.raw(source, func)
-pipe.print = print_operator.pipe
-
 
 # Client handler
 
@@ -57,7 +28,7 @@ async def euclidean_norm_handler(reader, writer):
 
     # Define lambdas
     strip =        lambda x: x.decode().strip()
-    is_empty =     lambda x: x == ''
+    nonempty =     lambda x: x != ''
     square =       lambda x: x ** 2
     write_cursor = lambda x: writer.write(b'> ')
     add =          lambda x, y: x + y
@@ -66,16 +37,16 @@ async def euclidean_norm_handler(reader, writer):
     # Create awaitable
     handle_request = (
         stream.iterate(reader)
-        | pipe.print('string')
+        | pipe.print('string: {}')
         | pipe.map(strip)
-        | pipe.until(is_empty)
+        | pipe.takewhile(nonempty)
         | pipe.map(float)
         | pipe.map(square)
-        | pipe.print('square')
+        | pipe.print('square: {:.2f}')
         | pipe.action(write_cursor)
         | pipe.reduce(add, initializer=0)
         | pipe.map(square_root)
-        | pipe.print('norm')
+        | pipe.print('norm -> {:.2f}')
     )
 
     # Loop over norm computations
