@@ -69,13 +69,13 @@ async def test_iterable(assert_run):
 
 
 @pytest.mark.asyncio
-async def test_aiterable(assert_run, event_loop):
+async def test_async_iterable(assert_run, event_loop):
 
     async def agen():
         for x in range(2, 5):
             yield await asyncio.sleep(1.0, result=x**2)
 
-    xs = stream.from_aiterable(agen())
+    xs = stream.from_async_iterable(agen())
     await assert_run(xs, [4, 9, 16])
     assert event_loop.steps == [1.0, 1.0, 1.0]
 

@@ -7,7 +7,7 @@ from collections import Iterable, AsyncIterable
 from ..core import operator
 from ..stream import time
 
-__all__ = ['from_iterable', 'from_aiterable', 'iterate',
+__all__ = ['from_iterable', 'from_async_iterable', 'iterate',
            'just', 'throw', 'empty', 'never', 'repeat',
            'range', 'count']
 
@@ -21,14 +21,14 @@ async def from_iterable(it):
 
 
 @operator
-def from_aiterable(ait):
+def from_async_iterable(ait):
     return ait
 
 
 @operator
 def iterate(it):
     if isinstance(it, AsyncIterable):
-        return from_aiterable.raw(it)
+        return from_async_iterable.raw(it)
     if isinstance(it, Iterable):
         return from_iterable.raw(it)
     raise TypeError("Not (async) iterable")
