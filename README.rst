@@ -53,54 +53,73 @@ Example
     loop.close()
 
 
-
 Operators
 ---------
 
-- create operators (non-pipable):
-    - iterate
-    - just
-    - empty
-    - throw
-    - never
-    - repeat
-    - range
-    - count
+create operators (non-pipable)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- transform operators:
-    - map
-    - enumerate
-    - starmap
-    - cycle
+- iterate
+- just
+- empty
+- throw
+- never
+- repeat
+- range
+- count
 
-- select operators:
-    - take
-    - take_last
-    - skip
-    - skip_last
-    - filter_index
-    - slice
-    - item_at
-    - get_item
-    - filter
-    - dropwhile
-    - takewhile
 
-- combine operators:
-    - map
-    - zip
-    - merge
-    - chain
+transform operators
+^^^^^^^^^^^^^^^^^^^
 
-- aggregate operators:
-    - accumulate
-    - reduce
-    - to_list
+- map
+- enumerate
+- starmap
+- cycle
 
-- timing operators:
-    - space_out
-    - timeout
 
-- misc operators:
-    - action
-    - print
+select operators
+^^^^^^^^^^^^^^^^
+
+- take
+- take_last
+- skip
+- skip_last
+- filter_index
+- slice
+- item_at
+- get_item
+- filter
+- dropwhile
+- takewhile
+
+
+combine operators
+^^^^^^^^^^^^^^^^^
+
+- map
+- zip
+- merge
+- chain
+
+
+aggregate operators
+^^^^^^^^^^^^^^^^^^^
+
+- accumulate
+- reduce
+- to_list
+
+
+timing operators
+^^^^^^^^^^^^^^^^
+
+- space_out
+- timeout
+
+
+misc operators
+^^^^^^^^^^^^^^
+
+- action
+- print
