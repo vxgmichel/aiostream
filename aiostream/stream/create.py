@@ -2,10 +2,11 @@
 import asyncio
 import builtins
 import itertools
-from collections import Iterable, AsyncIterable
+import collections
 
-from ..core import operator
 from ..stream import time
+from ..core import operator
+from ..aiter_utils import is_async_iterable
 
 __all__ = ['from_iterable', 'from_async_iterable', 'iterate',
            'just', 'throw', 'empty', 'never', 'repeat',
@@ -27,11 +28,12 @@ def from_async_iterable(ait):
 
 @operator
 def iterate(it):
-    if isinstance(it, AsyncIterable):
+    if is_async_iterable(it):
         return from_async_iterable.raw(it)
-    if isinstance(it, Iterable):
+    if isinstance(it, collections.Iterable):
         return from_iterable.raw(it)
-    raise TypeError("Not (async) iterable")
+    raise TypeError(
+        f"{type(it).__name__!r} object is not (async) iterable")
 
 
 # Simple operators

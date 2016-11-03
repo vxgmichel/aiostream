@@ -86,6 +86,8 @@ async def test_async_iterable(assert_run, event_loop):
 
 @pytest.mark.asyncio
 async def test_non_iterable(assert_run):
-    exception = TypeError('Not (async) iterable',)
-    xs = stream.iterate(None)
-    await assert_run(xs, [], exception)
+    with pytest.raises(TypeError):
+        xs = stream.iterate(None)
+
+    with pytest.raises(TypeError):
+        xs = stream.from_async_iterable(None)

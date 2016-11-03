@@ -3,6 +3,8 @@ import warnings
 from collections import AsyncIterator
 
 __all__ = ['aiter', 'anext', '_await',
+           'is_async_iterable', 'assert_async_iterable',
+           'is_async_iterator', 'assert_async_iterator',
            'AsyncIteratorContext', 'aitercontext']
 
 
@@ -10,17 +12,41 @@ __all__ = ['aiter', 'anext', '_await',
 
 def aiter(obj):
     """Access aiter magic method."""
+    assert_async_iterable(obj)
     return obj.__aiter__()
 
 
 def anext(obj):
     """Access anext magic method."""
+    assert_async_iterator(obj)
     return obj.__anext__()
 
 
 def _await(obj):
     """Access await magic method."""
     return obj.__await__()
+
+
+# Iterability helpers
+
+def is_async_iterable(obj):
+    return hasattr(obj, '__aiter__')
+
+
+def assert_async_iterable(obj):
+    if not is_async_iterable(obj):
+        raise TypeError(
+            f"{type(obj).__name__!r} object is not async iterable")
+
+
+def is_async_iterator(obj):
+    return hasattr(obj, '__anext__')
+
+
+def assert_async_iterator(obj):
+    if not is_async_iterator(obj):
+        raise TypeError(
+            f"{type(obj).__name__!r} object is not an async iterator")
 
 
 # Async iterator context
@@ -33,10 +59,10 @@ class AsyncIteratorContext(AsyncIterator):
     _FINISHED = "FINISHED"
 
     def __init__(self, aiterator):
-        if not isinstance(aiterator, AsyncIterator):
-            raise TypeError('Expected an AsyncIterator')
+        assert_async_iterator(aiterator)
         if isinstance(aiterator, AsyncIteratorContext):
-            raise TypeError('Already an AsyncIteratorContext')
+            raise TypeError(
+                f'{aiterator!r} is already an AsyncIteratorContext')
         self._state = self._STANDBY
         self._aiterator = aiterator
 

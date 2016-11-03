@@ -3,7 +3,8 @@
 import functools
 from collections import AsyncIterable, Awaitable
 
-from .aiter_utils import _await, aitercontext, AsyncIteratorContext
+from .aiter_utils import AsyncIteratorContext
+from .aiter_utils import _await, aitercontext, assert_async_iterable
 
 __all__ = ['Stream', 'Streamer', 'StreamEmpty', 'operator', 'streamcontext']
 
@@ -34,10 +35,18 @@ class Stream(AsyncIterable, Awaitable):
     """Enhanced asynchronous iterable."""
 
     def __init__(self, factory):
-        self._factory = factory
+        aiter = factory()
+        assert_async_iterable(aiter)
+        self._generator = self._make_generator(aiter, factory)
+
+    def _make_generator(self, first, factory):
+        yield first
+        del first
+        while True:
+            yield factory()
 
     def __aiter__(self):
-        return streamcontext(self._factory())
+        return streamcontext(next(self._generator))
 
     def __await__(self):
         return _await(wait_stream(self))
@@ -71,18 +80,22 @@ def operator(func=None, *, pipable=False, position=0):
 
     def decorator(func):
 
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            return Stream(lambda: func(*args, **kwargs))
+        def __init__(self, *args, **kwargs):
+            return Stream.__init__(self, lambda: func(*args, **kwargs))
 
-        @functools.wraps(func)
-        def pipe(*args, **kwargs):
-            return lambda source: wrapper(
+        @classmethod
+        def pipe(cls, *args, **kwargs):
+            return lambda source: cls(
                 *args[:position], source, *args[position:], **kwargs)
+        pipe.__doc__ = func.__doc__
 
-        wrapper.operator = True
-        wrapper.pipe = pipe if pipable else None
-        wrapper.raw = func
-        return wrapper
+        attrs = {
+            '__init__': __init__,
+            '__module__': func.__module__,
+            '__doc__': func.__doc__,
+            'operator': True,
+            'pipe': pipe if pipable else None,
+            'raw': staticmethod(func)}
+        return type(func.__name__, (Stream,), attrs)
 
     return decorator if func is None else decorator(func)

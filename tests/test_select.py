@@ -77,13 +77,11 @@ async def test_slice(assert_run, event_loop):
               | pipe.slice(-5, -1, 2))
         await assert_run(xs, [15, 17])
 
-    xs = stream.range(10, 20) | pipe.slice(5, 1, -1)
-    exc = ValueError('Negative step not supported')
-    await assert_run(xs, [], exc)
+    with pytest.raises(ValueError):
+        xs = stream.range(10, 20) | pipe.slice(5, 1, -1)
 
-    xs = stream.range(10, 20) | pipe.slice(-8, 8)
-    exc = ValueError('Positive stop and negative start is not supported')
-    await assert_run(xs, [], exc)
+    with pytest.raises(ValueError):
+        xs = stream.range(10, 20) | pipe.slice(-8, 8)
 
 
 @pytest.mark.asyncio
@@ -135,10 +133,8 @@ async def test_get_item(assert_run, event_loop):
         xs = stream.range(5) | add_resource.pipe(1)
         await assert_run(xs[1:5:2], [1, 3])
 
-    with event_loop.assert_cleanup():
-        xs = stream.range(5) | add_resource.pipe(1)
-        exception = TypeError('Not a valid index (int or slice)')
-        await assert_run(xs[None], [], exception)
+    with pytest.raises(TypeError):
+        xs = stream.range(5)[None]
 
 
 @pytest.mark.asyncio
