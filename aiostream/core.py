@@ -81,7 +81,6 @@ def operator(func=None, *, pipable=False):
 
     def decorator(func):
         # Gather data
-        raw = func
         bases = (Stream,)
         name = func.__name__
         module = func.__module__
@@ -98,7 +97,13 @@ def operator(func=None, *, pipable=False):
         cls_parameter = inspect.Parameter(
             'cls', inspect.Parameter.POSITIONAL_OR_KEYWORD)
 
-        # Raw method
+        # wrapped static method
+        original = func
+        original.__qualname__ = name + '.original'
+
+        # Raw static method
+        raw = func
+        raw.__qualname__ = name + '.raw'
 
         # Init method
         def init(self, *args, **kwargs):
@@ -157,6 +162,7 @@ def operator(func=None, *, pipable=False):
             '__module__': module,
             '__doc__': doc,
             'raw': staticmethod(raw),
+            'original': staticmethod(original),
             'pipe': classmethod(pipe) if pipable else None}
 
         # Create operator class
