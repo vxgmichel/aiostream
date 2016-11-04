@@ -9,6 +9,7 @@ from ..core import operator, streamcontext
 
 @operator(pipable=True)
 async def accumulate(source, func=op.add, initializer=None):
+    """Generate a series of accumulated sums (or other binary function)."""
     iscorofunc = asyncio.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         # Initialize
