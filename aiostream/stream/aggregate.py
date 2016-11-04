@@ -29,8 +29,8 @@ async def accumulate(source, func=op.add, initializer=None):
             yield value
 
 
-@operator(pipable=True, position=1)
-def reduce(func, source, initializer=None):
+@operator(pipable=True)
+def reduce(source, func, initializer=None):
     acc = accumulate.raw(source, func, initializer)
     return select.item_at.raw(acc, -1)
 

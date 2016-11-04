@@ -126,8 +126,8 @@ def get_item(source, index):
     raise TypeError("Not a valid index (int or slice)")
 
 
-@operator(pipable=True, position=1)
-async def filter(func, source):
+@operator(pipable=True)
+async def filter(source, func):
     iscorofunc = asyncio.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
@@ -138,8 +138,8 @@ async def filter(func, source):
                 yield item
 
 
-@operator(pipable=True, position=1)
-async def takewhile(func, source):
+@operator(pipable=True)
+async def takewhile(source, func):
     iscorofunc = asyncio.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
@@ -151,8 +151,8 @@ async def takewhile(func, source):
             yield item
 
 
-@operator(pipable=True, position=1)
-async def dropwhile(func, source):
+@operator(pipable=True)
+async def dropwhile(source, func):
     iscorofunc = asyncio.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:

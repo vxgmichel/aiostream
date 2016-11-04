@@ -35,13 +35,14 @@ async def zip(*sources):
                 yield tuple(items)
 
 
-@operator(pipable=True, position=1)
-async def map(func, *sources):
+@operator(pipable=True)
+async def map(source, func, *sources):
     iscorofunc = asyncio.iscoroutinefunction(func)
-    source = zip(*sources) if len(sources) > 1 else sources[0]
+    if sources:
+        source = zip(source, *sources)
     async with streamcontext(source) as streamer:
         async for item in streamer:
-            if len(sources) == 1:
+            if not sources:
                 item = (item,)
             result = func(*item)
             if iscorofunc:

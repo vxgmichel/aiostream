@@ -18,7 +18,7 @@ def action(source, func):
         def innerfunc(arg):
             func(arg)
             return arg
-    return map.raw(innerfunc, source)
+    return map.raw(source, innerfunc)
 
 
 @operator(pipable=True)

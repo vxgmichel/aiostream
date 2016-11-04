@@ -16,15 +16,15 @@ async def enumerate(source, start=0, step=1):
             yield next(count), item
 
 
-@operator(pipable=True, position=1)
-def starmap(func, source):
+@operator(pipable=True)
+def starmap(source, func):
     if asyncio.iscoroutinefunction(func):
         async def starfunc(args):
             return await func(*args)
     else:
         def starfunc(args):
             return func(*args)
-    return map.raw(starfunc, source)
+    return map.raw(source, starfunc)
 
 
 @operator(pipable=True)
