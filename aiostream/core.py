@@ -1,5 +1,6 @@
 """Provide core objects for streaming."""
 
+import inspect
 import functools
 from collections import AsyncIterable, Awaitable
 
@@ -75,27 +76,90 @@ streamcontext = functools.partial(aitercontext, cls=Streamer)
 
 # Operator decorator
 
-def operator(func=None, *, pipable=False, position=0):
+def operator(func=None, *, pipable=False):
     """Return a decorator to wrap function into a stream operator."""
 
     def decorator(func):
+        # Gather data
+        raw = func
+        bases = (Stream,)
+        name = func.__name__
+        module = func.__module__
+        extra_doc = func.__doc__
+        doc = f'Regular "{name}" stream operator.'
+        if extra_doc:
+            doc += '\n\n    ' + extra_doc
 
-        def __init__(self, *args, **kwargs):
-            return Stream.__init__(self, lambda: func(*args, **kwargs))
+        # Extract signature
+        signature = inspect.signature(func)
+        parameters = list(signature.parameters.values())
+        self_parameter = inspect.Parameter(
+            'self', inspect.Parameter.POSITIONAL_OR_KEYWORD)
+        cls_parameter = inspect.Parameter(
+            'cls', inspect.Parameter.POSITIONAL_OR_KEYWORD)
 
-        @classmethod
-        def pipe(cls, *args, **kwargs):
-            return lambda source: cls(
-                *args[:position], source, *args[position:], **kwargs)
-        pipe.__doc__ = func.__doc__
+        # Raw method
 
+        # Init method
+        def init(self, *args, **kwargs):
+            if pipable and args:
+                assert_async_iterable(args[0])
+            factory = functools.partial(self.raw, *args, **kwargs)
+            return Stream.__init__(self, factory)
+
+        # Customize init signature
+        new_parameters = [self_parameter] + parameters
+        init.__signature__ = signature.replace(parameters=new_parameters)
+
+        # Customize init method
+        init.__qualname__ = name + '.__init__'
+        init.__name__ = '__init__'
+        init.__module__ = module
+        init.__doc__ = f'Initialize the "{name}" stream.'
+
+        if pipable:
+
+            # Raw static method
+            def raw(*args, **kwargs):
+                if args:
+                    assert_async_iterable(args[0])
+                return func(*args, **kwargs)
+
+            # Custonize raw method
+            raw.__signature__ = signature
+            raw.__qualname__ = name + '.raw'
+            raw.__module__ = module
+            raw.__doc__ = doc
+
+            # Pipe class method
+            def pipe(cls, *args, **kwargs):
+                return lambda source: cls(source, *args, **kwargs)
+
+            # Customize pipe signature
+            if parameters and parameters[0].kind in (
+                    inspect.Parameter.POSITIONAL_ONLY,
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD):
+                new_parameters = [cls_parameter] + parameters[1:]
+            else:
+                new_parameters = [cls_parameter] + parameters
+            pipe.__signature__ = signature.replace(parameters=new_parameters)
+
+            # Customize pipe method
+            pipe.__qualname__ = name + '.pipe'
+            pipe.__module__ = module
+            pipe.__doc__ = f'Pipable "{name}" stream operator.'
+            if extra_doc:
+                pipe.__doc__ += "\n\n    " + extra_doc
+
+        # Gather attributes
         attrs = {
-            '__init__': __init__,
-            '__module__': func.__module__,
-            '__doc__': func.__doc__,
-            'operator': True,
-            'pipe': pipe if pipable else None,
-            'raw': staticmethod(func)}
-        return type(func.__name__, (Stream,), attrs)
+            '__init__': init,
+            '__module__': module,
+            '__doc__': doc,
+            'raw': staticmethod(raw),
+            'pipe': classmethod(pipe) if pipable else None}
+
+        # Create operator class
+        return type(name, bases, attrs)
 
     return decorator if func is None else decorator(func)
