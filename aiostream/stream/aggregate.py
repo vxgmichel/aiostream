@@ -9,7 +9,13 @@ from ..core import operator, streamcontext
 
 @operator(pipable=True)
 async def accumulate(source, func=op.add, initializer=None):
-    """Generate a series of accumulated sums (or other binary function)."""
+    """Generate a series of accumulated sums (or other binary function)
+    from an asynchronous sequence.
+
+    If initializer is present, it is placed before the items
+    of the sequence in the calculation, and serves as a default
+    when the sequence is empty.
+    """
     iscorofunc = asyncio.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         # Initialize
@@ -32,12 +38,21 @@ async def accumulate(source, func=op.add, initializer=None):
 
 @operator(pipable=True)
 def reduce(source, func, initializer=None):
+    """Apply a function of two arguments cumulatively to the items
+    of an asynchronous sequence, from left to right, so as to reduce
+    the sequence to a single value.
+
+    If initializer is present, it is placed before the items
+    of the sequence in the calculation, and serves as a default when the
+    sequence is empty.
+    """
     acc = accumulate.raw(source, func, initializer)
     return select.item_at.raw(acc, -1)
 
 
 @operator(pipable=True)
 async def to_list(source):
+    """Convert an asynchronous sequence to a list."""
     result = []
     async with streamcontext(source) as streamer:
         async for item in streamer:

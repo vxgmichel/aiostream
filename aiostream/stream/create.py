@@ -17,17 +17,20 @@ __all__ = ['from_iterable', 'from_async_iterable', 'iterate',
 
 @operator
 async def from_iterable(it):
+    """Generate values from a regular iterable."""
     for item in it:
         yield item
 
 
 @operator
 def from_async_iterable(ait):
+    """Generate values from an asychronous iterable."""
     return ait
 
 
 @operator
 def iterate(it):
+    """Generate values from a sychronous or asynchronous iterable."""
     if is_async_iterable(it):
         return from_async_iterable.raw(it)
     if isinstance(it, collections.Iterable):
@@ -40,11 +43,13 @@ def iterate(it):
 
 @operator
 async def just(value):
+    """Generate a given value."""
     yield value
 
 
 @operator
 async def throw(exc):
+    """Throw an exception without generating any value."""
     if False:
         yield
     raise exc
@@ -52,12 +57,14 @@ async def throw(exc):
 
 @operator
 async def empty():
+    """Terminate without generating any value."""
     if False:
         yield
 
 
 @operator
 async def never():
+    """Hang forever without generating any value."""
     if False:
         yield
     future = asyncio.Future()
@@ -65,21 +72,39 @@ async def never():
 
 
 @operator
-def repeat(value, times=None):
+def repeat(value, times=None, *, interval=0):
+    """Generate the same value a given number of times.
+
+    If times is None, the value is repeated indefinitely.
+    An optional interval can be given to space the values out.
+    """
     args = () if times is None else (times,)
     it = itertools.repeat(value, *args)
-    return from_iterable.raw(it)
+    agen = from_iterable.raw(it)
+    return time.space_out.raw(agen, interval) if interval else agen
 
 
 # Counting operators
 
 @operator
 def range(*args, interval=0):
-    stream = from_iterable.raw(builtins.range(*args))
-    return time.space_out.raw(stream, interval) if interval else stream
+    """Generate a given range of numbers.
+
+    It supports the same arguments as the builtin function.
+    An optional interval can be given to space the values out.
+    """
+    agen = from_iterable.raw(builtins.range(*args))
+    return time.space_out.raw(agen, interval) if interval else agen
 
 
 @operator
 def count(start=0, step=1, *, interval=0):
-    stream = from_iterable.raw(itertools.count(start, step))
-    return time.space_out.raw(stream, interval) if interval else stream
+    """Generate consecutive numbers indefinitely.
+
+    Optional starting point and increment can be defined,
+    respectively defaulting to 0 and 1.
+
+    An optional interval can be given to space the values out.
+    """
+    agen = from_iterable.raw(itertools.count(start, step))
+    return time.space_out.raw(agen, interval) if interval else agen

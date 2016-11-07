@@ -14,6 +14,10 @@ __all__ = ['take', 'take_last', 'skip', 'skip_last',
 
 @operator(pipable=True)
 async def take(source, n):
+    """Forward the first n elements from an asynchronous sequence.
+
+    If n is negative, it simply terminates before iterating the source.
+    """
     source = transform.enumerate.raw(source)
     async with streamcontext(source) as streamer:
         if n <= 0:
@@ -26,6 +30,13 @@ async def take(source, n):
 
 @operator(pipable=True)
 async def take_last(source, n):
+    """Forward the last n elements from an asynchronous sequence.
+
+    If n is negative, it simply terminates after iterating the source.
+
+    Note: it is required to reach the end of the source before the first
+    element is generated.
+    """
     queue = collections.deque(maxlen=n if n > 0 else 0)
     async with streamcontext(source) as streamer:
         async for item in streamer:
@@ -36,6 +47,10 @@ async def take_last(source, n):
 
 @operator(pipable=True)
 async def skip(source, n):
+    """Forward an asynchronous sequence, skipping the first n elements.
+
+    If n is negative, no elements are skipped.
+    """
     source = transform.enumerate.raw(source)
     async with streamcontext(source) as streamer:
         async for i, item in streamer:
@@ -45,6 +60,13 @@ async def skip(source, n):
 
 @operator(pipable=True)
 async def skip_last(source, n):
+    """Forward an asynchronous sequence, skipping the last n elements.
+
+    If n is negative, no elements are skipped.
+
+    Note: it is required to reach the (n+1)th element of the source
+    before the first element is generated.
+    """
     queue = collections.deque(maxlen=n if n > 0 else 0)
     async with streamcontext(source) as streamer:
         async for item in streamer:
@@ -58,6 +80,12 @@ async def skip_last(source, n):
 
 @operator(pipable=True)
 async def filter_index(source, func):
+    """Filter an asynchronous sequence using the index of the elements.
+
+    The given function is synchronous, takes the index as an argument,
+    and returns True if the corresponding should be forwarded,
+    False otherwise.
+    """
     source = transform.enumerate.raw(source)
     async with streamcontext(source) as streamer:
         async for i, item in streamer:
@@ -67,6 +95,14 @@ async def filter_index(source, func):
 
 @operator(pipable=True)
 def slice(source, *args):
+    """Slice an asynchronous sequence.
+
+    The arguments are the same as the builtin type slice.
+
+    There two limitations compare to regular slices:
+    - Positive stop index + negative start index is not supported
+    - Negative step is not supported
+    """
     s = builtins.slice(*args)
     start, stop, step = s.start or 0, s.stop, s.step or 1
     # Filter the first items
@@ -78,7 +114,7 @@ def slice(source, *args):
     if stop is not None:
         if stop >= 0 and start < 0:
             raise ValueError(
-                "Positive stop and negative start is not supported")
+                "Positive stop + negative start is not supported")
         elif stop >= 0:
             source = take.raw(source, stop - start)
         else:
@@ -95,6 +131,11 @@ def slice(source, *args):
 
 @operator(pipable=True)
 async def item_at(source, index):
+    """Forward the nth element of an asynchronous sequence.
+
+    The index can be negative and works like regular indexing.
+    If the index is out of range, and IndexError is raised.
+    """
     # Prepare
     if index >= 0:
         source = skip.raw(source, index)
@@ -119,6 +160,11 @@ async def item_at(source, index):
 
 @operator(pipable=True)
 def get_item(source, index):
+    """Get one or several items from an asynchronous sequence.
+
+    The argument can either be a slice or an integer.
+    See the slice and item_at operators for more information.
+    """
     if isinstance(index, builtins.slice):
         return slice.raw(source, index.start, index.stop, index.step)
     if isinstance(index, int):
@@ -128,6 +174,12 @@ def get_item(source, index):
 
 @operator(pipable=True)
 async def filter(source, func):
+    """Filter an asynchronous sequence using an arbitrary function.
+
+    The function takes the item as an argument and returns True
+    if it should be forwarded, False otherwise.
+    The function can either be synchronous or asynchronous.
+    """
     iscorofunc = asyncio.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
@@ -140,6 +192,12 @@ async def filter(source, func):
 
 @operator(pipable=True)
 async def takewhile(source, func):
+    """Forward an asynchronous sequence while a condition is met.
+
+    The given function takes the item as an argument and returns a boolean
+    corresponding to the condition to meet. The function can either be
+    synchronous or asynchronous.
+    """
     iscorofunc = asyncio.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
@@ -153,6 +211,13 @@ async def takewhile(source, func):
 
 @operator(pipable=True)
 async def dropwhile(source, func):
+    """Discard the elements from an asynchronous sequence
+    while a condition is met.
+
+    The given function takes the item as an argument and returns a boolean
+    corresponding to the condition to meet. The function can either be
+    synchronous or asynchronous.
+    """
     iscorofunc = asyncio.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:

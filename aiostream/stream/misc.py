@@ -10,6 +10,11 @@ __all__ = ['action', 'print']
 
 @operator(pipable=True)
 def action(source, func):
+    """Perform an action for each element of an asyncronous sequence,
+    and forward this element without modifying it.
+
+    The given function can be synchronous or asynchronous.
+    """
     if asyncio.iscoroutinefunction(func):
         async def innerfunc(arg):
             await func(arg)
@@ -23,6 +28,11 @@ def action(source, func):
 
 @operator(pipable=True)
 def print(source, template=None, **kwargs):
+    """Print each element of an asynchronous sequence without modifying it.
+
+    An optional template can be provided to be formatted with the elements.
+    All the keyword arguments are forwarded to the builtin function print.
+    """
     def func(value):
         if template:
             value = template.format(value)
