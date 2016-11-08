@@ -1,3 +1,4 @@
+"""Combination operators."""
 
 import asyncio
 import builtins
@@ -11,6 +12,12 @@ __all__ = ['chain', 'zip', 'map', 'merge']
 
 @operator(pipable=True)
 async def chain(*sources):
+    """Chain asynchronous sequences together, in the order they're given.
+
+    Note: the sequences are not iterated until it is required,
+    so if the operation is interrupted, the remaining sequences
+    will be left untouched.
+    """
     for source in sources:
         async with streamcontext(source) as streamer:
             async for item in streamer:
@@ -19,6 +26,15 @@ async def chain(*sources):
 
 @operator(pipable=True)
 async def zip(*sources):
+    """Combine and forward the elements of several asynchronous sequences.
+
+    Each generated value is a tuple of elements, using the same order as
+    their respective sources. The generation continues until the shortest
+    sequence is exhausted.
+
+    Note: the different sequences are awaited in parrallel, so that their
+    waiting times don't add up.
+    """
     async with AsyncExitStack() as stack:
         # Handle resources
         streamers = []
@@ -36,13 +52,24 @@ async def zip(*sources):
 
 
 @operator(pipable=True)
-async def map(source, func, *sources):
+async def map(source, func, *more_sources):
+    """Apply a given function to the elements of one or several
+    asynchronous sequences.
+
+    Each element is used as a positional argument, using the same order as
+    their respective sources. The generation continues until the shortest
+    sequence is exhausted. The function can either be synchronous or
+    asynchronous.
+
+    Note: the different sequences are awaited in parrallel, so that their
+    waiting times don't add up.
+    """
     iscorofunc = asyncio.iscoroutinefunction(func)
-    if sources:
-        source = zip(source, *sources)
+    if more_sources:
+        source = zip(source, *more_sources)
     async with streamcontext(source) as streamer:
         async for item in streamer:
-            if not sources:
+            if not more_sources:
                 item = (item,)
             result = func(*item)
             if iscorofunc:
@@ -52,6 +79,12 @@ async def map(source, func, *sources):
 
 @operator(pipable=True)
 async def merge(*sources):
+    """Merge several asynchronous sequences together.
+
+    All the sequences are iterated simultaneously and their elements
+    are forwarded as soon as they're available. The generation continues
+    until all the sequences are exhausted.
+    """
     async with AsyncExitStack() as stack:
         # Schedule first anext
         streamers = {}

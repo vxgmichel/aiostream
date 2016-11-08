@@ -1,3 +1,4 @@
+"""Gather all the stream operators."""
 
 from .create import *
 from .transform import *

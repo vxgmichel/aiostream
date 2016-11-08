@@ -1,3 +1,4 @@
+"""Aggregation operators."""
 
 import asyncio
 import operator as op

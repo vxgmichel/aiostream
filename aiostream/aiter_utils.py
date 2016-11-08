@@ -1,3 +1,4 @@
+"""Utilities for asynchronous iteration."""
 
 import warnings
 from collections import AsyncIterator
@@ -30,20 +31,28 @@ def _await(obj):
 # Iterability helpers
 
 def is_async_iterable(obj):
+    """Check if the given object is an asynchronous iterable."""
     return hasattr(obj, '__aiter__')
 
 
 def assert_async_iterable(obj):
+    """Raise a TypeError if the given object is not an
+    asynchronous iterable.
+    """
     if not is_async_iterable(obj):
         raise TypeError(
             f"{type(obj).__name__!r} object is not async iterable")
 
 
 def is_async_iterator(obj):
+    """Check if the given object is an asynchronous iterator."""
     return hasattr(obj, '__anext__')
 
 
 def assert_async_iterator(obj):
+    """Raise a TypeError if the given object is not an
+    asynchronous iterator.
+    """
     if not is_async_iterator(obj):
         raise TypeError(
             f"{type(obj).__name__!r} object is not an async iterator")
@@ -52,13 +61,30 @@ def assert_async_iterator(obj):
 # Async iterator context
 
 class AsyncIteratorContext(AsyncIterator):
-    """"Asynchronous iterator with context management."""
+    """"Asynchronous iterator with context management.
+
+    The context management makes sure the aclose asynchronous method
+    of the corresponding iterator has run before it exits. It also issues
+    warnings and RuntimeError if it is used incorrectly.
+
+    Correct usage:
+
+        ait = some_asynchronous_iterable()
+        aitcontext = AsyncIteratorContext(ait)
+        async with ait context:
+            async for item in ait:
+                <block>
+
+    It is nonetheless not meant to use directly.
+    Prefer aitercontext helper instead.
+    """
 
     _STANDBY = "STANDBY"
     _RUNNING = "RUNNING"
     _FINISHED = "FINISHED"
 
     def __init__(self, aiterator):
+        """Initialize with an asynchrnous iterator."""
         assert_async_iterator(aiterator)
         if isinstance(aiterator, AsyncIteratorContext):
             raise TypeError(
@@ -95,7 +121,26 @@ class AsyncIteratorContext(AsyncIterator):
 
 
 def aitercontext(aiterable, *, cls=AsyncIteratorContext):
-    """Return an async context manager from an aiterable."""
+    """Return an asynchronous context manager from an asynchronous iterable.
+
+    The context management makes sure the aclose asynchronous method
+    has run before it exits. It also issues warnings and RuntimeError
+    if it is used incorrectly.
+
+    It is safe to use with any asynchronous iterable and prevent
+    asynchronous iterator context to be wrapped twice.
+
+    Correct usage:
+
+        ait = some_asynchronous_iterable()
+        async with aitercontext(ait) as safe_ait:
+            async for item in safe_ait:
+                <block>
+
+    An optional subclass of AsyncIteratorContext can be provided.
+    This class will be used to wrap the given iterable.
+    """
+    assert issubclass(cls, AsyncIteratorContext)
     aiterator = aiter(aiterable)
     if isinstance(aiterator, cls):
         return aiterator

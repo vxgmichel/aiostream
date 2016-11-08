@@ -1,3 +1,4 @@
+"""Selection operators."""
 
 import asyncio
 import builtins

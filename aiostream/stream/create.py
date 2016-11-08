@@ -1,3 +1,4 @@
+"""Non-pipable creation operators."""
 
 import asyncio
 import builtins

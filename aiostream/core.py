@@ -1,4 +1,4 @@
-"""Provide core objects for streaming."""
+"""Core objects for stream operators."""
 
 import inspect
 import functools
@@ -20,7 +20,11 @@ class StreamEmpty(Exception):
 # Helpers
 
 async def wait_stream(aiterable):
-    """Wait for a stream to finish and return the last item."""
+    """Wait for an asynchronous iterable to finish and return the last item.
+
+    The iterable is executed within a safe stream context.
+    A StreamEmpty exception is raised if the sequence is empty.
+    """
     async with streamcontext(aiterable) as streamer:
         async for item in streamer:
             item
@@ -33,53 +37,205 @@ async def wait_stream(aiterable):
 # Core objects
 
 class Stream(AsyncIterable, Awaitable):
-    """Enhanced asynchronous iterable."""
+    """Enhanced asynchronous iterable.
+
+    It provides the following features:
+    - each iteration create a new streamer object, making it re-iterable
+    - the streamer objects have context management for safe execution
+    - it can be awaited to safely execute and return its last element
+    - it is concatenable (through the stream.chain operator)
+    - it is indexable/slicable (through the stream.get_item operator)
+    - it is pipable, using the pipe operators from the pipe module
+
+    It is not meant to be instanciated directly.
+    Use the stream operators instead.
+
+    Example:
+
+        xs = stream.count()    # xs is a stream object
+        ys = xs | pipe.skip(5) # pipe xs and skip the first 5 elements
+        zs = ys[5:10:2]        # slice ys using start, stop and step
+
+        async with zs.stream() as streamer:  # stream zs in a safe context
+            async for z in streamer:         # iterate the zs streamer
+                print(z)                     # Prints 10, 12, 14
+
+        result = await zs  # await zs and return its last element
+        print(result)      # Prints 14
+        result = await zs  # zs can be used several times
+        print(result)      # Prints 14
+    """
 
     def __init__(self, factory):
+        """Initialize the stream with an asynchronous iterable factory.
+
+        The factory is a callable and takes no argument.
+        The factory return value is an asynchronous iterable."""
         aiter = factory()
         assert_async_iterable(aiter)
         self._generator = self._make_generator(aiter, factory)
 
     def _make_generator(self, first, factory):
+        """Generate asynchronous iterables when required.
+
+        The first iterable is created beforehand for extra checking.
+        """
         yield first
         del first
         while True:
             yield factory()
 
     def __aiter__(self):
+        """Asynchronous iteration protocol.
+
+        Return a streamer context for safe iteration."""
         return streamcontext(next(self._generator))
 
     def __await__(self):
+        """Await protocol.
+
+        Safely iterate and return the last element.
+        """
         return _await(wait_stream(self))
 
     def __or__(self, func):
+        """Pipe protocol.
+
+        Allow to pipe stream operators.
+        """
         return func(self)
 
     def __add__(self, value):
+        """Addition protocol.
+
+        Concatenate with a given asynchronous sequence."""
         from .stream import chain
         return chain(self, value)
 
     def __getitem__(self, value):
+        """Get item protocol.
+
+        Accept index or slice to extract the corresponding item(s)
+        """
         from .stream import get_item
         return get_item(self, value)
 
-    stream = __aiter__
+    def stream(self):
+        """Return a streamer context for safe iteration.
+
+        Example:
+
+        xs = stream.count()
+        async with xs.stream() as streamer:
+            async for item in streamer:
+                <block>
+        """
+        return self.__aiter__()
 
 
 class Streamer(AsyncIteratorContext, Stream):
-    """Enhanced asynchronous iterator."""
+    """Enhanced asynchronous iterator context.
+
+    It is similar to AsyncIteratorContext but provides the stream
+    magic methods for concatenation, indexing and awaiting.
+
+    It's not meant to be instanciated directly, use streamcontext instead.
+
+    Example:
+
+        ait = some_asynchronous_iterable()
+        async with streamcontext(ait) as streamer:
+            async for item in streamer:
+                await streamer[5]
+    """
     pass
 
 
-streamcontext = functools.partial(aitercontext, cls=Streamer)
+def streamcontext(aiterable):
+    """Return an stream context manager from an asynchronous iterable.
+
+    The context management makes sure the aclose asynchronous method
+    of the corresponding iterator has run before it exits. It also issues
+    warnings and RuntimeError if it is used incorrectly.
+
+    It is safe to use with any asynchronous iterable and prevent
+    asynchronous iterator context to be wrapped twice.
+
+    Correct usage:
+
+        ait = some_asynchronous_iterable()
+        async with streamcontext(ait) as streamer:
+            async for item in streamer:
+                <block>
+
+    For streams objects, it is possible to use the stream method instead:
+
+        xs = stream.count()
+        async with xs.stream() as streamer:
+            async for item in streamer:
+                <block>
+    """
+    return aitercontext(aiterable, cls=Streamer)
 
 
 # Operator decorator
 
 def operator(func=None, *, pipable=False):
-    """Return a decorator to wrap function into a stream operator."""
+    """Create a stream operator from an asynchronous generator
+    (or any function returning an asynchronous iterable).
+
+    Decorator usage:
+
+        @operator
+        async def random(offset=0., width=1.):
+            while True:
+                yield offset + width * random.random()
+
+    Decorator usage for pipable operators:
+
+        @operator(pipable=True):
+        async def multiply(source, factor):
+            async with streamcontext(source) as streamer:
+                 async for item in streamer:
+                     yield factor * item
+
+    In the case of pipable operators, the first argument is expected
+    to be the asynchronous iteratable used for piping.
+
+    The return value is a dynamically created class.
+    It has the same name, module and doc as the original function.
+
+    A new stream is created by simply instanciating the operator:
+
+        xs = random()
+        ys = multiply(xs, 2)
+
+    The original function is called at instanciation to check that
+    signature match. In the case of pipable operators, the source is
+    also checked for asynchronous iteration.
+
+    The operator also have a pipe class method that can be used along
+    with the piping synthax:
+
+        xs = random()
+        ys = xs | multiply.pipe(2)
+
+    This is strictly equivalent to the previous example.
+
+    Other methods are available:
+      - original: the original function as a static method
+      - raw: same as original but add extra checking
+
+    The raw method is useful to create new operators from existing ones:
+
+        @operator(pipable=True)
+        def double(source):
+            return multiply.raw(source, 2)
+    """
 
     def decorator(func):
+        """Inner decorator for stream operator."""
+
         # Gather data
         bases = (Stream,)
         name = func.__name__
