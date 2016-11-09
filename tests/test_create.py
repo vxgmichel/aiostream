@@ -61,7 +61,7 @@ async def test_count(assert_run):
 async def test_iterable(assert_run):
     lst = [9, 4, 8, 3, 1]
 
-    xs = stream.from_iterable(lst)
+    xs = stream.create.from_iterable(lst)
     await assert_run(xs, lst)
 
     xs = stream.iterate(lst)
@@ -75,7 +75,7 @@ async def test_async_iterable(assert_run, event_loop):
         for x in range(2, 5):
             yield await asyncio.sleep(1.0, result=x**2)
 
-    xs = stream.from_async_iterable(agen())
+    xs = stream.create.from_async_iterable(agen())
     await assert_run(xs, [4, 9, 16])
     assert event_loop.steps == [1.0, 1.0, 1.0]
 
@@ -87,7 +87,23 @@ async def test_async_iterable(assert_run, event_loop):
 @pytest.mark.asyncio
 async def test_non_iterable(assert_run):
     with pytest.raises(TypeError):
-        xs = stream.iterate(None)
+        stream.iterate(None)
 
     with pytest.raises(TypeError):
-        xs = stream.from_async_iterable(None)
+        stream.create.from_async_iterable(None)
+
+
+@pytest.mark.asyncio
+async def test_preserve(assert_run, event_loop):
+
+    async def agen():
+        yield 1
+        yield 2
+
+    xs = stream.iterate(agen())[0]
+    await assert_run(xs, [1])
+    await assert_run(xs, [], IndexError('Index out of range'))
+
+    ys = stream.preserve(agen())[0]
+    await assert_run(ys, [1])
+    await assert_run(ys, [2])

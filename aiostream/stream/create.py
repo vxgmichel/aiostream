@@ -6,10 +6,10 @@ import itertools
 import collections
 
 from ..stream import time
-from ..core import operator
+from ..core import operator, streamcontext
 from ..aiter_utils import is_async_iterable
 
-__all__ = ['from_iterable', 'from_async_iterable', 'iterate',
+__all__ = ['iterate', 'preserve',
            'just', 'throw', 'empty', 'never', 'repeat',
            'range', 'count']
 
@@ -25,8 +25,11 @@ async def from_iterable(it):
 
 @operator
 def from_async_iterable(ait):
-    """Generate values from an asychronous iterable."""
-    return ait
+    """Generate values from an asychronous iterable.
+
+    Note: the corresponding iterator will be explicitely closed
+    when leaving the context manager."""
+    return streamcontext(ait)
 
 
 @operator
@@ -38,6 +41,14 @@ def iterate(it):
         return from_iterable.raw(it)
     raise TypeError(
         f"{type(it).__name__!r} object is not (async) iterable")
+
+
+@operator
+async def preserve(ait):
+    """Generate values from an asynchronous iterable without
+    explicitely closing the corresponding iterator."""
+    async for item in ait:
+        yield item
 
 
 # Simple operators
