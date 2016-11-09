@@ -1,3 +1,4 @@
+"""Utilities for testing stream operators."""
 
 import pytest
 import asyncio
@@ -11,6 +12,7 @@ __all__ = ['add_resource', 'assert_run', 'event_loop']
 
 @operator(pipable=True)
 async def add_resource(source, cleanup_time):
+    """Simulate an open resource in a stream operator."""
     try:
         loop = asyncio.get_event_loop()
         loop.open_resources += 1
@@ -26,6 +28,7 @@ async def add_resource(source, cleanup_time):
 
 
 def compare_exceptions(exc1, exc2):
+    """Compare two exceptions together."""
     return (
         exc1 == exc2 or
         exc1.__class__ == exc2.__class__ and
@@ -33,6 +36,7 @@ def compare_exceptions(exc1, exc2):
 
 
 async def assert_aiter(source, values, exception=None):
+    """Check the results of a stream using a streamcontext."""
     result = []
     exception_type = type(exception) if exception else ()
     try:
@@ -48,6 +52,7 @@ async def assert_aiter(source, values, exception=None):
 
 
 async def assert_await(source, values, exception=None):
+    """Check the results of a stream using by awaiting it."""
     exception_type = type(exception) if exception else ()
     try:
         result = await source
@@ -65,11 +70,20 @@ async def assert_await(source, values, exception=None):
     params=[assert_aiter, assert_await],
     ids=['aiter', 'await'])
 def assert_run(request):
+    """Parametrized fixture returning a stream runner."""
     return request.param
 
 
 @pytest.fixture
 def event_loop():
+    """Fixture providing a test event loop.
+
+    The event loop simulate and records the sleep operation,
+    available as event_loop.steps
+
+    It also tracks simulated resources and make sure they are
+    all released before the loop is closed.
+    """
 
     def gen():
         when = yield

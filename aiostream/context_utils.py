@@ -1,3 +1,4 @@
+"""Utilites for asynchronous context management"""
 
 import sys
 import functools
@@ -9,7 +10,24 @@ __all__ = ['async_context_manager', 'AsyncExitStack']
 # Async context manager
 
 def async_context_manager(func):
-    """@acontextmanager decorator."""
+    """Asyncronous context manager decorator.
+
+    Example usage:
+
+        @async_context_manager
+        async def mycontext():
+            try:
+                await prepare_context()
+                yield some_value
+            except SomeException:
+                await exception_handling()
+            finally:
+                await resource_cleanup()
+
+        async with mycontext() as some_value:
+            <block>
+    """
+
     @functools.wraps(func)
     def helper(*args, **kwargs):
         return AsyncGeneratorContextManager(func(*args, **kwargs))
@@ -19,7 +37,7 @@ def async_context_manager(func):
 # Async context manager helper
 
 class AsyncGeneratorContextManager(object):
-    """Helper for @acontextmanager decorator."""
+    """Helper for @async_context_manager decorator."""
 
     def __init__(self, gen):
         self.gen = gen
