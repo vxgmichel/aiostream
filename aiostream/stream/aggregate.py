@@ -53,7 +53,7 @@ def reduce(source, func, initializer=None):
 
 @operator(pipable=True)
 async def to_list(source):
-    """Convert an asynchronous sequence to a list."""
+    """Generate a single list from an asynchronous sequence."""
     result = []
     async with streamcontext(source) as streamer:
         async for item in streamer:

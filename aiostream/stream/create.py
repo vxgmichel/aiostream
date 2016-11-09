@@ -55,7 +55,7 @@ async def preserve(ait):
 
 @operator
 async def just(value):
-    """Generate a given value."""
+    """Generate a single value."""
     yield value
 
 
@@ -80,7 +80,10 @@ async def never():
     if False:
         yield
     future = asyncio.Future()
-    await future
+    try:
+        await future
+    finally:
+        future.cancel()
 
 
 @operator

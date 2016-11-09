@@ -161,7 +161,7 @@ async def item_at(source, index):
 
 @operator(pipable=True)
 def get_item(source, index):
-    """Get one or several items from an asynchronous sequence.
+    """Forward one or several items from an asynchronous sequence.
 
     The argument can either be a slice or an integer.
     See the slice and item_at operators for more information.

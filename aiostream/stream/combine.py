@@ -12,7 +12,7 @@ __all__ = ['chain', 'zip', 'map', 'merge']
 
 @operator(pipable=True)
 async def chain(*sources):
-    """Chain asynchronous sequences together, in the order they're given.
+    """Chain asynchronous sequences together, in the order they are given.
 
     Note: the sequences are not iterated until it is required,
     so if the operation is interrupted, the remaining sequences
