@@ -30,26 +30,37 @@ Example
     import asyncio
     from aiostream import stream, pipe
 
-    # This stream computes 11² + 13² in 1.5 second
-    xs = (
-        stream.count(interval=0.1)         # Count from zero every 0.1 s
-        | pipe.skip(10)                    # Skip the first 10 numbers
-        | pipe.take(5)                     # Take the following 5
-        | pipe.filter(lambda x: x % 2)     # Keep odd numbers
-        | pipe.map(lambda x: x ** 2)       # Square the results
-        | pipe.reduce(lambda x, y: x + y)  # Add the numbers together
-    )
 
-    # The stream can be awaited
+    async def main():
+
+        # Create a counting stream with a 0.2 second interval
+        xs = stream.count(interval=0.2)
+
+        # Pipe operators using '|'
+        ys = xs | pipe.map(lambda x: x**2)
+
+        # Streams can be sliced
+        zs = ys[1:10:2]
+
+        # Use a stream context for proper resource management
+        async with zs.stream() as streamer:
+
+            # Asynchronous iteration
+            async for z in streamer:
+
+                # Prints 1, 9, 25, 49, 81
+                print('->', z)
+
+        # Streams can be awaited and return the last value
+        print('9² = ', await zs)
+
+        # Streams can run several times
+        print('9² = ', await zs)
+
+
+    # Run main coroutine
     loop = asyncio.get_event_loop()
-    result = loop.run_until_complete(xs)
-    print('11² + 13² = ', result)
-
-    # The stream can run several times
-    result = loop.run_until_complete(xs)
-    print('11² + 13² = ', result)
-
-    # Clean up
+    loop.run_until_complete(main())
     loop.close()
 
 
