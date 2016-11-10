@@ -25,7 +25,7 @@ async def from_iterable(it):
 
 @operator
 def from_async_iterable(ait):
-    """Generate values from an asychronous iterable.
+    """Generate values from an asynchronous iterable.
 
     Note: the corresponding iterator will be explicitely closed
     when leaving the context manager."""
@@ -46,7 +46,7 @@ def iterate(it):
 @operator
 async def preserve(ait):
     """Generate values from an asynchronous iterable without
-    explicitely closing the corresponding iterator."""
+    explicitly closing the corresponding iterator."""
     async for item in ait:
         yield item
 

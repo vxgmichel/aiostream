@@ -26,7 +26,7 @@ async def space_out(source, interval):
 
 @operator(pipable=True)
 async def timeout(source, timeout):
-    """Raise a timeout if an element of the asynchronous sequence
+    """Raise a time-out if an element of the asynchronous sequence
     takes too long to arrive.
 
     Note: the timeout is not global but specific to each step of
@@ -44,7 +44,7 @@ async def timeout(source, timeout):
 
 @operator(pipable=True)
 async def delay(source, delay):
-    """Delay the iteration of an asynchrnous sequence."""
+    """Delay the iteration of an asynchronous sequence."""
     await asyncio.sleep(delay)
     async with streamcontext(source) as streamer:
         async for item in streamer:
