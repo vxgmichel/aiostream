@@ -76,135 +76,135 @@ Operators
 Creation operators (non-pipable)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**iterate** `(it)`:
-  Generate values from a synchronous or asychronous iterable.
+- **iterate** ``(it)``:
+    Generate values from a synchronous or asychronous iterable.
 
-**preserve** `(ait)`:
-  Generate values from an asynchronous iterable without explicitely closing the corresponding iterator.
+- **preserve** ``(ait)``:
+    Generate values from an asynchronous iterable without explicitely closing the corresponding iterator.
 
-**just** `(value)`:
-  Generate a single value.
+- **just** ``(value)``:
+    Generate a single value.
 
-**empty** `()`:
-  Terminate without generating any value.
+- **empty** ``()``:
+    Terminate without generating any value.
 
-**throw** `(exc)`:
-  Throw an exception without generating any value.
+- **throw** ``(exc)``:
+    Throw an exception without generating any value.
 
-**never** `()`:
-  Hang forever without generating any value.
+- **never** ``()``:
+    Hang forever without generating any value.
 
-**repeat** `(value, times=None, *, interval=0)`:
-  Generate the same value a given number of times.
+- **repeat** ``(value, times=None, *, interval=0)``:
+    Generate the same value a given number of times.
 
-**range** `(*args, interval=0)`:
-  Generate a given range of numbers.
+- **range** ``(*args, interval=0)``:
+    Generate a given range of numbers.
 
-**count** `(start=0, step=1, *, interval=0)`:
+- **count** ``(start=0, step=1, *, interval=0)``:
     Generate consecutive numbers indefinitely.
 
 
 Transformation operators
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-**map** `(source, func, *more_sources)`:
-  Apply a given function to the elements of one or several asynchronous sequences.
+- **map** ``(source, func, *more_sources)``:
+    Apply a given function to the elements of one or several asynchronous sequences.
 
-**enumerate** `(source, start=0, step=1)`:
-  Generate (index, value) tuples from an asynchronous sequence.
+- **enumerate** ``(source, start=0, step=1)``:
+    Generate (index, value) tuples from an asynchronous sequence.
 
-**starmap** `(source, func)`:
-  Apply a given function to the unpacked elements of an asynchronous sequence.
+- **starmap** ``(source, func)``:
+    Apply a given function to the unpacked elements of an asynchronous sequence.
 
-**cycle** `(source)`:
-  Iterate indefinitely over an asynchronous sequence.
+- **cycle** ``(source)``:
+    Iterate indefinitely over an asynchronous sequence.
 
 
 Selection operators
 ^^^^^^^^^^^^^^^^^^^
 
-**take** `(source, n)`:
-  Forward the first n elements from an asynchronous sequence.
+- **take** ``(source, n)``:
+    Forward the first n elements from an asynchronous sequence.
 
-**take_last** `(source, n)`:
-  Forward the last n elements from an asynchronous sequence.
+- **take_last** ``(source, n)``:
+    Forward the last n elements from an asynchronous sequence.
 
-**skip** `(source, n)`:
-  Forward an asynchronous sequence, skipping the first n elements.
+- **skip** ``(source, n)``:
+    Forward an asynchronous sequence, skipping the first n elements.
 
-**skip_last** `(source, n)`:
-  Forward an asynchronous sequence, skipping the last n elements.
+- **skip_last** ``(source, n)``:
+    Forward an asynchronous sequence, skipping the last n elements.
 
-**filter_index** `(source, func)`:
-  Filter an asynchronous sequence using the index of the elements.
+- **filter_index** ``(source, func)``:
+    Filter an asynchronous sequence using the index of the elements.
 
-**slice** `(source, *args)`:
-  Slice an asynchronous sequence.
+- **slice** ``(source, *args)``:
+    Slice an asynchronous sequence.
 
-**item_at** `(source, index)`:
-  Forward the nth element of an asynchronous sequence.
+- **item_at** ``(source, index)``:
+    Forward the nth element of an asynchronous sequence.
 
-**get_item** `(source, index)`:
-  Forward one or several items from an asynchronous sequence.
+- **get_item** ``(source, index)``:
+    Forward one or several items from an asynchronous sequence.
 
-**filter** `(source, func)`:
-  Filter an asynchronous sequence using an arbitrary function.
+- **filter** ``(source, func)``:
+    Filter an asynchronous sequence using an arbitrary function.
 
-**takewhile** `(source, func)`:
-  Forward an asynchronous sequence while a condition is met.
+- **takewhile** ``(source, func)``:
+    Forward an asynchronous sequence while a condition is met.
 
-**dropwhile** `(source, func)`:
-  Discard the elements from an asynchronous sequence while a condition is met.
+- **dropwhile** ``(source, func)``:
+    Discard the elements from an asynchronous sequence while a condition is met.
 
 
 Combination operators
 ^^^^^^^^^^^^^^^^^^^^^
 
-**map** `(source, func, *more_sources)`:
-  Apply a given function to the elements of one or several asynchronous sequences.
+- **map** ``(source, func, *more_sources)``:
+    Apply a given function to the elements of one or several asynchronous sequences.
 
-**zip** `(*sources)`:
-  Combine and forward the elements of several asynchronous sequences.
+- **zip** ``(*sources)``:
+    Combine and forward the elements of several asynchronous sequences.
 
-**merge** `(*sources)`:
-  Merge several asynchronous sequences together.
+- **merge** ``(*sources)``:
+    Merge several asynchronous sequences together.
 
-**chain** `(*sources)`:
-  Chain asynchronous sequences together, in the order they are given.
+- **chain** ``(*sources)``:
+    Chain asynchronous sequences together, in the order they are given.
 
 
 Aggregatation operators
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-**accumulate** `(source, func=op.add, initializer=None)`:
-  Generate a series of accumulated sums (or other binary function) from an asynchronous sequence.
+- **accumulate** ``(source, func=op.add, initializer=None)``:
+    Generate a series of accumulated sums (or other binary function) from an asynchronous sequence.
 
-**reduce** `(source, func, initializer=None)`:
-  Apply a function of two arguments cumulatively to the items of an asynchronous sequence,
-  reducing the sequence to a single value.
+- **reduce** ``(source, func, initializer=None)``:
+    Apply a function of two arguments cumulatively to the items of an asynchronous sequence,
+    reducing the sequence to a single value.
 
-**list** `()`:
-  Generate a single list from an asynchronous sequence.
+- **list** ``()``:
+    Generate a single list from an asynchronous sequence.
 
 
 Timing operators
 ^^^^^^^^^^^^^^^^
 
-**space_out** `(source, interval)`:
-  Make sure the elements of an asynchronous sequence are separated in time by the given interval.
+- **space_out** ``(source, interval)``:
+    Make sure the elements of an asynchronous sequence are separated in time by the given interval.
 
-**timeout** `(source, timeout)`:
-  Raise a timeout if an element of the asynchronous sequence takes too long to arrive.
+- **timeout** ``(source, timeout)``:
+    Raise a timeout if an element of the asynchronous sequence takes too long to arrive.
 
-**delay** `(source, delay)`:
-  Delay the iteration of an asynchrnous sequence.
+- **delay** ``(source, delay)``:
+    Delay the iteration of an asynchrnous sequence.
 
 
 Misc operators
 ^^^^^^^^^^^^^^
 
-**action** `(source, func)`:
-  Perform an action for each element of an asyncronous sequence without modifying it.
+- **action** ``(source, func)``:
+    Perform an action for each element of an asyncronous sequence without modifying it.
 
-**print** `(source, template=None, **kwargs)`:
-  Print each element of an asynchronous sequence without modifying it.
+- **print** ``(source, template=None, **kwargs)``:
+    Print each element of an asynchronous sequence without modifying it.
