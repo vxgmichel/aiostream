@@ -19,7 +19,7 @@ async def main():
         # Asynchronous iteration
         async for z in streamer:
 
-            # Prints 1, 9, 25, 49, 81
+            # Print 1, 9, 25, 49 and 81
             print('->', z)
 
     # Streams can be awaited and return the last value
@@ -27,6 +27,12 @@ async def main():
 
     # Streams can run several times
     print('9² = ', await zs)
+
+    # Streams can be concatenated
+    one_two_three = stream.just(1) + stream.range(2, 4)
+
+    # Print [1, 2, 3]
+    print(await stream.list(one_two_three))
 
 
 # Run main coroutine
