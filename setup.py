@@ -22,6 +22,7 @@ setup(
     long_description=long_description,
     url="https://pypi.python.org/pypi/aiostream",
 
+    license="GPLv3",
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
