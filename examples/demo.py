@@ -4,10 +4,10 @@ from aiostream import stream, pipe
 
 async def main():
 
-    # Create a counting stream with a 0.2 second interval
+    # Create a counting stream with a 0.2 seconds interval
     xs = stream.count(interval=0.2)
 
-    # Pipe operators using '|'
+    # Operators can be piped using '|'
     ys = xs | pipe.map(lambda x: x**2)
 
     # Streams can be sliced

@@ -16,14 +16,37 @@ aiostream
 Generator-based operators for asynchronous iteration
 
 
+Synopsis
+--------
+
+This library provides a collection of stream operators that can be combined to create
+asynchronous pipelines of operations.
+
+It can be seen as an asynchronous version of itertools_, although some aspects are slightly different.
+Essentially, all the provided operators return a unified interface called a stream.
+A stream is an enhanced asynchronous iterable providing the following features:
+
+- Pipe-lining of operators - using pipe symbol ``|``
+- Repeatability - every iteration creates a different iterator
+- Safe iteration context - using ``async with`` statement and the ``stream`` method
+- Simplified execution - get the last element from a steam using ``await`` statement
+- Slicing and indexing - using square brackets ``[]``
+- Concatenation - using addition symbol ``+``
+
+
+
 Requirements
 ------------
 
-- python 3.6
+The stream operators rely heavily on asynchronous generators (`PEP 525`_):
+
+- python >= 3.6
 
 
 Example
 -------
+
+The following example demonstrates most of the streams capabilities:
 
 .. sourcecode:: python
 
@@ -33,10 +56,10 @@ Example
 
     async def main():
 
-        # Create a counting stream with a 0.2 second interval
+        # Create a counting stream with a 0.2 seconds interval
         xs = stream.count(interval=0.2)
 
-        # Pipe operators using '|'
+        # Operators can be piped using '|'
         ys = xs | pipe.map(lambda x: x**2)
 
         # Streams can be sliced
@@ -77,10 +100,10 @@ Creation operators (non-pipable)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - **iterate** ``(it)``:
-    Generate values from a synchronous or asychronous iterable.
+    Generate values from a synchronous or asynchronous iterable.
 
 - **preserve** ``(ait)``:
-    Generate values from an asynchronous iterable without explicitely closing the corresponding iterator.
+    Generate values from an asynchronous iterable without explicitly closing the corresponding iterator.
 
 - **just** ``(value)``:
     Generate a single value.
@@ -194,17 +217,40 @@ Timing operators
     Make sure the elements of an asynchronous sequence are separated in time by the given interval.
 
 - **timeout** ``(source, timeout)``:
-    Raise a timeout if an element of the asynchronous sequence takes too long to arrive.
+    Raise a time-out if an element of the asynchronous sequence takes too long to arrive.
 
 - **delay** ``(source, delay)``:
-    Delay the iteration of an asynchrnous sequence.
+    Delay the iteration of an asynchronous sequence.
 
 
 Misc operators
 ^^^^^^^^^^^^^^
 
 - **action** ``(source, func)``:
-    Perform an action for each element of an asyncronous sequence without modifying it.
+    Perform an action for each element of an asynchronous sequence without modifying it.
 
 - **print** ``(source, template=None, **kwargs)``:
     Print each element of an asynchronous sequence without modifying it.
+
+
+References
+----------
+
+This library is inspired by:
+
+- `PEP 525`_: Asynchronous Generators
+- `Rx`_ - Reactive Extensions
+- aioreactive_ - Async/await reactive tools for Python 3.5+
+- itertools_ - Functions creating iterators for efficient looping
+
+
+Contact
+-------
+
+Vincent Michel: vxgmichel@gmail.com
+
+
+.. _PEP 525: http://www.python.org/dev/peps/pep-0525/
+.. _Rx: http://reactivex.io/
+.. _aioreactive: http://github.com/dbrattli/aioreactive
+.. _itertools: http://docs.python.org/3/library/itertools.html
