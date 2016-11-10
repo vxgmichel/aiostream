@@ -37,9 +37,8 @@ async def zip(*sources):
     """
     async with AsyncExitStack() as stack:
         # Handle resources
-        streamers = []
-        for source in sources:
-            streamers.append(await stack.enter_context(streamcontext(source)))
+        streamers = [await stack.enter_context(streamcontext(source))
+                     for source in sources]
         # Loop over items
         while True:
             try:
