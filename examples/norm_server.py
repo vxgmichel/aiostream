@@ -1,4 +1,18 @@
-"""Run a TCP server that computes euclidean norm of vectors for its clients."""
+"""Run a TCP server that computes euclidean norm of vectors for its clients.
+
+Run the server:
+
+    $ python3.6 norm_server.py
+    Serving on ('127.0.0.1', 8888)
+
+Test using netcat client:
+
+    $ nc localhost 8888
+    --------------------------------------
+    Compute the Euclidean norm of a vector
+    --------------------------------------
+    [...]
+"""
 
 import asyncio
 from aiostream import stream, pipe
