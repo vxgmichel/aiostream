@@ -177,7 +177,7 @@ Aggregatation operators
   Apply a function of two arguments cumulatively to the items of an asynchronous sequence,
   reducing the sequence to a single value.
 
-**to_list** `()`:
+**list** `()`:
   Generate a single list from an asynchronous sequence.
 
 
