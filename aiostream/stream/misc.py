@@ -10,8 +10,8 @@ __all__ = ['action', 'print']
 
 @operator(pipable=True)
 def action(source, func):
-    """Perform an action for each element of an asyncronous sequence,
-    and forward this element without modifying it.
+    """Perform an action for each element of an asyncronous sequence
+    without modifying it.
 
     The given function can be synchronous or asynchronous.
     """
