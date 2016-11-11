@@ -44,7 +44,7 @@ class Stream(AsyncIterable, Awaitable):
     - the streamer objects have context management for safe execution
     - it can be awaited to safely execute and return its last element
     - it is concatenable (through the stream.chain operator)
-    - it is indexable/slicable (through the stream.get_item operator)
+    - it is indexable/slicable (through the stream.getitem operator)
     - it is pipable, using the pipe operators from the pipe module
 
     It is not meant to be instanciated directly.
@@ -117,8 +117,8 @@ class Stream(AsyncIterable, Awaitable):
 
         Accept index or slice to extract the corresponding item(s)
         """
-        from .stream import get_item
-        return get_item(self, value)
+        from .stream import getitem
+        return getitem(self, value)
 
     def stream(self):
         """Return a streamer context for safe iteration.

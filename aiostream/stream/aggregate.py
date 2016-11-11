@@ -47,7 +47,7 @@ def reduce(source, func, initializer=None):
     sequence is empty.
     """
     acc = accumulate.raw(source, func, initializer)
-    return select.item_at.raw(acc, -1)
+    return select.item.raw(acc, -1)
 
 
 @operator(pipable=True)

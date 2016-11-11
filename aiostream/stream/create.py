@@ -96,7 +96,7 @@ def repeat(value, times=None, *, interval=0):
     args = () if times is None else (times,)
     it = itertools.repeat(value, *args)
     agen = from_iterable.raw(it)
-    return time.space_out.raw(agen, interval) if interval else agen
+    return time.spaceout.raw(agen, interval) if interval else agen
 
 
 # Counting operators
@@ -109,7 +109,7 @@ def range(*args, interval=0):
     An optional interval can be given to space the values out.
     """
     agen = from_iterable.raw(builtins.range(*args))
-    return time.space_out.raw(agen, interval) if interval else agen
+    return time.spaceout.raw(agen, interval) if interval else agen
 
 
 @operator
@@ -122,4 +122,4 @@ def count(start=0, step=1, *, interval=0):
     An optional interval can be given to space the values out.
     """
     agen = from_iterable.raw(itertools.count(start, step))
-    return time.space_out.raw(agen, interval) if interval else agen
+    return time.spaceout.raw(agen, interval) if interval else agen

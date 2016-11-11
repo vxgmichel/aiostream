@@ -5,11 +5,11 @@ import asyncio
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
 
-__all__ = ['space_out', 'delay', 'timeout']
+__all__ = ['spaceout', 'delay', 'timeout']
 
 
 @operator(pipable=True)
-async def space_out(source, interval):
+async def spaceout(source, interval):
     """Make sure the elements of an asynchronous sequence are separated
     in time by the given interval.
     """

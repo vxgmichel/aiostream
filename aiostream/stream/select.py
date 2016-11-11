@@ -8,8 +8,7 @@ from . import transform
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
 
-__all__ = ['take', 'take_last', 'skip', 'skip_last',
-           'filter_index', 'slice', 'item_at', 'get_item',
+__all__ = ['take', 'takelast', 'skip', 'skiplast', 'filterindex', 'getitem',
            'filter', 'dropwhile', 'takewhile']
 
 
@@ -30,7 +29,7 @@ async def take(source, n):
 
 
 @operator(pipable=True)
-async def take_last(source, n):
+async def takelast(source, n):
     """Forward the last n elements from an asynchronous sequence.
 
     If n is negative, it simply terminates after iterating the source.
@@ -60,7 +59,7 @@ async def skip(source, n):
 
 
 @operator(pipable=True)
-async def skip_last(source, n):
+async def skiplast(source, n):
     """Forward an asynchronous sequence, skipping the last n elements.
 
     If n is negative, no elements are skipped.
@@ -80,7 +79,7 @@ async def skip_last(source, n):
 
 
 @operator(pipable=True)
-async def filter_index(source, func):
+async def filterindex(source, func):
     """Filter an asynchronous sequence using the index of the elements.
 
     The given function is synchronous, takes the index as an argument,
@@ -108,7 +107,7 @@ def slice(source, *args):
     start, stop, step = s.start or 0, s.stop, s.step or 1
     # Filter the first items
     if start < 0:
-        source = take_last.raw(source, abs(start))
+        source = takelast.raw(source, abs(start))
     elif start > 0:
         source = skip.raw(source, start)
     # Filter the last items
@@ -119,11 +118,11 @@ def slice(source, *args):
         elif stop >= 0:
             source = take.raw(source, stop - start)
         else:
-            source = skip_last.raw(source, abs(stop))
+            source = skiplast.raw(source, abs(stop))
     # Filter step items
     if step is not None:
         if step > 1:
-            source = filter_index.raw(source, lambda i: i % step == 0)
+            source = filterindex.raw(source, lambda i: i % step == 0)
         elif step < 0:
             raise ValueError("Negative step not supported")
     # Return
@@ -131,7 +130,7 @@ def slice(source, *args):
 
 
 @operator(pipable=True)
-async def item_at(source, index):
+async def item(source, index):
     """Forward the nth element of an asynchronous sequence.
 
     The index can be negative and works like regular indexing.
@@ -141,7 +140,7 @@ async def item_at(source, index):
     if index >= 0:
         source = skip.raw(source, index)
     else:
-        source = take_last(source, abs(index))
+        source = takelast(source, abs(index))
     async with streamcontext(source) as streamer:
         # Get first item
         try:
@@ -160,16 +159,16 @@ async def item_at(source, index):
 
 
 @operator(pipable=True)
-def get_item(source, index):
+def getitem(source, index):
     """Forward one or several items from an asynchronous sequence.
 
     The argument can either be a slice or an integer.
-    See the slice and item_at operators for more information.
+    See the slice and item operators for more information.
     """
     if isinstance(index, builtins.slice):
         return slice.raw(source, index.start, index.stop, index.step)
     if isinstance(index, int):
-        return item_at.raw(source, index)
+        return item.raw(source, index)
     raise TypeError("Not a valid index (int or slice)")
 
 

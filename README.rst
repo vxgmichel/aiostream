@@ -149,25 +149,19 @@ Selection operators
 - **take** ``(source, n)``:
     Forward the first n elements from an asynchronous sequence.
 
-- **take_last** ``(source, n)``:
+- **takelast** ``(source, n)``:
     Forward the last n elements from an asynchronous sequence.
 
 - **skip** ``(source, n)``:
     Forward an asynchronous sequence, skipping the first n elements.
 
-- **skip_last** ``(source, n)``:
+- **skiplast** ``(source, n)``:
     Forward an asynchronous sequence, skipping the last n elements.
 
-- **filter_index** ``(source, func)``:
+- **filterindex** ``(source, func)``:
     Filter an asynchronous sequence using the index of the elements.
 
-- **slice** ``(source, *args)``:
-    Slice an asynchronous sequence.
-
-- **item_at** ``(source, index)``:
-    Forward the nth element of an asynchronous sequence.
-
-- **get_item** ``(source, index)``:
+- **getitem** ``(source, index)``:
     Forward one or several items from an asynchronous sequence.
 
 - **filter** ``(source, func)``:
@@ -213,7 +207,7 @@ Aggregatation operators
 Timing operators
 ^^^^^^^^^^^^^^^^
 
-- **space_out** ``(source, interval)``:
+- **spaceout** ``(source, interval)``:
     Make sure the elements of an asynchronous sequence are separated in time by the given interval.
 
 - **timeout** ``(source, timeout)``:
