@@ -1,0 +1,5 @@
+name: py36
+channels:
+- jjhelmus
+dependencies:
+- python=3.6
