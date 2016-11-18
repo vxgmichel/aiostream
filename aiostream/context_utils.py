@@ -12,7 +12,7 @@ __all__ = ['async_context_manager', 'AsyncExitStack']
 def async_context_manager(func):
     """Asyncronous context manager decorator.
 
-    Example usage:
+    Example usage::
 
         @async_context_manager
         async def mycontext():

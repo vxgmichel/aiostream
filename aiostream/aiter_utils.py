@@ -61,13 +61,13 @@ def assert_async_iterator(obj):
 # Async iterator context
 
 class AsyncIteratorContext(AsyncIterator):
-    """"Asynchronous iterator with context management.
+    """Asynchronous iterator with context management.
 
     The context management makes sure the aclose asynchronous method
     of the corresponding iterator has run before it exits. It also issues
     warnings and RuntimeError if it is used incorrectly.
 
-    Correct usage:
+    Correct usage::
 
         ait = some_asynchronous_iterable()
         aitcontext = AsyncIteratorContext(ait)
@@ -130,7 +130,7 @@ def aitercontext(aiterable, *, cls=AsyncIteratorContext):
     It is safe to use with any asynchronous iterable and prevent
     asynchronous iterator context to be wrapped twice.
 
-    Correct usage:
+    Correct usage::
 
         ait = some_asynchronous_iterable()
         async with aitercontext(ait) as safe_ait:

@@ -40,17 +40,17 @@ class Stream(AsyncIterable, Awaitable):
     """Enhanced asynchronous iterable.
 
     It provides the following features:
-    - each iteration create a new streamer object, making it re-iterable
-    - the streamer objects have context management for safe execution
-    - it can be awaited to safely execute and return its last element
-    - it is concatenable (through the stream.chain operator)
-    - it is indexable/slicable (through the stream.getitem operator)
-    - it is pipable, using the pipe operators from the pipe module
+      - each iteration create a new streamer object, making it re-iterable
+      - the streamer objects have context management for safe execution
+      - it can be awaited to safely execute and return its last element
+      - it is concatenable (through the stream.chain operator)
+      - it is indexable/slicable (through the stream.getitem operator)
+      - it is pipable, using the pipe operators from the pipe module
 
     It is not meant to be instanciated directly.
     Use the stream operators instead.
 
-    Example:
+    Example::
 
         xs = stream.count()    # xs is a stream object
         ys = xs | pipe.skip(5) # pipe xs and skip the first 5 elements
@@ -123,12 +123,13 @@ class Stream(AsyncIterable, Awaitable):
     def stream(self):
         """Return a streamer context for safe iteration.
 
-        Example:
+        Example::
 
-        xs = stream.count()
-        async with xs.stream() as streamer:
-            async for item in streamer:
-                <block>
+            xs = stream.count()
+            async with xs.stream() as streamer:
+                async for item in streamer:
+                    <block>
+
         """
         return self.__aiter__()
 
@@ -141,7 +142,7 @@ class Streamer(AsyncIteratorContext, Stream):
 
     It's not meant to be instanciated directly, use streamcontext instead.
 
-    Example:
+    Example::
 
         ait = some_asynchronous_iterable()
         async with streamcontext(ait) as streamer:
@@ -152,7 +153,7 @@ class Streamer(AsyncIteratorContext, Stream):
 
 
 def streamcontext(aiterable):
-    """Return an stream context manager from an asynchronous iterable.
+    """Return a stream context manager from an asynchronous iterable.
 
     The context management makes sure the aclose asynchronous method
     of the corresponding iterator has run before it exits. It also issues
@@ -161,14 +162,14 @@ def streamcontext(aiterable):
     It is safe to use with any asynchronous iterable and prevent
     asynchronous iterator context to be wrapped twice.
 
-    Correct usage:
+    Correct usage::
 
         ait = some_asynchronous_iterable()
         async with streamcontext(ait) as streamer:
             async for item in streamer:
                 <block>
 
-    For streams objects, it is possible to use the stream method instead:
+    For streams objects, it is possible to use the stream method instead::
 
         xs = stream.count()
         async with xs.stream() as streamer:
@@ -184,14 +185,14 @@ def operator(func=None, *, pipable=False):
     """Create a stream operator from an asynchronous generator
     (or any function returning an asynchronous iterable).
 
-    Decorator usage:
+    Decorator usage::
 
         @operator
         async def random(offset=0., width=1.):
             while True:
                 yield offset + width * random.random()
 
-    Decorator usage for pipable operators:
+    Decorator usage for pipable operators::
 
         @operator(pipable=True):
         async def multiply(source, factor):
@@ -205,7 +206,7 @@ def operator(func=None, *, pipable=False):
     The return value is a dynamically created class.
     It has the same name, module and doc as the original function.
 
-    A new stream is created by simply instanciating the operator:
+    A new stream is created by simply instanciating the operator::
 
         xs = random()
         ys = multiply(xs, 2)
@@ -215,7 +216,7 @@ def operator(func=None, *, pipable=False):
     also checked for asynchronous iteration.
 
     The operator also have a pipe class method that can be used along
-    with the piping synthax:
+    with the piping synthax::
 
         xs = random()
         ys = xs | multiply.pipe(2)
@@ -223,10 +224,10 @@ def operator(func=None, *, pipable=False):
     This is strictly equivalent to the previous example.
 
     Other methods are available:
-      - original: the original function as a static method
-      - raw: same as original but add extra checking
+      - `original`: the original function as a static method
+      - `raw`: same as original but add extra checking
 
-    The raw method is useful to create new operators from existing ones:
+    The raw method is useful to create new operators from existing ones::
 
         @operator(pipable=True)
         def double(source):
@@ -241,9 +242,7 @@ def operator(func=None, *, pipable=False):
         name = func.__name__
         module = func.__module__
         extra_doc = func.__doc__
-        doc = f'Regular "{name}" stream operator.'
-        if extra_doc:
-            doc += '\n\n    ' + extra_doc
+        doc = extra_doc or f'Regular {name} stream operator.'
 
         # Extract signature
         signature = inspect.signature(func)
@@ -276,7 +275,7 @@ def operator(func=None, *, pipable=False):
         init.__qualname__ = name + '.__init__'
         init.__name__ = '__init__'
         init.__module__ = module
-        init.__doc__ = f'Initialize the "{name}" stream.'
+        init.__doc__ = f'Initialize the {name} stream.'
 
         if pipable:
 
