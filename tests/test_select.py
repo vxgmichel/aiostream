@@ -45,9 +45,10 @@ async def test_skiplast(assert_run, event_loop):
 
 @pytest.mark.asyncio
 async def test_filterindex(assert_run, event_loop):
+    filterindex = stream.select.filterindex
     xs = (stream.range(10)
           | add_resource.pipe(1)
-          | pipe.filterindex(lambda x: x in [4, 7, 8]))
+          | filterindex.pipe(lambda x: x in [4, 7, 8]))
     await assert_run(xs, [4, 7, 8])
 
 

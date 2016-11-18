@@ -8,8 +8,8 @@ from . import transform
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
 
-__all__ = ['take', 'takelast', 'skip', 'skiplast', 'filterindex', 'getitem',
-           'filter', 'dropwhile', 'takewhile']
+__all__ = ['take', 'takelast', 'skip', 'skiplast',
+           'getitem', 'filter', 'dropwhile', 'takewhile']
 
 
 @operator(pipable=True)

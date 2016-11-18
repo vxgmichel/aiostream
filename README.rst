@@ -158,9 +158,6 @@ Selection operators
 - **skiplast** ``(source, n)``:
     Forward an asynchronous sequence, skipping the last n elements.
 
-- **filterindex** ``(source, func)``:
-    Filter an asynchronous sequence using the index of the elements.
-
 - **getitem** ``(source, index)``:
     Forward one or several items from an asynchronous sequence.
 
