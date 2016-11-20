@@ -23,8 +23,8 @@ INSTRUCTIONS = """\
 --------------------------------------
 Compute the Euclidean norm of a vector
 --------------------------------------
-Enter each coordinate of the vector on a separate line, and add an empty line
-at the end to get the result. Anything else will result in an error.
+Enter each coordinate of the vector on a separate line, and add an empty
+line at the end to get the result. Anything else will result in an error.
 > """
 
 ERROR = """\
@@ -45,7 +45,6 @@ async def euclidean_norm_handler(reader, writer):
     nonempty =     lambda x: x != ''
     square =       lambda x: x ** 2
     write_cursor = lambda x: writer.write(b'> ')
-    add =          lambda x, y: x + y
     square_root =  lambda x: x ** 0.5
 
     # Create awaitable
@@ -58,7 +57,7 @@ async def euclidean_norm_handler(reader, writer):
         | pipe.map(square)
         | pipe.print('square: {:.2f}')
         | pipe.action(write_cursor)
-        | pipe.reduce(add, initializer=0)
+        | pipe.accumulate(initializer=0)
         | pipe.map(square_root)
         | pipe.print('norm -> {:.2f}')
     )
