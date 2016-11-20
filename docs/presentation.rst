@@ -24,14 +24,6 @@ The stream operators rely heavily on asynchronous generators (`PEP 525`_):
 - python >= 3.6
 
 
-Demonstration
--------------
-
-The following example demonstrates most of the streams capabilities:
-
-.. literalinclude:: ../examples/demo.py
-
-
 Stream operators
 ----------------
 
@@ -40,6 +32,17 @@ Stream operators
 The `stream operators <operators.html>`_ are separated in 7 categories:
 
 .. include:: table.rst.inc
+
+
+Demonstration
+-------------
+
+The following example demonstrates most of the streams capabilities:
+
+.. literalinclude:: ../examples/demo.py
+
+More examples are available in the `example section <examples.html>`_.
+
 
 References
 ----------
@@ -50,12 +53,6 @@ This library is inspired by:
 - `Rx`_ - Reactive Extensions
 - aioreactive_ - Async/await reactive tools for Python 3.5+
 - itertools_ - Functions creating iterators for efficient looping
-
-
-Contact
--------
-
-Vincent Michel: vxgmichel@gmail.com
 
 
 .. _PEP 525: http://www.python.org/dev/peps/pep-0525/

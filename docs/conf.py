@@ -3,6 +3,7 @@ import sphinx_rtd_theme
 project = 'aiostream'
 version = '0.2.1'
 author = 'Vincent Michel'
+copyright = u'2016, Vincent Michel'
 
 master_doc = 'index'
 highlight_language = 'python3'

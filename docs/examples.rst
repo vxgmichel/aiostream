@@ -1,3 +1,5 @@
+.. _example section:
+
 Examples
 ========
 

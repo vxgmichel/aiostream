@@ -1,7 +1,7 @@
 Utilities
 =========
 
-.. module:: aiostream
+:ref:`aiostream` also provides utilites for general asynchronous iteration and asynchronous context management.
 
 Asynchronous iteration
 ----------------------

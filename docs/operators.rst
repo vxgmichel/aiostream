@@ -9,8 +9,8 @@ The stream operators are separated in 7 categories:
 
 They can be found in the :mod:`aiostream.stream` module.
 
-Stream vs pipe operators
-------------------------
+Pipe-lining
+-----------
 
 Most of the operators have a :meth:`pipe` method corresponding to their equivalent pipe operator.
 They are also gathered and accessible through the :mod:`aiostream.pipe` module.
@@ -41,29 +41,23 @@ Creation operators
 
 .. note:: Those operators do not have a pipe equivalent.
 
-**Streams from iterators:**
+.. autoclass:: iterate
 
-  .. autoclass:: iterate
+.. autoclass:: preserve
 
-  .. autoclass:: preserve
+.. autoclass:: just
 
-**Basic streams:**
+.. autoclass:: empty
 
-  .. autoclass:: just
+.. autoclass:: throw
 
-  .. autoclass:: empty
+.. autoclass:: never
 
-  .. autoclass:: throw
+.. autoclass:: repeat
 
-  .. autoclass:: never
+.. autoclass:: range
 
-**Other streams:**
-
-  .. autoclass:: repeat
-
-  .. autoclass:: range
-
-  .. autoclass:: count
+.. autoclass:: count
 
 
 Transformation operators
