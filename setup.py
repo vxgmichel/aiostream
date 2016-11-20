@@ -2,10 +2,11 @@
 import sys
 from setuptools import setup
 
-if sys.version_info < (3, 6):
-    raise RuntimeError("aiostream requires Python 3.6")
-
 TESTING = any(x in sys.argv for x in ['test', 'pytest'])
+UPLOAD = 'upload_sphinx' in sys.argv
+
+if not UPLOAD and sys.version_info < (3, 6):
+    raise RuntimeError("aiostream requires Python 3.6")
 
 with open("README.rst") as f:
     long_description = f.read()
@@ -20,7 +21,7 @@ setup(
 
     description="Generator-based operators for asynchronous iteration",
     long_description=long_description,
-    url="https://pypi.python.org/pypi/aiostream",
+    url="https://github.com/vxgmichel/aiostream",
 
     license="GPLv3",
     classifiers=[
