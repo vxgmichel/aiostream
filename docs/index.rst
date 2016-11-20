@@ -1,5 +1,3 @@
-.. _aiostream:
-
 +++++++++
 aiostream
 +++++++++

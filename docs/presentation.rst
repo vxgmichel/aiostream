@@ -1,7 +1,7 @@
 Presentation
 ============
 
-:ref:`aiostream` provides a collection of stream operators that can be combined to create
+aiostream_ provides a collection of stream operators that can be combined to create
 asynchronous pipelines of operations.
 
 It can be seen as an asynchronous version of itertools_, although some aspects are slightly different.
@@ -55,6 +55,7 @@ This library is inspired by:
 - itertools_ - Functions creating iterators for efficient looping
 
 
+.. _aiostream: https://github.com/vxgmichel/aiostream
 .. _PEP 525: http://www.python.org/dev/peps/pep-0525/
 .. _Rx: http://reactivex.io/
 .. _aioreactive: http://github.com/dbrattli/aioreactive
