@@ -1,9 +1,6 @@
 Presentation
 ============
 
-Synopsis
---------
-
 :ref:`aiostream` provides a collection of stream operators that can be combined to create
 asynchronous pipelines of operations.
 
