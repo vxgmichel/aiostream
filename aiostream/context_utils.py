@@ -143,8 +143,8 @@ class AsyncExitStack:
     async def enter_context(self, cm):
         """Enters the supplied context manager
 
-        If successful, also pushes its __exit__ method as a callback and
-        returns the result of the __enter__ method.
+        If successful, also pushes its __aexit__ method as a callback and
+        returns the result of the __aenter__ method.
         """
         # Look up the special methods on the type to match the with statement
         _cm_type = type(cm)

@@ -40,6 +40,7 @@ class Stream(AsyncIterable, Awaitable):
     """Enhanced asynchronous iterable.
 
     It provides the following features:
+
       - each iteration create a new streamer object, making it re-iterable
       - the streamer objects have context management for safe execution
       - it can be awaited to safely execute and return its last element
@@ -70,7 +71,8 @@ class Stream(AsyncIterable, Awaitable):
         """Initialize the stream with an asynchronous iterable factory.
 
         The factory is a callable and takes no argument.
-        The factory return value is an asynchronous iterable."""
+        The factory return value is an asynchronous iterable.
+        """
         aiter = factory()
         assert_async_iterable(aiter)
         self._generator = self._make_generator(aiter, factory)
@@ -88,7 +90,8 @@ class Stream(AsyncIterable, Awaitable):
     def __aiter__(self):
         """Asynchronous iteration protocol.
 
-        Return a streamer context for safe iteration."""
+        Return a streamer context for safe iteration.
+        """
         return streamcontext(next(self._generator))
 
     def __await__(self):
@@ -108,7 +111,8 @@ class Stream(AsyncIterable, Awaitable):
     def __add__(self, value):
         """Addition protocol.
 
-        Concatenate with a given asynchronous sequence."""
+        Concatenate with a given asynchronous sequence.
+        """
         from .stream import chain
         return chain(self, value)
 
