@@ -41,12 +41,14 @@ class Stream(AsyncIterable, Awaitable):
 
     It provides the following features:
 
-      - each iteration create a new streamer object, making it re-iterable
-      - the streamer objects have context management for safe execution
-      - it can be awaited to safely execute and return its last element
-      - it is concatenable (through the stream.chain operator)
-      - it is indexable/slicable (through the stream.getitem operator)
-      - it is pipable, using the pipe operators from the pipe module
+      - **Operator pipe-lining** - using pipe symbol ``|``
+      - **Repeatability** - every iteration creates a different iterator
+      - **Safe iteration context** - using ``async with`` and the ``stream``
+        method
+      - **Simplified execution** - get the last element from a steam using
+        ``await``
+      - **Slicing and indexing** - using square brackets ``[]``
+      - **Concatenation** - using addition symbol ``+``
 
     It is not meant to be instanciated directly.
     Use the stream operators instead.
@@ -198,7 +200,7 @@ def operator(func=None, *, pipable=False):
 
     Decorator usage for pipable operators::
 
-        @operator(pipable=True):
+        @operator(pipable=True)
         async def multiply(source, factor):
             async with streamcontext(source) as streamer:
                  async for item in streamer:
@@ -228,6 +230,7 @@ def operator(func=None, *, pipable=False):
     This is strictly equivalent to the previous example.
 
     Other methods are available:
+
       - `original`: the original function as a static method
       - `raw`: same as original but add extra checking
 
