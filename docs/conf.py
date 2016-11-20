@@ -1,7 +1,9 @@
 import sphinx_rtd_theme
 
+VERSION = open('../setup.py').read().split("version='")[1].split("'")[0]
+
 project = 'aiostream'
-version = '0.2.1'
+version = VERSION
 author = 'Vincent Michel'
 copyright = u'2016, Vincent Michel'
 
