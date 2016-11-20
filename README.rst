@@ -1,17 +1,25 @@
 aiostream
 =========
 
+.. image:: https://img.shields.io/badge/docs-python_hosted-brightgreen.svg
+   :target: http://pythonhosted.org/aiostream
+   :alt:
+
 .. image:: https://coveralls.io/repos/github/vxgmichel/aiostream/badge.svg?branch=master
-    :target: https://coveralls.io/github/vxgmichel/aiostream?branch=master
+   :target: https://coveralls.io/github/vxgmichel/aiostream?branch=master
+   :alt:
 
 .. image:: https://travis-ci.org/vxgmichel/aiostream.svg?branch=master
-    :target: https://travis-ci.org/vxgmichel/aiostream
+   :target: https://travis-ci.org/vxgmichel/aiostream
+   :alt:
 
 .. image:: https://img.shields.io/pypi/v/aiostream.svg
-    :target: https://pypi.python.org/pypi/aiostream
+   :target: https://pypi.python.org/pypi/aiostream
+   :alt:
 
 .. image:: https://img.shields.io/pypi/pyversions/aiostream.svg
-    :target: https://pypi.python.org/pypi/aiostream/
+   :target: https://pypi.python.org/pypi/aiostream/
+   :alt:
 
 Generator-based operators for asynchronous iteration
 
@@ -19,20 +27,19 @@ Generator-based operators for asynchronous iteration
 Synopsis
 --------
 
-This library provides a collection of stream operators that can be combined to create
+aiostream_ provides a collection of stream operators that can be combined to create
 asynchronous pipelines of operations.
 
 It can be seen as an asynchronous version of itertools_, although some aspects are slightly different.
 Essentially, all the provided operators return a unified interface called a stream.
 A stream is an enhanced asynchronous iterable providing the following features:
 
-- Pipe-lining of operators - using pipe symbol ``|``
-- Repeatability - every iteration creates a different iterator
-- Safe iteration context - using ``async with`` statement and the ``stream`` method
-- Simplified execution - get the last element from a steam using ``await`` statement
-- Slicing and indexing - using square brackets ``[]``
-- Concatenation - using addition symbol ``+``
-
+- **Operator pipe-lining** - using pipe symbol ``|``
+- **Repeatability** - every iteration creates a different iterator
+- **Safe iteration context** - using ``async with`` and the ``stream`` method
+- **Simplified execution** - get the last element from a steam using ``await``
+- **Slicing and indexing** - using square brackets ``[]``
+- **Concatenation** - using addition symbol ``+``
 
 
 Requirements
@@ -43,8 +50,30 @@ The stream operators rely heavily on asynchronous generators (`PEP 525`_):
 - python >= 3.6
 
 
-Example
--------
+Stream operators
+----------------
+
+The `stream operators`_ are separated in 7 categories:
+
++--------------------+--------------------------------------------------------------------------------+
+| **creation**       | iterate_, preserve_, just_, empty_, throw_, never_, repeat_, count_, range_    |
++--------------------+--------------------------------------------------------------------------------+
+| **transformation** | map_, enumerate_, starmap_, cycle_                                             |
++--------------------+--------------------------------------------------------------------------------+
+| **selection**      | take_, takelast_, skip_, skiplast_, getitem_, filter_, takewhile_, dropwhile_  |
++--------------------+--------------------------------------------------------------------------------+
+| **combination**    | map_, zip_, merge_, chain_                                                     |
++--------------------+--------------------------------------------------------------------------------+
+| **aggregation**    | accumulate_, reduce_, list_                                                    |
++--------------------+--------------------------------------------------------------------------------+
+| **timing**         | spaceout_, timeout_, delay_                                                    |
++--------------------+--------------------------------------------------------------------------------+
+| **miscellaneous**  | action_, print_                                                                |
++--------------------+--------------------------------------------------------------------------------+
+
+
+Demonstration
+-------------
 
 The following example demonstrates most of the streams capabilities:
 
@@ -80,11 +109,11 @@ The following example demonstrates most of the streams capabilities:
         # Streams can run several times
         print('9² = ', await zs)
 
-	# Streams can be concatenated
-	one_two_three = stream.just(1) + stream.range(2, 4)
+        # Streams can be concatenated
+        one_two_three = stream.just(1) + stream.range(2, 4)
 
-	# Print [1, 2, 3]
-	print(await stream.list(one_two_three))
+        # Print [1, 2, 3]
+        print(await stream.list(one_two_three))
 
 
     # Run main coroutine
@@ -92,147 +121,7 @@ The following example demonstrates most of the streams capabilities:
     loop.run_until_complete(main())
     loop.close()
 
-
-Operators
----------
-
-Creation operators (non-pipable)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- **iterate** ``(it)``:
-    Generate values from a synchronous or asynchronous iterable.
-
-- **preserve** ``(ait)``:
-    Generate values from an asynchronous iterable without explicitly closing the corresponding iterator.
-
-- **just** ``(value)``:
-    Generate a single value.
-
-- **empty** ``()``:
-    Terminate without generating any value.
-
-- **throw** ``(exc)``:
-    Throw an exception without generating any value.
-
-- **never** ``()``:
-    Hang forever without generating any value.
-
-- **repeat** ``(value, times=None, *, interval=0)``:
-    Generate the same value a given number of times.
-
-- **range** ``(*args, interval=0)``:
-    Generate a given range of numbers.
-
-- **count** ``(start=0, step=1, *, interval=0)``:
-    Generate consecutive numbers indefinitely.
-
-
-Transformation operators
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-- **map** ``(source, func, *more_sources)``:
-    Apply a given function to the elements of one or several asynchronous sequences.
-
-- **enumerate** ``(source, start=0, step=1)``:
-    Generate (index, value) tuples from an asynchronous sequence.
-
-- **starmap** ``(source, func)``:
-    Apply a given function to the unpacked elements of an asynchronous sequence.
-
-- **cycle** ``(source)``:
-    Iterate indefinitely over an asynchronous sequence.
-
-
-Selection operators
-^^^^^^^^^^^^^^^^^^^
-
-- **take** ``(source, n)``:
-    Forward the first n elements from an asynchronous sequence.
-
-- **takelast** ``(source, n)``:
-    Forward the last n elements from an asynchronous sequence.
-
-- **skip** ``(source, n)``:
-    Forward an asynchronous sequence, skipping the first n elements.
-
-- **skiplast** ``(source, n)``:
-    Forward an asynchronous sequence, skipping the last n elements.
-
-- **getitem** ``(source, index)``:
-    Forward one or several items from an asynchronous sequence.
-
-- **filter** ``(source, func)``:
-    Filter an asynchronous sequence using an arbitrary function.
-
-- **takewhile** ``(source, func)``:
-    Forward an asynchronous sequence while a condition is met.
-
-- **dropwhile** ``(source, func)``:
-    Discard the elements from an asynchronous sequence while a condition is met.
-
-
-Combination operators
-^^^^^^^^^^^^^^^^^^^^^
-
-- **map** ``(source, func, *more_sources)``:
-    Apply a given function to the elements of one or several asynchronous sequences.
-
-- **zip** ``(*sources)``:
-    Combine and forward the elements of several asynchronous sequences.
-
-- **merge** ``(*sources)``:
-    Merge several asynchronous sequences together.
-
-- **chain** ``(*sources)``:
-    Chain asynchronous sequences together, in the order they are given.
-
-
-Aggregatation operators
-^^^^^^^^^^^^^^^^^^^^^^^
-
-- **accumulate** ``(source, func=op.add, initializer=None)``:
-    Generate a series of accumulated sums (or other binary function) from an asynchronous sequence.
-
-- **reduce** ``(source, func, initializer=None)``:
-    Apply a function of two arguments cumulatively to the items of an asynchronous sequence,
-    reducing the sequence to a single value.
-
-- **list** ``()``:
-    Generate a single list from an asynchronous sequence.
-
-
-Timing operators
-^^^^^^^^^^^^^^^^
-
-- **spaceout** ``(source, interval)``:
-    Make sure the elements of an asynchronous sequence are separated in time by the given interval.
-
-- **timeout** ``(source, timeout)``:
-    Raise a time-out if an element of the asynchronous sequence takes too long to arrive.
-
-- **delay** ``(source, delay)``:
-    Delay the iteration of an asynchronous sequence.
-
-
-Misc operators
-^^^^^^^^^^^^^^
-
-- **action** ``(source, func)``:
-    Perform an action for each element of an asynchronous sequence without modifying it.
-
-- **print** ``(source, template=None, **kwargs)``:
-    Print each element of an asynchronous sequence without modifying it.
-
-
-References
-----------
-
-This library is inspired by:
-
-- `PEP 525`_: Asynchronous Generators
-- `Rx`_ - Reactive Extensions
-- aioreactive_ - Async/await reactive tools for Python 3.5+
-- itertools_ - Functions creating iterators for efficient looping
+More examples are available in the `example section`_ of the documentation.
 
 
 Contact
@@ -241,7 +130,44 @@ Contact
 Vincent Michel: vxgmichel@gmail.com
 
 
+.. _aiostream: https://github.com/vxgmichel/aiostream
 .. _PEP 525: http://www.python.org/dev/peps/pep-0525/
 .. _Rx: http://reactivex.io/
 .. _aioreactive: http://github.com/dbrattli/aioreactive
 .. _itertools: http://docs.python.org/3/library/itertools.html
+
+.. _stream operators: http://pythonhosted.org/aiostream/operators.html
+.. _example section: http://pythonhosted.org/aiostream/examples.html
+
+.. _iterate: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.iterate
+.. _preserve: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.preserve
+.. _just: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.just
+.. _throw: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.throw
+.. _empty: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.empty
+.. _never: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.never
+.. _repeat: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.repeat
+.. _range: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.range
+.. _count: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.count
+.. _map: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.map
+.. _enumerate: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.enumerate
+.. _starmap: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.starmap
+.. _cycle: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.cycle
+.. _take: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.take
+.. _takelast: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.takelast
+.. _skip: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.skip
+.. _skiplast: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.skiplast
+.. _getitem: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.getitem
+.. _filter: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.filter
+.. _dropwhile: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.dropwhile
+.. _takewhile: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.takewhile
+.. _chain: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.chain
+.. _zip: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.zip
+.. _merge: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.merge
+.. _accumulate: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.accumulate
+.. _reduce: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.reduce
+.. _list: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.list
+.. _spaceout: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.spaceout
+.. _delay: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.delay
+.. _timeout: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.timeout
+.. _action: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.action
+.. _print: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.print
