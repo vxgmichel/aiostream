@@ -45,7 +45,7 @@ class Stream(AsyncIterable, Awaitable):
       - **Repeatability** - every iteration creates a different iterator
       - **Safe iteration context** - using ``async with`` and the ``stream``
         method
-      - **Simplified execution** - get the last element from a steam using
+      - **Simplified execution** - get the last element from a stream using
         ``await``
       - **Slicing and indexing** - using square brackets ``[]``
       - **Concatenation** - using addition symbol ``+``
