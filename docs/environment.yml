@@ -1,6 +1,5 @@
 name: py36
 channels:
-- conda-forge/label/prerelease
-- vxgmichel
+- conda-forge
 dependencies:
 - python=3.6
