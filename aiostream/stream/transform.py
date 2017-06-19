@@ -5,8 +5,9 @@ import itertools
 
 from .combine import map
 from ..core import operator, streamcontext
+from .. import stream
 
-__all__ = ['map', 'enumerate', 'starmap', 'cycle']
+__all__ = ['map', 'enumerate', 'starmap', 'cycle', 'chunks']
 
 
 @operator(pipable=True)
@@ -54,3 +55,16 @@ async def cycle(source):
                 yield item
             # Prevent blocking while loop if the stream is empty
             await asyncio.sleep(0)
+
+
+@operator(pipable=True)
+async def chunks(source, n):
+    """Generate chunks of size n from an asynchronous sequence.
+
+    The chunks are lists, and the last chunk might contain less than n
+    elements.
+    """
+    async with streamcontext(source) as streamer:
+        async for first in streamer:
+            xs = stream.take(stream.preserve(streamer), n-1)
+            yield [first] + await stream.list(xs)

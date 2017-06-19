@@ -45,3 +45,24 @@ async def test_cycle(assert_run, event_loop):
         xs = stream.just(1) | add_resource.pipe(1) | pipe.cycle()
         await assert_run(xs[:5], [1]*5)
         assert event_loop.steps == [1]*5
+
+
+@pytest.mark.asyncio
+async def test_chunks(assert_run, event_loop):
+    with event_loop.assert_cleanup():
+        xs = stream.range(3, interval=1) | pipe.chunks(3)
+        await assert_run(xs, [[0, 1, 2]])
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(4, interval=1) | pipe.chunks(3)
+        await assert_run(xs, [[0, 1, 2], [3]])
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(5, interval=1) | pipe.chunks(3)
+        await assert_run(xs, [[0, 1, 2], [3, 4]])
+
+    with event_loop.assert_cleanup():
+        xs = (stream.count(interval=1)
+              | add_resource.pipe(1)
+              | pipe.chunks(3))
+        await assert_run(xs[:1], [[0, 1, 2]])

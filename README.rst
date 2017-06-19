@@ -58,7 +58,7 @@ The `stream operators`_ are separated in 7 categories:
 +--------------------+--------------------------------------------------------------------------------+
 | **creation**       | iterate_, preserve_, just_, empty_, throw_, never_, repeat_, count_, range_    |
 +--------------------+--------------------------------------------------------------------------------+
-| **transformation** | map_, enumerate_, starmap_, cycle_                                             |
+| **transformation** | map_, enumerate_, starmap_, cycle_, chunks_                                    |
 +--------------------+--------------------------------------------------------------------------------+
 | **selection**      | take_, takelast_, skip_, skiplast_, getitem_, filter_, takewhile_, dropwhile_  |
 +--------------------+--------------------------------------------------------------------------------+
@@ -152,6 +152,7 @@ Vincent Michel: vxgmichel@gmail.com
 .. _enumerate: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.enumerate
 .. _starmap: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.starmap
 .. _cycle: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.cycle
+.. _chunks: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.chunks
 .. _take: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.take
 .. _takelast: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.takelast
 .. _skip: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.skip

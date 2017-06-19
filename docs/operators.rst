@@ -74,6 +74,7 @@ Transformation operators
 
 .. autoclass:: cycle
 
+.. autoclass:: chunks
 
 Selection operators
 -------------------
