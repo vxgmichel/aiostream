@@ -92,17 +92,33 @@ class AsyncIteratorContext(AsyncIterator):
         self._state = self._STANDBY
         self._aiterator = aiterator
 
+    # Async generator interface
+
     def __aiter__(self):
         return self
 
-    def __anext__(self):
+    async def __anext__(self):
+        return await self._safe_asend(None)
+
+    async def asend(self, value):
+        self._aiterator.asend
+        return await self._safe_asend(value)
+
+    async def athrow(self, exc):
+        self._aiterator.athrow
+        return await self._safe_asend(exc=exc)
+
+    # State logic
+
+    async def _safe_asend(self, value=None, exc=None):
         if self._state == self._FINISHED:
             raise RuntimeError(
                 "AsyncIteratorContext is closed and cannot be iterated")
         if self._state == self._STANDBY:
             warnings.warn(
                 "AsyncIteratorContext is iterated outside of its context")
-        return anext(self._aiterator)
+            await self.__aenter__()
+        return await self._asend(value, exc)
 
     async def __aenter__(self):
         if self._state == self._FINISHED:
@@ -115,12 +131,25 @@ class AsyncIteratorContext(AsyncIterator):
         try:
             if self._state != self._FINISHED and \
                hasattr(self._aiterator, 'aclose'):
-                await self._aiterator.aclose()
+                try:
+                    await self._aiterator.aclose()
+                except GeneratorExit:
+                    pass
         finally:
             self._state = self._FINISHED
 
+    # Internal logic
 
-def aitercontext(aiterable, *, cls=AsyncIteratorContext):
+    async def _asend(self, value=None, exc=None):
+        if exc is not None:
+            return await self._aiterator.athrow(exc)
+        elif value is not None:
+            return await self._aiterator.asend(value)
+        else:
+            return await self._aiterator.__anext__()
+
+
+def aitercontext(aiterable, *args, cls=AsyncIteratorContext, **kwargs):
     """Return an asynchronous context manager from an asynchronous iterable.
 
     The context management makes sure the aclose asynchronous method
@@ -143,5 +172,8 @@ def aitercontext(aiterable, *, cls=AsyncIteratorContext):
     assert issubclass(cls, AsyncIteratorContext)
     aiterator = aiter(aiterable)
     if isinstance(aiterator, cls):
+        if args or kwargs:
+            raise TypeError(
+                'Cannot pass arguments, the context is already created')
         return aiterator
-    return cls(aiterator)
+    return cls(aiterator, *args, **kwargs)
