@@ -4,7 +4,7 @@ import inspect
 import functools
 from collections import AsyncIterable, Awaitable
 
-from .aiter_utils import AsyncIteratorContext
+from .concurrent import ConcurrentIteratorContext
 from .aiter_utils import _await, aitercontext, assert_async_iterable
 
 __all__ = ['Stream', 'Streamer', 'StreamEmpty', 'operator', 'streamcontext']
@@ -69,7 +69,7 @@ class Stream(AsyncIterable, Awaitable):
         print(result)      # Prints 14
     """
 
-    def __init__(self, factory):
+    def __init__(self, factory, buffering=0):
         """Initialize the stream with an asynchronous iterable factory.
 
         The factory is a callable and takes no argument.
@@ -77,6 +77,7 @@ class Stream(AsyncIterable, Awaitable):
         """
         aiter = factory()
         assert_async_iterable(aiter)
+        self._buffering = buffering
         self._generator = self._make_generator(aiter, factory)
 
     def _make_generator(self, first, factory):
@@ -94,7 +95,7 @@ class Stream(AsyncIterable, Awaitable):
 
         Return a streamer context for safe iteration.
         """
-        return streamcontext(next(self._generator))
+        return streamcontext(next(self._generator), self._buffering)
 
     def __await__(self):
         """Await protocol.
@@ -140,7 +141,7 @@ class Stream(AsyncIterable, Awaitable):
         return self.__aiter__()
 
 
-class Streamer(AsyncIteratorContext, Stream):
+class Streamer(ConcurrentIteratorContext, Stream):
     """Enhanced asynchronous iterator context.
 
     It is similar to AsyncIteratorContext but provides the stream
@@ -158,7 +159,7 @@ class Streamer(AsyncIteratorContext, Stream):
     pass
 
 
-def streamcontext(aiterable):
+def streamcontext(aiterable, buffering=0):
     """Return a stream context manager from an asynchronous iterable.
 
     The context management makes sure the aclose asynchronous method
@@ -182,7 +183,8 @@ def streamcontext(aiterable):
             async for item in streamer:
                 <block>
     """
-    return aitercontext(aiterable, cls=Streamer)
+    args = (buffering,) if buffering != 0 else ()
+    return aitercontext(aiterable, *args, cls=Streamer)
 
 
 # Operator decorator
@@ -268,11 +270,11 @@ def operator(func=None, *, pipable=False):
         raw.__qualname__ = name + '.raw'
 
         # Init method
-        def init(self, *args, **kwargs):
+        def init(self, *args, buffering=0, **kwargs):
             if pipable and args:
                 assert_async_iterable(args[0])
             factory = functools.partial(self.raw, *args, **kwargs)
-            return Stream.__init__(self, factory)
+            return Stream.__init__(self, factory, buffering=buffering)
 
         # Customize init signature
         new_parameters = [self_parameter] + parameters
