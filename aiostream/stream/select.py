@@ -140,7 +140,7 @@ async def item(source, index):
     if index >= 0:
         source = skip.raw(source, index)
     else:
-        source = takelast(source, abs(index))
+        source = takelast.raw(source, abs(index))
     async with streamcontext(source) as streamer:
         # Get first item
         try:
