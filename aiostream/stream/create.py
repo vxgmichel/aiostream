@@ -20,6 +20,7 @@ __all__ = ['iterate', 'preserve',
 async def from_iterable(it):
     """Generate values from a regular iterable."""
     for item in it:
+        await asyncio.sleep(0)
         yield item
 
 
