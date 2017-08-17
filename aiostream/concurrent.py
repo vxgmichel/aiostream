@@ -2,7 +2,7 @@
 
 import asyncio
 import functools
-from .aiter_utils import AsyncIteratorContext, aitercontext
+from .aiter_utils import AsyncIteratorContext
 
 
 class ConcurrentIteratorContext(AsyncIteratorContext):
@@ -93,15 +93,18 @@ class ConcurrentIteratorContext(AsyncIteratorContext):
         return value
 
 
-def go(aiterable, buffering=0):
-    return aitercontext(aiterable, buffering=0, cls=ConcurrentIteratorContext)
+# Utilities
+
+
+def gocontext(aiterable, buffering=0):
+    return ConcurrentIteratorContext(aiterable, buffering=buffering)
 
 
 def gogenerator(aiterable=None, buffering=0):
     def decorator(aiterable):
         @functools.wraps(aiterable)
         def wrapper(*args, **kwargs):
-            return go(aiterable(*args, **kwargs), buffering)
+            return gocontext(aiterable(*args, **kwargs), buffering)
         return wrapper
     if aiterable is None:
         return decorator

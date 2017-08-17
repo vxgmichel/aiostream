@@ -149,14 +149,14 @@ class AsyncIteratorContext(AsyncIterator):
             return await self._aiterator.__anext__()
 
 
-def aitercontext(aiterable, *args, cls=AsyncIteratorContext, **kwargs):
+def aitercontext(aiterable, *, cls=AsyncIteratorContext):
     """Return an asynchronous context manager from an asynchronous iterable.
 
     The context management makes sure the aclose asynchronous method
     has run before it exits. It also issues warnings and RuntimeError
     if it is used incorrectly.
 
-    It is safe to use with any asynchronous iterable and prevent
+    It is safe to use with any asynchronous iterable and prevents
     asynchronous iterator context to be wrapped twice.
 
     Correct usage::
@@ -172,8 +172,5 @@ def aitercontext(aiterable, *args, cls=AsyncIteratorContext, **kwargs):
     assert issubclass(cls, AsyncIteratorContext)
     aiterator = aiter(aiterable)
     if isinstance(aiterator, cls):
-        if args or kwargs:
-            raise TypeError(
-                'Cannot pass arguments, the context is already created')
         return aiterator
-    return cls(aiterator, *args, **kwargs)
+    return cls(aiterator)

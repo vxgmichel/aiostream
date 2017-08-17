@@ -4,6 +4,7 @@ import builtins
 
 from .transform import map
 from ..core import operator
+from ..concurrent import gocontext
 
 __all__ = ['action', 'print']
 
@@ -38,3 +39,10 @@ def print(source, template=None, **kwargs):
             value = template.format(value)
         builtins.print(value, **kwargs)
     return action.raw(source, func)
+
+
+@operator(pipable=True)
+async def go(source, buffering=0):
+    async with gocontext(source, buffering=buffering) as streamer:
+        async for item in streamer:
+            yield item
