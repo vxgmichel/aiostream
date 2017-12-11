@@ -84,9 +84,16 @@ async def merge(*sources):
     are forwarded as soon as they're available. The generation continues
     until all the sequences are exhausted.
     """
+    streamers = {}
+
+    async def cleanup():
+        for task in streamers:
+            task.cancel()
+
     async with AsyncExitStack() as stack:
+        # Add cleanup
+        stack.callback(cleanup)
         # Schedule first anext
-        streamers = {}
         for source in sources:
             streamer = await stack.enter_context(streamcontext(source))
             task = asyncio.ensure_future(anext(streamer))
