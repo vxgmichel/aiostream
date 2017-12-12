@@ -3,9 +3,11 @@
 import asyncio
 import builtins
 
+from . import create
 from ..aiter_utils import anext
 from ..context_utils import AsyncExitStack
 from ..core import operator, streamcontext
+from . import advanced
 
 __all__ = ['chain', 'zip', 'map', 'merge']
 
@@ -60,7 +62,7 @@ async def map(source, func, *more_sources):
     sequence is exhausted. The function can either be synchronous or
     asynchronous.
 
-    Note: the different sequences are awaited in parrallel, so that their
+    Note: the different sequences are awaited in parallel, so that their
     waiting times don't add up.
     """
     iscorofunc = asyncio.iscoroutinefunction(func)
@@ -77,40 +79,11 @@ async def map(source, func, *more_sources):
 
 
 @operator(pipable=True)
-async def merge(*sources):
+def merge(*sources):
     """Merge several asynchronous sequences together.
 
     All the sequences are iterated simultaneously and their elements
     are forwarded as soon as they're available. The generation continues
     until all the sequences are exhausted.
     """
-    streamers = {}
-
-    async def cleanup():
-        for task in streamers:
-            task.cancel()
-
-    async with AsyncExitStack() as stack:
-        # Add cleanup
-        stack.callback(cleanup)
-        # Schedule first anext
-        for source in sources:
-            streamer = await stack.enter_context(streamcontext(source))
-            task = asyncio.ensure_future(anext(streamer))
-            streamers[task] = streamer
-        # Loop over events
-        while streamers:
-            done, pending = await asyncio.wait(
-                list(streamers), return_when="FIRST_COMPLETED")
-            # Loop over items
-            for task in done:
-                try:
-                    yield task.result()
-                # End of stream
-                except StopAsyncIteration:
-                    streamers.pop(task)
-                # Schedule next anext
-                else:
-                    streamer = streamers.pop(task)
-                    task = asyncio.ensure_future(anext(streamer))
-                    streamers[task] = streamer
+    return advanced.flatten.raw(create.iterate.raw(sources))

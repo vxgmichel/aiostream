@@ -119,6 +119,9 @@ class AsyncIteratorContext(AsyncIterator):
         finally:
             self._state = self._FINISHED
 
+    async def aclose(self):
+        await self.__aexit__(None, None, None)
+
 
 def aitercontext(aiterable, *, cls=AsyncIteratorContext):
     """Return an asynchronous context manager from an asynchronous iterable.
