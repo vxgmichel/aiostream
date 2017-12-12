@@ -4,6 +4,7 @@ import inspect
 import functools
 from collections import AsyncIterable, Awaitable
 
+from .concurrent import ConcurrentIteratorContext
 from .aiter_utils import AsyncIteratorContext
 from .aiter_utils import _await, aitercontext, assert_async_iterable
 

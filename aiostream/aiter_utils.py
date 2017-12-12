@@ -92,17 +92,33 @@ class AsyncIteratorContext(AsyncIterator):
         self._state = self._STANDBY
         self._aiterator = aiterator
 
+    # Async generator interface
+
     def __aiter__(self):
         return self
 
-    def __anext__(self):
+    async def __anext__(self):
+        return await self._safe_asend(None)
+
+    async def asend(self, value):
+        self._aiterator.asend
+        return await self._safe_asend(value)
+
+    async def athrow(self, exc):
+        self._aiterator.athrow
+        return await self._safe_asend(exc=exc)
+
+    # State logic
+
+    async def _safe_asend(self, value=None, exc=None):
         if self._state == self._FINISHED:
             raise RuntimeError(
                 "AsyncIteratorContext is closed and cannot be iterated")
         if self._state == self._STANDBY:
             warnings.warn(
                 "AsyncIteratorContext is iterated outside of its context")
-        return anext(self._aiterator)
+            await self.__aenter__()
+        return await self._asend(value, exc)
 
     async def __aenter__(self):
         if self._state == self._FINISHED:
@@ -115,9 +131,22 @@ class AsyncIteratorContext(AsyncIterator):
         try:
             if self._state != self._FINISHED and \
                hasattr(self._aiterator, 'aclose'):
-                await self._aiterator.aclose()
+                try:
+                    await self._aiterator.aclose()
+                except GeneratorExit:
+                    pass
         finally:
             self._state = self._FINISHED
+
+    # Internal logic
+
+    async def _asend(self, value=None, exc=None):
+        if exc is not None:
+            return await self._aiterator.athrow(exc)
+        elif value is not None:
+            return await self._aiterator.asend(value)
+        else:
+            return await self._aiterator.__anext__()
 
 
 def aitercontext(aiterable, *, cls=AsyncIteratorContext):
@@ -127,7 +156,7 @@ def aitercontext(aiterable, *, cls=AsyncIteratorContext):
     has run before it exits. It also issues warnings and RuntimeError
     if it is used incorrectly.
 
-    It is safe to use with any asynchronous iterable and prevent
+    It is safe to use with any asynchronous iterable and prevents
     asynchronous iterator context to be wrapped twice.
 
     Correct usage::
