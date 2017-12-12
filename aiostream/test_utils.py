@@ -85,30 +85,51 @@ def event_loop():
     all released before the loop is closed.
     """
 
-    def gen():
-        when = yield
-        while True:
-            loop.steps.append(
-                when - loop.time() if when > loop.time()
-                else 0.)
-            when = yield loop.steps[-1]
+    class TimeTrackingTestLoop(asyncio.test_utils.TestLoop):
 
-    def clear():
-        loop.steps = []
-        loop.open_resources = 0
-        loop.resources = 0
+        stuck_threshold = 100
 
-    @contextmanager
-    def assert_cleanup():
-        clear()
-        yield loop
-        assert loop.open_resources == 0
-        clear()
+        def __init__(self):
+            super().__init__()
+            self.clear()
 
-    loop = asyncio.test_utils.TestLoop(gen)
-    loop._check_on_close = False
-    loop.assert_cleanup = assert_cleanup
+        def _run_once(self):
+            super(asyncio.test_utils.TestLoop, self)._run_once()
+            # Update internals
+            self.busy_count += 1
+            self._timers = sorted(
+                when for when in self._timers if when > loop.time())
+            # Time advance
+            if self.time_to_go:
+                when = self._timers.pop(0)
+                step = when - loop.time()
+                self.steps.append(step)
+                self.advance_time(step)
+                self.busy_count = 0
+
+        @property
+        def stuck(self):
+            return self.busy_count > self.stuck_threshold
+
+        @property
+        def time_to_go(self):
+            return self._timers and (self.stuck or not self._ready)
+
+        def clear(self):
+            self.steps = []
+            self.open_resources = 0
+            self.resources = 0
+            self.busy_count = 0
+
+        @contextmanager
+        def assert_cleanup(self):
+            self.clear()
+            yield self
+            assert self.open_resources == 0
+            self.clear()
+
+    loop = TimeTrackingTestLoop()
     asyncio.set_event_loop(loop)
-    with assert_cleanup():
+    with loop.assert_cleanup():
         yield loop
     loop.close()
