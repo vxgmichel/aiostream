@@ -66,6 +66,8 @@ The `stream operators`_ are separated in 7 categories:
 +--------------------+--------------------------------------------------------------------------------+
 | **aggregation**    | accumulate_, reduce_, list_                                                    |
 +--------------------+--------------------------------------------------------------------------------+
+| **advanced**       | concat_, flatten_, switch_, concatmap_, flatmap_, switchmap_                   |
++--------------------+--------------------------------------------------------------------------------+
 | **timing**         | spaceout_, timeout_, delay_                                                    |
 +--------------------+--------------------------------------------------------------------------------+
 | **miscellaneous**  | action_, print_                                                                |
@@ -148,11 +150,13 @@ Vincent Michel: vxgmichel@gmail.com
 .. _repeat: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.repeat
 .. _range: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.range
 .. _count: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.count
+
 .. _map: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.map
 .. _enumerate: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.enumerate
 .. _starmap: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.starmap
 .. _cycle: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.cycle
 .. _chunks: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.chunks
+
 .. _take: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.take
 .. _takelast: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.takelast
 .. _skip: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.skip
@@ -161,14 +165,25 @@ Vincent Michel: vxgmichel@gmail.com
 .. _filter: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.filter
 .. _dropwhile: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.dropwhile
 .. _takewhile: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.takewhile
+
 .. _chain: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.chain
 .. _zip: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.zip
 .. _merge: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.merge
+
 .. _accumulate: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.accumulate
 .. _reduce: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.reduce
 .. _list: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.list
+
+.. _concat: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.concat
+.. _flatten: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.flatten
+.. _switch: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.switch
+.. _concatmap: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.concatmap
+.. _flatmap: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.flatmap
+.. _switchmap: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.switchmap
+
 .. _spaceout: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.spaceout
 .. _delay: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.delay
 .. _timeout: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.timeout
+
 .. _action: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.action
 .. _print: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.print
