@@ -120,6 +120,30 @@ Aggregatation operators
 .. autoclass:: list
 
 
+Advanced operators
+------------------
+
+.. note:: The :class:`concat`, :class:`flatten` and :class:`switch` operators
+   all take a **stream of streams** as an argument (also called **stream of
+   higher order**) and return a flattened stream using their own merging
+   strategy.
+
+.. autoclass:: concat
+
+.. autoclass:: flatten
+
+.. autoclass:: switch
+
+.. note:: The :class:`concatmap`, :class:`flatmap` and :class:`switchmap` operators
+   provide a simpler access to the three merging strategy listed above.
+
+.. autoclass:: concatmap
+
+.. autoclass:: flatmap
+
+.. autoclass:: switchmap
+
+
 Timing operators
 ----------------
 
