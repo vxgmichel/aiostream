@@ -1,8 +1,9 @@
 aiostream
 =========
 
-.. image:: https://img.shields.io/badge/docs-python_hosted-brightgreen.svg
-   :target: http://pythonhosted.org/aiostream
+
+.. image:: https://readthedocs.org/projects/aiostream/badge/?version=latest
+   :target: http://aiostream.readthedocs.io/en/latest/?badge=latest
    :alt:
 
 .. image:: https://coveralls.io/repos/github/vxgmichel/aiostream/badge.svg?branch=master
@@ -138,52 +139,52 @@ Vincent Michel: vxgmichel@gmail.com
 .. _aioreactive: http://github.com/dbrattli/aioreactive
 .. _itertools: http://docs.python.org/3/library/itertools.html
 
-.. _stream operators: http://pythonhosted.org/aiostream/operators.html
-.. _example section: http://pythonhosted.org/aiostream/examples.html
+.. _stream operators: http://aiostream.readthedocs.io/en/latest/operators.html
+.. _example section: http://aiostream.readthedocs.io/en/latest/examples.html
 
-.. _iterate: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.iterate
-.. _preserve: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.preserve
-.. _just: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.just
-.. _throw: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.throw
-.. _empty: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.empty
-.. _never: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.never
-.. _repeat: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.repeat
-.. _range: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.range
-.. _count: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.count
+.. _iterate: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.iterate
+.. _preserve: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.preserve
+.. _just: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.just
+.. _throw: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.throw
+.. _empty: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.empty
+.. _never: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.never
+.. _repeat: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.repeat
+.. _range: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.range
+.. _count: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.count
 
-.. _map: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.map
-.. _enumerate: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.enumerate
-.. _starmap: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.starmap
-.. _cycle: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.cycle
-.. _chunks: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.chunks
+.. _map: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.map
+.. _enumerate: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.enumerate
+.. _starmap: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.starmap
+.. _cycle: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.cycle
+.. _chunks: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.chunks
 
-.. _take: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.take
-.. _takelast: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.takelast
-.. _skip: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.skip
-.. _skiplast: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.skiplast
-.. _getitem: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.getitem
-.. _filter: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.filter
-.. _dropwhile: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.dropwhile
-.. _takewhile: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.takewhile
+.. _take: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.take
+.. _takelast: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.takelast
+.. _skip: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.skip
+.. _skiplast: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.skiplast
+.. _getitem: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.getitem
+.. _filter: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.filter
+.. _dropwhile: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.dropwhile
+.. _takewhile: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.takewhile
 
-.. _chain: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.chain
-.. _zip: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.zip
-.. _merge: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.merge
+.. _chain: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.chain
+.. _zip: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.zip
+.. _merge: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.merge
 
-.. _accumulate: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.accumulate
-.. _reduce: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.reduce
-.. _list: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.list
+.. _accumulate: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.accumulate
+.. _reduce: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.reduce
+.. _list: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.list
 
-.. _concat: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.concat
-.. _flatten: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.flatten
-.. _switch: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.switch
-.. _concatmap: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.concatmap
-.. _flatmap: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.flatmap
-.. _switchmap: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.switchmap
+.. _concat: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.concat
+.. _flatten: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.flatten
+.. _switch: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.switch
+.. _concatmap: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.concatmap
+.. _flatmap: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.flatmap
+.. _switchmap: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.switchmap
 
-.. _spaceout: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.spaceout
-.. _delay: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.delay
-.. _timeout: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.timeout
+.. _spaceout: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.spaceout
+.. _delay: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.delay
+.. _timeout: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.timeout
 
-.. _action: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.action
-.. _print: http://pythonhosted.org/aiostream/operators.html#aiostream.stream.print
+.. _action: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.action
+.. _print: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.print

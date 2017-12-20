@@ -2,8 +2,8 @@
 aiostream
 +++++++++
 
-.. image:: https://img.shields.io/badge/docs-python_hosted-brightgreen.svg
-   :target: http://pythonhosted.org/aiostream
+.. image:: https://readthedocs.org/projects/aiostream/badge/?version=latest
+   :target: http://aiostream.readthedocs.io/en/latest/?badge=latest
    :alt:
 
 .. image:: https://coveralls.io/repos/github/vxgmichel/aiostream/badge.svg?branch=master
