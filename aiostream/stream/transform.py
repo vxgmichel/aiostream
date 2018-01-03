@@ -24,12 +24,21 @@ async def enumerate(source, start=0, step=1):
 
 
 @operator(pipable=True)
-def starmap(source, func):
+def starmap(source, func, ordered=True, task_limit=None):
     """Apply a given function to the unpacked elements of
     an asynchronous sequence.
 
     Each element is unpacked before applying the function.
     The given function can either be synchronous or asynchronous.
+
+    The results can either be returned in or out of order, depending on
+    the corresponding ordered argument. This argument is ignored if the
+    provided function is synchronous.
+
+    The coroutines run concurrently but their amount can be limited using
+    the task_limit argument. A value of 1 will cause the coroutines to run
+    sequentially. This argument is ignored if the provided function is
+    synchronous.
     """
     if asyncio.iscoroutinefunction(func):
         async def starfunc(args):
@@ -37,7 +46,7 @@ def starmap(source, func):
     else:
         def starfunc(args):
             return func(*args)
-    return map.raw(source, starfunc)
+    return map.raw(source, starfunc, ordered=ordered, task_limit=task_limit)
 
 
 @operator(pipable=True)
