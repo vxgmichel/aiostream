@@ -1,6 +1,7 @@
 """Advanced operators (to deal with streams of higher order) ."""
 
 import asyncio
+from collections import OrderedDict, deque, defaultdict
 
 from . import create
 from . import combine
@@ -14,84 +15,127 @@ __all__ = ['concat', 'flatten', 'switch',
 
 # Helper to manage stream of higher order
 
-@operator(pipable=True)
-async def base_combine(source, switch=False):
-    streamers = {}
+class StreamerManager:
 
-    async def enter(stack, source):
-        streamer = await stack.enter_context(streamcontext(source))
-        schedule(streamer)
+    def __init__(self, task_limit=None):
+        if task_limit is None:
+            task_limit = float('inf')
+        self.streamers = {}
+        self.pending = deque()
+        self.task_limit = task_limit
+        self.stack = AsyncExitStack()
+        self.stack.callback(self.cleanup)
+
+    async def __aenter__(self):
+        await self.stack.__aenter__()
+        return self
+
+    async def __aexit__(self, *args):
+        return await self.stack.__aexit__(*args)
+
+    async def enter(self, source):
+        streamer = await self.stack.enter_context(streamcontext(source))
+        self.schedule(streamer)
         return streamer
 
-    async def cleanup():
-        for task, streamer in streamers.items():
+    async def cleanup(self):
+        # Clear pending streamers
+        for streamer in self.pending:
+            await streamer.aclose()
+        self.pending.clear()
+        # Clear active streamers
+        for task, streamer in self.streamers.items():
             task.cancel()
             await streamer.aclose()
-        streamers.clear()
+        self.streamers.clear()
 
-    def schedule(streamer):
+    def schedule(self, streamer):
+        # The task limit is reached
+        if len(self.streamers) >= self.task_limit:
+            self.pending.append(streamer)
+            return False
+        # Schedule next task
         task = asyncio.ensure_future(anext(streamer))
-        streamers[task] = streamer
+        self.streamers[task] = streamer
+        return True
 
-    async def completed():
-        while streamers:
+    def restore(self):
+        while self.pending and self.schedule(self.pending.popleft()):
+            pass
+
+    async def completed(self):
+        while self.streamers:
             done, _ = await asyncio.wait(
-                list(streamers), return_when="FIRST_COMPLETED")
+                list(self.streamers), return_when="FIRST_COMPLETED")
             for task in done:
-                yield streamers.pop(task), task.result
+                yield self.streamers.pop(task), task.result
+
+
+@operator(pipable=True)
+async def base_combine(source, switch=False, task_limit=None, ordered=False):
+    # Argument check
+    if task_limit is not None and not task_limit > 0:
+        raise ValueError('The task limit must be None or greater than 0')
+
+    # Data structures
+    results = OrderedDict()
+    finished = defaultdict(bool)
 
     # Safe context
-    async with AsyncExitStack() as stack:
-        stack.callback(cleanup)
+    async with StreamerManager(task_limit) as manager:
 
         # Initialize
-        main_streamer = await enter(stack, source)
+        main_streamer = await manager.enter(source)
 
         # Loop over events
-        async for streamer, getter in completed():
+        async for streamer, getter in manager.completed():
 
             # Get result
             try:
                 result = getter()
             # End of stream
             except StopAsyncIteration:
-                continue
-
-            # Switch mecanism
-            if switch and streamer is main_streamer:
-                await cleanup()
-
-            # Setup a new source
-            if streamer is main_streamer:
-                await enter(stack, result)
-            # Simply yield the result
+                manager.restore()
+                finished[streamer] = True
+            # Process result
             else:
-                yield result
+                # Switch mecanism
+                if switch and streamer is main_streamer:
+                    results.clear()
+                    await manager.cleanup()
+                # Setup a new source
+                if streamer is main_streamer:
+                    results[await manager.enter(result)] = deque()
+                # Append the result
+                else:
+                    results[streamer].append(result)
+                # Re-schedule streamer
+                manager.schedule(streamer)
 
-            # Re-schedule streamer
-            schedule(streamer)
+            # Yield results
+            for streamer, queue in results.items():
+                if ordered and not finished[streamer]:
+                    break
+                while queue:
+                    yield queue.popleft()
 
 
 # Advanced operators (for streams of higher order)
 
 @operator(pipable=True)
-async def concat(source):
+def concat(source, task_limit=None):
     """Given an asynchronous sequence of sequences, iterate over the element
     sequences in order.
 
     After one element sequence is exhausted, the next sequence is generated.
     Errors raised in the source or an element sequence are propagated.
     """
-    async with streamcontext(source) as streamer:
-        async for iterator in streamer:
-            subsource = create.iterate.raw(iterator)
-            async with streamcontext(subsource) as substreamer:
-                async for item in substreamer:
-                    yield item
+    return base_combine.raw(
+        source, task_limit=task_limit, switch=False, ordered=True)
 
 
 @operator(pipable=True)
-def flatten(source):
+def flatten(source, task_limit=None):
     """Given an asynchronous sequence of sequences, iterate over the element
     sequences in parallel.
 
@@ -99,7 +143,8 @@ def flatten(source):
     their elements interleaved as they arrive. Errors raised in the source or
     an element sequence are propagated.
     """
-    return base_combine.raw(source, switch=False)
+    return base_combine.raw(
+        source, task_limit=task_limit, switch=False, ordered=False)
 
 
 @operator(pipable=True)
@@ -117,7 +162,7 @@ def switch(source):
 # Advanced *-map operators
 
 @operator(pipable=True)
-def concatmap(source, func, *more_sources):
+def concatmap(source, func, *more_sources, task_limit=None):
     """Apply a given function that returns a sequence to the elements of one or
     several asynchronous sequences, and iterate over the returned sequences in
     order.
@@ -127,11 +172,12 @@ def concatmap(source, func, *more_sources):
     sequence is generated. Errors raised in a source or output sequence are
     propagated.
     """
-    return concat.raw(combine.map.raw(source, func, *more_sources))
+    return concat.raw(
+        combine.smap.raw(source, func, *more_sources), task_limit=task_limit)
 
 
 @operator(pipable=True)
-def flatmap(source, func, *more_sources):
+def flatmap(source, func, *more_sources, task_limit=None):
     """Apply a given function that returns a sequence to the elements of one or
     several asynchronous sequences, and iterate over the returned sequences in
     parallel.
@@ -141,7 +187,8 @@ def flatmap(source, func, *more_sources):
     iterated in parallel, yielding their elements interleaved as they arrive.
     Errors raised in a source or output sequence are propagated.
     """
-    return flatten.raw(combine.map.raw(source, func, *more_sources))
+    return flatten.raw(
+        combine.smap.raw(source, func, *more_sources), task_limit=task_limit)
 
 
 @operator(pipable=True)
@@ -154,4 +201,4 @@ def switchmap(source, func, *more_sources):
     once they are superseded by a more recent sequence. Errors raised in a
     source or output sequence (that was not already closed) are propagated.
     """
-    return switch.raw(combine.map.raw(source, func, *more_sources))
+    return switch.raw(combine.smap.raw(source, func, *more_sources))
