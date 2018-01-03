@@ -23,6 +23,13 @@ async def test_starmap(assert_run, event_loop):
         ys = stream.range(1, 4)
         zs = xs | pipe.zip(ys) | pipe.starmap(asyncio.sleep)
         await assert_run(zs, [1, 2, 3])
+        assert event_loop.steps == [1, 1, 1]
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(1, 4)
+        ys = stream.range(1, 4)
+        zs = xs | pipe.zip(ys) | pipe.starmap(asyncio.sleep, task_limit=1)
+        await assert_run(zs, [1, 2, 3])
         assert event_loop.steps == [1, 2, 3]
 
 
