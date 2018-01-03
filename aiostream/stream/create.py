@@ -1,6 +1,7 @@
 """Non-pipable creation operators."""
 
 import asyncio
+import inspect
 import builtins
 import itertools
 import collections
@@ -56,8 +57,11 @@ async def preserve(ait):
 
 @operator
 async def just(value):
-    """Generate a single value."""
-    yield value
+    """Await if possible, and generate a single value."""
+    if inspect.isawaitable(value):
+        yield await value
+    else:
+        yield value
 
 
 @operator
