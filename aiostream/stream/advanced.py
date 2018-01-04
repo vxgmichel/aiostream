@@ -34,31 +34,41 @@ async def base_combine(source, switch=False, task_limit=None, ordered=False):
             # Get result
             try:
                 result = getter()
+
             # End of stream
             except StopAsyncIteration:
                 manager.restore()
                 finished[streamer] = True
+
             # Process result
             else:
+
                 # Switch mecanism
                 if switch and streamer is main_streamer:
                     results.clear()
                     await manager.cleanup()
+
                 # Setup a new source
                 if streamer is main_streamer:
                     results[await manager.enter(result)] = deque()
+
                 # Append the result
                 else:
                     results[streamer].append(result)
+
                 # Re-schedule streamer
                 manager.schedule(streamer)
 
             # Yield results
             for streamer, queue in results.items():
-                if ordered and not finished[streamer]:
-                    break
+
+                # Yield all items
                 while queue:
                     yield queue.popleft()
+
+                # Guarantee order
+                if ordered and not finished[streamer]:
+                    break
 
 
 # Advanced operators (for streams of higher order)
