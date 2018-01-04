@@ -1,75 +1,16 @@
 """Advanced operators (to deal with streams of higher order) ."""
 
-import asyncio
 from collections import OrderedDict, deque, defaultdict
 
-from . import create
 from . import combine
-from ..aiter_utils import anext
-from ..context_utils import AsyncExitStack
-from ..core import operator, streamcontext
+from ..core import operator
+from ..manager import StreamerManager
 
 __all__ = ['concat', 'flatten', 'switch',
            'concatmap', 'flatmap', 'switchmap']
 
 
 # Helper to manage stream of higher order
-
-class StreamerManager:
-
-    def __init__(self, task_limit=None):
-        if task_limit is None:
-            task_limit = float('inf')
-        self.streamers = {}
-        self.pending = deque()
-        self.task_limit = task_limit
-        self.stack = AsyncExitStack()
-        self.stack.callback(self.cleanup)
-
-    async def __aenter__(self):
-        await self.stack.__aenter__()
-        return self
-
-    async def __aexit__(self, *args):
-        return await self.stack.__aexit__(*args)
-
-    async def enter(self, source):
-        streamer = await self.stack.enter_context(streamcontext(source))
-        self.schedule(streamer)
-        return streamer
-
-    async def cleanup(self):
-        # Clear pending streamers
-        for streamer in self.pending:
-            await streamer.aclose()
-        self.pending.clear()
-        # Clear active streamers
-        for task, streamer in self.streamers.items():
-            task.cancel()
-            await streamer.aclose()
-        self.streamers.clear()
-
-    def schedule(self, streamer):
-        # The task limit is reached
-        if len(self.streamers) >= self.task_limit:
-            self.pending.append(streamer)
-            return False
-        # Schedule next task
-        task = asyncio.ensure_future(anext(streamer))
-        self.streamers[task] = streamer
-        return True
-
-    def restore(self):
-        while self.pending and self.schedule(self.pending.popleft()):
-            pass
-
-    async def completed(self):
-        while self.streamers:
-            done, _ = await asyncio.wait(
-                list(self.streamers), return_when="FIRST_COMPLETED")
-            for task in done:
-                yield self.streamers.pop(task), task.result
-
 
 @operator(pipable=True)
 async def base_combine(source, switch=False, task_limit=None, ordered=False):
