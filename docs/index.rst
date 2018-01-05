@@ -25,10 +25,15 @@ aiostream
 Generator-based operators for asynchronous iteration
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    presentation
    operators
    core
    examples
    utilities
+
+Reference table:
+
+.. module:: aiostream.stream
+.. include:: table.rst.inc

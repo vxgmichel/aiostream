@@ -81,21 +81,24 @@ def amap(source, corofn, *more_sources, ordered=True, task_limit=None):
     sequence is exhausted.
 
     The results can either be returned in or out of order, depending on
-    the corresponding ordered argument.
+    the corresponding ``ordered`` argument.
 
     The coroutines run concurrently but their amount can be limited using
-    the task_limit argument. A value of 1 will cause the coroutines to run
-    sequentially.
+    the ``task_limit`` argument. A value of ``1`` will cause the coroutines
+    to run sequentially.
 
-    Note: if more than one sequence is provided, they're also awaited
-    concurrently, so that their waiting times don't add up.
+    If more than one sequence is provided, they're also awaited concurrently,
+    so that their waiting times don't add up.
     """
-    op = lambda *args: create.just(corofn(*args))
+
+    def func(*args):
+        return create.just(corofn(*args))
+
     if ordered:
         return advanced.concatmap.raw(
-            source, op, *more_sources, task_limit=task_limit)
+            source, func, *more_sources, task_limit=task_limit)
     return advanced.flatmap.raw(
-        source, op, *more_sources, task_limit=task_limit)
+        source, func, *more_sources, task_limit=task_limit)
 
 
 @operator(pipable=True)
@@ -109,16 +112,16 @@ def map(source, func, *more_sources, ordered=True, task_limit=None):
     asynchronous (coroutine function).
 
     The results can either be returned in or out of order, depending on
-    the corresponding ordered argument. This argument is ignored if the
+    the corresponding ``ordered`` argument. This argument is ignored if the
     provided function is synchronous.
 
     The coroutines run concurrently but their amount can be limited using
-    the task_limit argument. A value of 1 will cause the coroutines to run
-    sequentially. This argument is ignored if the provided function is
-    synchronous.
+    the ``task_limit`` argument. A value of ``1`` will cause the coroutines
+    to run sequentially. This argument is ignored if the provided function
+    is synchronous.
 
-    Note: if more than one sequence is provided, they're also awaited
-    concurrently, so that their waiting times don't add up.
+    If more than one sequence is provided, they're also awaited concurrently,
+    so that their waiting times don't add up.
     """
     if asyncio.iscoroutinefunction(func):
         return amap.raw(

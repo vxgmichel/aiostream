@@ -12,10 +12,10 @@ __all__ = ['map', 'enumerate', 'starmap', 'cycle', 'chunks']
 
 @operator(pipable=True)
 async def enumerate(source, start=0, step=1):
-    """Generate (index, value) tuples from an asynchronous sequence.
+    """Generate ``(index, value)`` tuples from an asynchronous sequence.
 
     This index is computed using a starting point and an increment,
-    respectively defaulting to 0 and 1.
+    respectively defaulting to ``0`` and ``1``.
     """
     count = itertools.count(start, step)
     async with streamcontext(source) as streamer:
@@ -32,13 +32,13 @@ def starmap(source, func, ordered=True, task_limit=None):
     The given function can either be synchronous or asynchronous.
 
     The results can either be returned in or out of order, depending on
-    the corresponding ordered argument. This argument is ignored if the
-    provided function is synchronous.
+    the corresponding ``ordered`` argument. This argument is ignored if
+    the provided function is synchronous.
 
     The coroutines run concurrently but their amount can be limited using
-    the task_limit argument. A value of 1 will cause the coroutines to run
-    sequentially. This argument is ignored if the provided function is
-    synchronous.
+    the ``task_limit`` argument. A value of ``1`` will cause the coroutines
+    to run sequentially. This argument is ignored if the provided function
+    is synchronous.
     """
     if asyncio.iscoroutinefunction(func):
         async def starfunc(args):
@@ -68,9 +68,9 @@ async def cycle(source):
 
 @operator(pipable=True)
 async def chunks(source, n):
-    """Generate chunks of size n from an asynchronous sequence.
+    """Generate chunks of size ``n`` from an asynchronous sequence.
 
-    The chunks are lists, and the last chunk might contain less than n
+    The chunks are lists, and the last chunk might contain less than ``n``
     elements.
     """
     async with streamcontext(source) as streamer:

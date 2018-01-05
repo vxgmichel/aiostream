@@ -65,8 +65,8 @@ Transformation operators
 
 .. autoclass:: map
 
-   Note: :class:`map` is considered a combination operator
-   if used with extra sources, and a transformation operator otherwise
+   .. note:: :class:`map` is considered a combination operator
+	     if used with extra sources, and a transformation operator otherwise
 
 .. autoclass:: enumerate
 
@@ -100,8 +100,8 @@ Combination operators
 
 .. autoclass:: map
 
-   Note: :class:`map` is considered a combination operator
-   if used with extra sources, and a transformation operator otherwise
+   .. note:: :class:`map` is considered a combination operator
+	     if used with extra sources, and a transformation operator otherwise
 
 .. autoclass:: zip
 
