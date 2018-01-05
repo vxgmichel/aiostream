@@ -13,7 +13,7 @@ async def accumulate(source, func=op.add, initializer=None):
     """Generate a series of accumulated sums (or other binary function)
     from an asynchronous sequence.
 
-    If initializer is present, it is placed before the items
+    If ``initializer`` is present, it is placed before the items
     of the sequence in the calculation, and serves as a default
     when the sequence is empty.
     """
@@ -42,7 +42,7 @@ def reduce(source, func, initializer=None):
     """Apply a function of two arguments cumulatively to the items
     of an asynchronous sequence, reducing the sequence to a single value.
 
-    If initializer is present, it is placed before the items
+    If ``initializer`` is present, it is placed before the items
     of the sequence in the calculation, and serves as a default when the
     sequence is empty.
     """

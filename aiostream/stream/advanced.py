@@ -13,11 +13,18 @@ __all__ = ['concat', 'flatten', 'switch',
 # Helper to manage stream of higher order
 
 @operator(pipable=True)
-async def base_combine(source, switch=False, task_limit=None, ordered=False):
-    # Argument check
-    if task_limit is not None and not task_limit > 0:
-        raise ValueError('The task limit must be None or greater than 0')
+async def base_combine(source, switch=False, ordered=False, task_limit=None):
+    """Base operator for managing an asynchronous sequence of sequences.
 
+    The sequences are awaited concurrently, although it's possible to limit
+    the amount of running sequences using the `task_limit` argument.
+
+    The ``switch`` argument enables the switch mecanism, which cause the
+    previous subsequence to be discarded when a new one is created.
+
+    The items can either be generated in order or as soon as they're received,
+    depending on the ``ordered`` argument.
+    """
     # Data structures
     results = OrderedDict()
     finished = defaultdict(bool)
@@ -75,10 +82,12 @@ async def base_combine(source, switch=False, task_limit=None, ordered=False):
 
 @operator(pipable=True)
 def concat(source, task_limit=None):
-    """Given an asynchronous sequence of sequences, iterate over the element
-    sequences in order.
+    """Given an asynchronous sequence of sequences, generate the elements
+    of the sequences in order.
 
-    After one element sequence is exhausted, the next sequence is generated.
+    The sequences are awaited concurrently, although it's possible to limit
+    the amount of running sequences using the `task_limit` argument.
+
     Errors raised in the source or an element sequence are propagated.
     """
     return base_combine.raw(
@@ -87,12 +96,13 @@ def concat(source, task_limit=None):
 
 @operator(pipable=True)
 def flatten(source, task_limit=None):
-    """Given an asynchronous sequence of sequences, iterate over the element
-    sequences in parallel.
+    """Given an asynchronous sequence of sequences, generate the elements
+    of the sequences as soon as they're received.
 
-    Element sequences are generated eagerly and iterated in parallel, yielding
-    their elements interleaved as they arrive. Errors raised in the source or
-    an element sequence are propagated.
+    The sequences are awaited concurrently, although it's possible to limit
+    the amount of running sequences using the `task_limit` argument.
+
+    Errors raised in the source or an element sequence are propagated.
     """
     return base_combine.raw(
         source, task_limit=task_limit, switch=False, ordered=False)
@@ -100,12 +110,15 @@ def flatten(source, task_limit=None):
 
 @operator(pipable=True)
 def switch(source):
-    """Given an asynchronous sequence of sequences, iterate over the most
-    recent element sequence.
+    """Given an asynchronous sequence of sequences, generate the elements of
+    the most recent sequence.
 
     Element sequences are generated eagerly, and closed once they are
-    superseded by a more recent sequence. Errors raised in the source or an
-    element sequence (that was not already closed) are propagated.
+    superseded by a more recent sequence. Once the main sequence is finished,
+    the last subsequence will be exhausted completely.
+
+    Errors raised in the source or an element sequence (that was not already
+    closed) are propagated.
     """
     return base_combine.raw(source, switch=True)
 
@@ -114,14 +127,14 @@ def switch(source):
 
 @operator(pipable=True)
 def concatmap(source, func, *more_sources, task_limit=None):
-    """Apply a given function that returns a sequence to the elements of one or
-    several asynchronous sequences, and iterate over the returned sequences in
-    order.
+    """Apply a given function that creates a sequence from the elements of one
+    or several asynchronous sequences, and generate the elements of the created
+    sequences in order.
 
-    The function is applied as described in `map`, and can return an iterable
-    or an asynchronous sequence. After one sequence is exhausted, the next
-    sequence is generated. Errors raised in a source or output sequence are
-    propagated.
+    The function is applied as described in `map`, and must return an
+    asynchronous sequence. The returned sequences are awaited concurrently,
+    although it's possible to limit the amount of running sequences using
+    the `task_limit` argument.
     """
     return concat.raw(
         combine.smap.raw(source, func, *more_sources), task_limit=task_limit)
@@ -129,13 +142,15 @@ def concatmap(source, func, *more_sources, task_limit=None):
 
 @operator(pipable=True)
 def flatmap(source, func, *more_sources, task_limit=None):
-    """Apply a given function that returns a sequence to the elements of one or
-    several asynchronous sequences, and iterate over the returned sequences in
-    parallel.
+    """Apply a given function that creates a sequence from the elements of one
+    or several asynchronous sequences, and generate the elements of the created
+    sequences as soon as they arrive.
 
-    The function is applied as described in `map`, and can return an iterable
-    or an asynchronous sequence. Sequences are generated eagerly and
-    iterated in parallel, yielding their elements interleaved as they arrive.
+    The function is applied as described in `map`, and must return an
+    asynchronous sequence. The returned sequences are awaited concurrently,
+    although it's possible to limit the amount of running sequences using
+    the `task_limit` argument.
+
     Errors raised in a source or output sequence are propagated.
     """
     return flatten.raw(
@@ -144,12 +159,12 @@ def flatmap(source, func, *more_sources, task_limit=None):
 
 @operator(pipable=True)
 def switchmap(source, func, *more_sources):
-    """Apply a given function that returns a sequence to the elements of one or
-    several asynchronous sequences, and iterate over the most recent sequence.
+    """Apply a given function that creates a sequence from the elements of one
+    or several asynchronous sequences and generate the elements of the most
+    recently created sequence.
 
-    The function is applied as described in `map`, and can return an iterable
-    or an asynchronous sequence. Sequences are generated eagerly, and closed
-    once they are superseded by a more recent sequence. Errors raised in a
-    source or output sequence (that was not already closed) are propagated.
+    The function is applied as described in `map`, and must return an
+    asynchronous sequence. Errors raised in a source or output sequence (that
+    was not already closed) are propagated.
     """
     return switch.raw(combine.smap.raw(source, func, *more_sources))

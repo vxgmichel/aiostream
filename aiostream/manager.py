@@ -17,6 +17,10 @@ class StreamerManager:
     def __init__(self, task_limit=None):
         """The number of concurrent task can be limited using the task_limit
         argument."""
+        # Argument check
+        if task_limit is not None and not task_limit > 0:
+            raise ValueError('The task limit must be None or greater than 0')
+        # Initialize internals
         self.pending = deque()
         self.task_limit = task_limit
         self.stack = AsyncExitStack()

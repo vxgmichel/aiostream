@@ -14,9 +14,9 @@ __all__ = ['take', 'takelast', 'skip', 'skiplast',
 
 @operator(pipable=True)
 async def take(source, n):
-    """Forward the first n elements from an asynchronous sequence.
+    """Forward the first ``n`` elements from an asynchronous sequence.
 
-    If n is negative, it simply terminates before iterating the source.
+    If ``n`` is negative, it simply terminates before iterating the source.
     """
     source = transform.enumerate.raw(source)
     async with streamcontext(source) as streamer:
@@ -30,9 +30,9 @@ async def take(source, n):
 
 @operator(pipable=True)
 async def takelast(source, n):
-    """Forward the last n elements from an asynchronous sequence.
+    """Forward the last ``n`` elements from an asynchronous sequence.
 
-    If n is negative, it simply terminates after iterating the source.
+    If ``n`` is negative, it simply terminates after iterating the source.
 
     Note: it is required to reach the end of the source before the first
     element is generated.
@@ -47,9 +47,9 @@ async def takelast(source, n):
 
 @operator(pipable=True)
 async def skip(source, n):
-    """Forward an asynchronous sequence, skipping the first n elements.
+    """Forward an asynchronous sequence, skipping the first ``n`` elements.
 
-    If n is negative, no elements are skipped.
+    If ``n`` is negative, no elements are skipped.
     """
     source = transform.enumerate.raw(source)
     async with streamcontext(source) as streamer:
@@ -60,11 +60,11 @@ async def skip(source, n):
 
 @operator(pipable=True)
 async def skiplast(source, n):
-    """Forward an asynchronous sequence, skipping the last n elements.
+    """Forward an asynchronous sequence, skipping the last ``n`` elements.
 
-    If n is negative, no elements are skipped.
+    If ``n`` is negative, no elements are skipped.
 
-    Note: it is required to reach the (n+1)th element of the source
+    Note: it is required to reach the ``n+1`` th element of the source
     before the first element is generated.
     """
     queue = collections.deque(maxlen=n if n > 0 else 0)
@@ -83,8 +83,8 @@ async def filterindex(source, func):
     """Filter an asynchronous sequence using the index of the elements.
 
     The given function is synchronous, takes the index as an argument,
-    and returns True if the corresponding should be forwarded,
-    False otherwise.
+    and returns ``True`` if the corresponding should be forwarded,
+    ``False`` otherwise.
     """
     source = transform.enumerate.raw(source)
     async with streamcontext(source) as streamer:
@@ -99,8 +99,8 @@ def slice(source, *args):
 
     The arguments are the same as the builtin type slice.
 
-    There two limitations compare to regular slices:
-    - Positive stop index + negative start index is not supported
+    There are two limitations compare to regular slices:
+    - Positive stop index with negative start index is not supported
     - Negative step is not supported
     """
     s = builtins.slice(*args)
@@ -114,7 +114,7 @@ def slice(source, *args):
     if stop is not None:
         if stop >= 0 and start < 0:
             raise ValueError(
-                "Positive stop + negative start is not supported")
+                "Positive stop with negative start is not supported")
         elif stop >= 0:
             source = take.raw(source, stop - start)
         else:
@@ -131,10 +131,10 @@ def slice(source, *args):
 
 @operator(pipable=True)
 async def item(source, index):
-    """Forward the nth element of an asynchronous sequence.
+    """Forward the ``n``th element of an asynchronous sequence.
 
     The index can be negative and works like regular indexing.
-    If the index is out of range, and IndexError is raised.
+    If the index is out of range, and ``IndexError`` is raised.
     """
     # Prepare
     if index >= 0:
@@ -176,8 +176,8 @@ def getitem(source, index):
 async def filter(source, func):
     """Filter an asynchronous sequence using an arbitrary function.
 
-    The function takes the item as an argument and returns True
-    if it should be forwarded, False otherwise.
+    The function takes the item as an argument and returns ``True``
+    if it should be forwarded, ``False`` otherwise.
     The function can either be synchronous or asynchronous.
     """
     iscorofunc = asyncio.iscoroutinefunction(func)

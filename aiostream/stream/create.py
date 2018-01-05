@@ -95,7 +95,7 @@ async def never():
 def repeat(value, times=None, *, interval=0):
     """Generate the same value a given number of times.
 
-    If times is None, the value is repeated indefinitely.
+    If ``times`` is ``None``, the value is repeated indefinitely.
     An optional interval can be given to space the values out.
     """
     args = () if times is None else (times,)
@@ -122,7 +122,7 @@ def count(start=0, step=1, *, interval=0):
     """Generate consecutive numbers indefinitely.
 
     Optional starting point and increment can be defined,
-    respectively defaulting to 0 and 1.
+    respectively defaulting to ``0`` and ``1``.
 
     An optional interval can be given to space the values out.
     """
