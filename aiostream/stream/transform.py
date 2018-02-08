@@ -3,7 +3,7 @@
 import asyncio
 import itertools
 
-from .combine import map
+from .combine import map, amap, smap
 from ..core import operator, streamcontext
 from .. import stream
 

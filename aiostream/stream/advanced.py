@@ -44,7 +44,6 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
 
             # End of stream
             except StopAsyncIteration:
-                manager.restore()
                 finished[streamer] = True
 
             # Process result

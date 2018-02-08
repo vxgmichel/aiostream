@@ -25,6 +25,7 @@ class StreamerManager:
         self.task_limit = task_limit
         self.stack = AsyncExitStack()
         self.streamers = OrderedDict()
+        self.stack.callback(self.cleanup)
 
     @property
     def full(self):
@@ -36,7 +37,6 @@ class StreamerManager:
     async def __aenter__(self):
         """Asynchronous context manager support."""
         await self.stack.__aenter__()
-        self.stack.callback(self.cleanup)
         return self
 
     async def __aexit__(self, *args):
@@ -90,3 +90,5 @@ class StreamerManager:
                     continue
                 # Yield a (streamer, getter) tuple
                 yield self.streamers.pop(task), task.result
+            # Restore
+            self.restore()
