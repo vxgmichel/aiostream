@@ -121,6 +121,12 @@ class AsyncIteratorContext(AsyncIterator):
     async def aclose(self):
         await self.__aexit__(None, None, None)
 
+    async def athrow(self, exc):
+        if self._state == self._FINISHED:
+            raise RuntimeError(
+                'AsyncIteratorContext is closed and cannot be used')
+        return await self._aiterator.athrow(exc)
+
 
 def aitercontext(aiterable, *, cls=AsyncIteratorContext):
     """Return an asynchronous context manager from an asynchronous iterable.

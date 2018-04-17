@@ -32,6 +32,17 @@ async def test_aitercontext(event_loop):
             async with safe_gen:
                 pass
 
+        with pytest.raises(RuntimeError):
+            await safe_gen.athrow(ValueError())
+
+    with event_loop.assert_cleanup():
+        async with aitercontext(agen()) as safe_gen:
+            assert await safe_gen.__anext__() == 0
+            with pytest.raises(ZeroDivisionError):
+                await safe_gen.athrow(ZeroDivisionError())
+            async for item in safe_gen:
+                assert False  # No more items
+
     safe_gen = aitercontext(agen())
     with pytest.warns(UserWarning):
         await anext(safe_gen)
