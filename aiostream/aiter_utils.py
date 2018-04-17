@@ -70,9 +70,8 @@ class AsyncIteratorContext(AsyncIterator):
     Correct usage::
 
         ait = some_asynchronous_iterable()
-        aitcontext = AsyncIteratorContext(ait)
-        async with ait context:
-            async for item in ait:
+        async with AsyncIteratorContext(ait) as safe_ait:
+            async for item in safe_ait:
                 <block>
 
     It is nonetheless not meant to use directly.
