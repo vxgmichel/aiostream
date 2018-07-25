@@ -1,9 +1,10 @@
 """Utilities for testing stream operators."""
 
-import pytest
 import asyncio
-import asyncio.test_utils
+from unittest.mock import Mock
 from contextlib import contextmanager
+
+import pytest
 
 from .core import StreamEmpty, operator, streamcontext
 
@@ -85,16 +86,21 @@ def event_loop():
     all released before the loop is closed.
     """
 
-    class TimeTrackingTestLoop(asyncio.test_utils.TestLoop):
+    class TimeTrackingTestLoop(asyncio.BaseEventLoop):
 
         stuck_threshold = 100
 
         def __init__(self):
             super().__init__()
+            self._time = 0
+            self._timers = []
+            self._selector = Mock()
             self.clear()
 
+        # Loop internals
+
         def _run_once(self):
-            super(asyncio.test_utils.TestLoop, self)._run_once()
+            super()._run_once()
             # Update internals
             self.busy_count += 1
             self._timers = sorted(
@@ -107,6 +113,22 @@ def event_loop():
                 self.advance_time(step)
                 self.busy_count = 0
 
+        def _process_events(self, event_list):
+            return
+
+        # Time management
+
+        def time(self):
+            return self._time
+
+        def advance_time(self, advance):
+            if advance:
+                self._time += advance
+
+        def call_at(self, when, callback, *args, **kwargs):
+            self._timers.append(when)
+            return super().call_at(when, callback, *args, **kwargs)
+
         @property
         def stuck(self):
             return self.busy_count > self.stuck_threshold
@@ -114,6 +136,8 @@ def event_loop():
         @property
         def time_to_go(self):
             return self._timers and (self.stuck or not self._ready)
+
+        # Resource management
 
         def clear(self):
             self.steps = []
