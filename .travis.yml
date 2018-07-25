@@ -1,5 +1,10 @@
 language: python
-python: 3.6-dev
+python:
+  - 3.6
+  - 3.7
+  - 3.8-dev
+dist: xenial
+sudo: true
 install: pip install coveralls
 script: python setup.py test
 after_success: coveralls
