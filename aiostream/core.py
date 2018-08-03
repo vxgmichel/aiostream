@@ -5,7 +5,7 @@ import functools
 from collections import AsyncIterable, Awaitable
 
 from .aiter_utils import AsyncIteratorContext
-from .aiter_utils import _await, aitercontext, assert_async_iterable
+from .aiter_utils import aitercontext, assert_async_iterable
 
 __all__ = ['Stream', 'Streamer', 'StreamEmpty', 'operator', 'streamcontext']
 
@@ -101,7 +101,7 @@ class Stream(AsyncIterable, Awaitable):
 
         Safely iterate and return the last element.
         """
-        return _await(wait_stream(self))
+        return wait_stream(self).__await__()
 
     def __or__(self, func):
         """Pipe protocol.

@@ -1,9 +1,10 @@
 """Utilities for asynchronous iteration."""
 
 import warnings
+import functools
 from collections import AsyncIterator
 
-__all__ = ['aiter', 'anext', '_await',
+__all__ = ['aiter', 'anext', 'await_', 'async_',
            'is_async_iterable', 'assert_async_iterable',
            'is_async_iterator', 'assert_async_iterator',
            'AsyncIteratorContext', 'aitercontext']
@@ -23,9 +24,20 @@ def anext(obj):
     return obj.__anext__()
 
 
-def _await(obj):
-    """Access await magic method."""
-    return obj.__await__()
+# Async / await helper functions
+
+
+async def await_(obj):
+    """Identity coroutine function."""
+    return await obj
+
+
+def async_(fn):
+    """Wrap the given function into a coroutine function."""
+    @functools.wraps(fn)
+    async def wrapper(*args, **kwargs):
+        return await fn(*args, **kwargs)
+    return wrapper
 
 
 # Iterability helpers
