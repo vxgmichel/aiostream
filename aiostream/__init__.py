@@ -16,6 +16,8 @@ Some utility modules are also provided:
 """
 
 from . import stream, pipe
+from .aiter_utils import async_, await_
 from .core import StreamEmpty, operator, streamcontext
 
-__all__ = ['stream', 'pipe', 'operator', 'streamcontext', 'StreamEmpty']
+__all__ = ['stream', 'pipe', 'async_', 'await_',
+           'operator', 'streamcontext', 'StreamEmpty', ]
