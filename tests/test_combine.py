@@ -2,7 +2,7 @@
 import pytest
 import asyncio
 
-from aiostream import stream, pipe
+from aiostream import stream, pipe, async_, await_
 from aiostream.test_utils import assert_run, event_loop, add_resource
 
 # Pytest fixtures
@@ -65,7 +65,6 @@ async def test_map(assert_run, event_loop):
         ys = xs | pipe.map(asyncio.sleep, xs)
         await assert_run(ys, [1, 2, 3])
         assert event_loop.steps == [1, 1, 1]
-        event_loop.steps.clear()
 
     # Asynchronous/multiple/sequential
     with event_loop.assert_cleanup():
@@ -73,7 +72,6 @@ async def test_map(assert_run, event_loop):
         ys = xs | pipe.map(asyncio.sleep, xs, task_limit=1)
         await assert_run(ys, [1, 2, 3])
         assert event_loop.steps == [1, 2, 3]
-        event_loop.steps.clear()
 
     # As completed
     with event_loop.assert_cleanup():
@@ -81,7 +79,6 @@ async def test_map(assert_run, event_loop):
         ys = xs | pipe.map(asyncio.sleep, xs, ordered=False)
         await assert_run(ys, [1, 2, 3, 4, 5])
         assert event_loop.steps == [1, 1, 1, 1, 1]
-        event_loop.steps.clear()
 
     # Invalid argument
     with pytest.raises(ValueError):
@@ -93,13 +90,28 @@ async def test_map(assert_run, event_loop):
         ys = xs | pipe.map(asyncio.sleep, xs, task_limit=10)
         await assert_run(ys[:3], [1, 2, 3])
         assert event_loop.steps == [1, 1, 1]
-        event_loop.steps.clear()
 
     # Stuck
     with event_loop.assert_cleanup():
         xs = stream.count(1)
         ys = xs | pipe.map(asyncio.sleep, xs, task_limit=1) | pipe.timeout(5)
         await assert_run(ys, [1, 2, 3, 4], asyncio.TimeoutError())
+
+    # Force await
+    with event_loop.assert_cleanup():
+        xs = stream.iterate([1, 2, 3])
+        ys = xs | pipe.map(async_(lambda x: asyncio.sleep(x, x)))
+        await assert_run(ys, [1, 2, 3])
+        assert event_loop.steps == [1, 1, 1]
+
+    # Map await_
+    with event_loop.assert_cleanup():
+        xs = stream.iterate(map(lambda x: asyncio.sleep(x, x), [1, 2, 3]))
+        ys = xs | pipe.map(await_)
+        await assert_run(ys, [1, 2, 3])
+        assert event_loop.steps == [1, 1, 1]
+
+
 
 @pytest.mark.asyncio
 async def test_merge(assert_run, event_loop):
