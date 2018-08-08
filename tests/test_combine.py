@@ -112,7 +112,6 @@ async def test_map(assert_run, event_loop):
         assert event_loop.steps == [1, 1, 1]
 
 
-
 @pytest.mark.asyncio
 async def test_merge(assert_run, event_loop):
     with event_loop.assert_cleanup():
@@ -126,3 +125,20 @@ async def test_merge(assert_run, event_loop):
         ys = stream.range(0, 5, 2, interval=2) | pipe.merge(xs)
         await assert_run(ys[:3], [0, 1, 2])
         assert event_loop.steps == [1, 1]
+
+
+@pytest.mark.asyncio
+async def test_ziplatest(assert_run, event_loop):
+    with event_loop.assert_cleanup():
+        xs = stream.range(0, 5, 2, interval=2)
+        ys = stream.range(1, 5, 2, interval=2) | pipe.delay(1)
+        zs = stream.ziplatest(xs, ys, default='▲')
+        await assert_run(zs, [(0, '▲'), (0, 1), (2, 1), (2, 3), (4, 3)])
+        assert event_loop.steps == [1, 1, 1, 1]
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(0, 5, 2, interval=2)
+        ys = stream.range(1, 5, 2, interval=2) | pipe.delay(1)
+        zs = stream.ziplatest(xs, ys, partial=False)
+        await assert_run(zs, [(0, 1), (2, 1), (2, 3), (4, 3)])
+        assert event_loop.steps == [1, 1, 1, 1]
