@@ -122,6 +122,16 @@ def map(source, func, *more_sources, ordered=True, task_limit=None):
 
     If more than one sequence is provided, they're also awaited concurrently,
     so that their waiting times don't add up.
+
+    It might happen that the provided function returns a coroutine but is not
+    a coroutine function per se. In this case, one can wrap the function with
+    ``aiostream.async_`` in order to force ``map`` to await the resulting
+    coroutine. The following example illustrates the use ``async_`` with a
+    lambda function::
+
+        from aiostream import stream, async_
+        ...
+        ys = stream.map(xs, async_(lambda ms: asyncio.sleep(ms / 1000)))
     """
     if asyncio.iscoroutinefunction(func):
         return amap.raw(
