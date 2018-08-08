@@ -3,13 +3,16 @@
 import asyncio
 import builtins
 
-from . import create
 from ..aiter_utils import anext
 from ..context_utils import AsyncExitStack
 from ..core import operator, streamcontext
-from . import advanced
 
-__all__ = ['chain', 'zip', 'map', 'merge']
+from . import create
+from . import select
+from . import advanced
+from . import aggregate
+
+__all__ = ['chain', 'zip', 'map', 'merge', 'ziplatest']
 
 
 @operator(pipable=True)
@@ -149,3 +152,45 @@ def merge(*sources):
     until all the sequences are exhausted.
     """
     return advanced.flatten.raw(create.iterate.raw(sources))
+
+
+@operator(pipable=True)
+def ziplatest(*sources, partial=True, default=None):
+    """Combine several asynchronous sequences together, producing a tuple with
+    the lastest element of each sequence whenever a new element is received.
+
+    The value to use when a sequence has not procuded any element yet is given
+    by the ``default`` argument (defaulting to ``None``).
+
+    The producing of partial results can be disabled by setting the optional
+    argument ``partial`` to ``False``.
+
+    All the sequences are iterated simultaneously and their elements
+    are forwarded as soon as they're available. The generation continues
+    until all the sequences are exhausted.
+    """
+    n = len(sources)
+
+    # Custom getter
+    def getter(dct):
+        return lambda key: dct.get(key, default)
+
+    # Add source index to the items
+    new_sources = [
+        smap.raw(source, lambda x, i=i: {i: x})
+        for i, source in enumerate(sources)]
+
+    # Merge the sources
+    merged = merge.raw(*new_sources)
+
+    # Accumulate the current state in a dict
+    accumulated = aggregate.accumulate.raw(
+        merged, lambda x, e: {**x, **e})
+
+    # Filter partial result
+    filtered = accumulated if partial else select.filter.raw(
+            accumulated, lambda x: len(x) == n)
+
+    # Convert the state dict to a tuple
+    return smap.raw(
+        filtered, lambda x: tuple(builtins.map(getter(x), range(n))))
