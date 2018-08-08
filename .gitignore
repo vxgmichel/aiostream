@@ -25,6 +25,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+.eggs/
 
 # Installer logs
 pip-log.txt
@@ -37,6 +38,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+.pytest_cache/
 
 # Translations
 *.mo
@@ -55,5 +57,3 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
-
-
