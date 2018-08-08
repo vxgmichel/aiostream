@@ -116,6 +116,9 @@ def event_loop():
         def _process_events(self, event_list):
             return
 
+        def _write_to_self(self):
+            return
+
         # Time management
 
         def time(self):
