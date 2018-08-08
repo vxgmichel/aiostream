@@ -109,6 +109,8 @@ Combination operators
 
 .. autoclass:: chain
 
+.. autoclass:: ziplatest
+
 
 Aggregatation operators
 -----------------------
