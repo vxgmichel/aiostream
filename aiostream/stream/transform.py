@@ -3,11 +3,17 @@
 import asyncio
 import itertools
 
-from .combine import map, amap, smap
 from ..core import operator, streamcontext
-from .. import stream
+
+from . import select
+from . import create
+from . import aggregate
+from .combine import map, amap, smap
 
 __all__ = ['map', 'enumerate', 'starmap', 'cycle', 'chunks']
+
+# map, amap and smap are also transform operators
+map, amap, smap
 
 
 @operator(pipable=True)
@@ -75,5 +81,5 @@ async def chunks(source, n):
     """
     async with streamcontext(source) as streamer:
         async for first in streamer:
-            xs = stream.take(stream.preserve(streamer), n-1)
-            yield [first] + await stream.list(xs)
+            xs = select.take(create.preserve(streamer), n-1)
+            yield [first] + await aggregate.list(xs)
