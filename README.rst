@@ -63,7 +63,7 @@ The `stream operators`_ are separated in 7 categories:
 +--------------------+--------------------------------------------------------------------------------+
 | **selection**      | take_, takelast_, skip_, skiplast_, getitem_, filter_, takewhile_, dropwhile_  |
 +--------------------+--------------------------------------------------------------------------------+
-| **combination**    | map_, zip_, merge_, chain_                                                     |
+| **combination**    | map_, zip_, merge_, chain_, ziplatest_                                         |
 +--------------------+--------------------------------------------------------------------------------+
 | **aggregation**    | accumulate_, reduce_, list_                                                    |
 +--------------------+--------------------------------------------------------------------------------+
@@ -170,6 +170,7 @@ Vincent Michel: vxgmichel@gmail.com
 .. _chain: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.chain
 .. _zip: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.zip
 .. _merge: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.merge
+.. _ziplatest: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.ziplatest
 
 .. _accumulate: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.accumulate
 .. _reduce: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.reduce
