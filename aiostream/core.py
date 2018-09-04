@@ -254,12 +254,18 @@ def operator(func=None, *, pipable=False):
         # Extract signature
         signature = inspect.signature(func)
         parameters = list(signature.parameters.values())
+        if parameters and parameters[0].name in ('self', 'cls'):
+            raise ValueError(
+                'An operator cannot be created from a method, '
+                'since the decorated function becomes an operator class')
+
+        # Injected parameters
         self_parameter = inspect.Parameter(
             'self', inspect.Parameter.POSITIONAL_OR_KEYWORD)
         cls_parameter = inspect.Parameter(
             'cls', inspect.Parameter.POSITIONAL_OR_KEYWORD)
 
-        # wrapped static method
+        # Wrapped static method
         original = func
         original.__qualname__ = name + '.original'
 

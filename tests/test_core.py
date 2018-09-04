@@ -1,8 +1,7 @@
 import pytest
-import asyncio
 
 from aiostream.test_utils import event_loop, add_resource
-from aiostream import stream, streamcontext
+from aiostream import stream, streamcontext, operator
 
 # Pytest fixtures
 event_loop
@@ -26,3 +25,25 @@ async def test_streamcontext(event_loop):
             async for item in streamer:
                 assert item == next(it)
         assert event_loop.steps == [1]
+
+
+def test_operator_from_method():
+
+    with pytest.raises(ValueError):
+        class A:
+            @operator
+            async def method(self, arg):
+                yield 1
+
+    with pytest.raises(ValueError):
+        class B:
+            @operator
+            async def method(cls, arg):
+                yield 1
+
+    with pytest.raises(AttributeError):
+        class C:
+            @operator
+            @classmethod
+            async def method(cls, arg):
+                yield 1
