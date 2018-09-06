@@ -1,7 +1,7 @@
 """Combination operators."""
 
-import asyncio
 import builtins
+import functools
 
 from ..aiter_utils import anext
 from ..context_utils import AsyncExitStack
@@ -11,6 +11,7 @@ from . import create
 from . import select
 from . import advanced
 from . import aggregate
+from ..loops import get_loop
 
 __all__ = ['chain', 'zip', 'map', 'merge', 'ziplatest']
 
@@ -40,6 +41,7 @@ async def zip(*sources):
     Note: the different sequences are awaited in parrallel, so that their
     waiting times don't add up.
     """
+    loop = get_loop()
     async with AsyncExitStack() as stack:
         # Handle resources
         streamers = [await stack.enter_context(streamcontext(source))
@@ -47,8 +49,9 @@ async def zip(*sources):
         # Loop over items
         while True:
             try:
-                coros = builtins.map(anext, streamers)
-                items = await asyncio.gather(*coros)
+                coros = builtins.map(
+                    lambda s: functools.partial(anext, s), streamers)
+                items = await loop.gather(*coros)
             except StopAsyncIteration:
                 break
             else:
@@ -136,7 +139,7 @@ def map(source, func, *more_sources, ordered=True, task_limit=None):
         ...
         ys = stream.map(xs, async_(lambda ms: asyncio.sleep(ms / 1000)))
     """
-    if asyncio.iscoroutinefunction(func):
+    if get_loop().iscoroutinefunction(func):
         return amap.raw(
             source, func, *more_sources,
             ordered=ordered, task_limit=task_limit)

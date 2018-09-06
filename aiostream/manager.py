@@ -68,6 +68,7 @@ class StreamerManager:
             self.pending.append(streamer)
         # Schedule next task
         else:
+            # XXX
             task = asyncio.ensure_future(anext(streamer))
             self.streamers[task] = streamer
 

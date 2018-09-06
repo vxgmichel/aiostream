@@ -1,11 +1,11 @@
 """Aggregation operators."""
 
-import asyncio
 import operator as op
 
 from . import select
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
+from ..loops import get_loop
 
 __all__ = ['accumulate', 'reduce', 'list']
 
@@ -19,7 +19,7 @@ async def accumulate(source, func=op.add, initializer=None):
     of the sequence in the calculation, and serves as a default
     when the sequence is empty.
     """
-    iscorofunc = asyncio.iscoroutinefunction(func)
+    iscorofunc = get_loop().iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         # Initialize
         if initializer is None:

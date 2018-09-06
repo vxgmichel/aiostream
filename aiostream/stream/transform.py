@@ -1,6 +1,5 @@
 """Transformation operators."""
 
-import asyncio
 import itertools
 
 from ..core import operator, streamcontext
@@ -9,6 +8,7 @@ from . import select
 from . import create
 from . import aggregate
 from .combine import map, amap, smap
+from ..loops import get_loop
 
 __all__ = ['map', 'enumerate', 'starmap', 'cycle', 'chunks']
 
@@ -46,7 +46,7 @@ def starmap(source, func, ordered=True, task_limit=None):
     to run sequentially. This argument is ignored if the provided function
     is synchronous.
     """
-    if asyncio.iscoroutinefunction(func):
+    if get_loop().iscoroutinefunction(func):
         async def starfunc(args):
             return await func(*args)
     else:
@@ -64,12 +64,13 @@ async def cycle(source):
     re-iterable, the generator might end up looping indefinitely
     without yielding any item.
     """
+    loop = get_loop()
     while True:
         async with streamcontext(source) as streamer:
             async for item in streamer:
                 yield item
             # Prevent blocking while loop if the stream is empty
-            await asyncio.sleep(0)
+            await loop.sleep(0)
 
 
 @operator(pipable=True)

@@ -1,9 +1,9 @@
 """Time-specific operators."""
 
-import asyncio
-
+import functools
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
+from ..loops import get_loop
 
 __all__ = ['spaceout', 'delay', 'timeout']
 
@@ -14,12 +14,12 @@ async def spaceout(source, interval):
     in time by the given interval.
     """
     timeout = 0
-    loop = asyncio.get_event_loop()
+    loop = get_loop()
     async with streamcontext(source) as streamer:
         async for item in streamer:
             delta = timeout - loop.time()
             delay = delta if delta > 0 else 0
-            await asyncio.sleep(delay)
+            await loop.sleep(delay)
             yield item
             timeout = loop.time() + interval
 
@@ -32,10 +32,12 @@ async def timeout(source, timeout):
     Note: the timeout is not global but specific to each step of
     the iteration.
     """
+    loop = get_loop()
     async with streamcontext(source) as streamer:
         while True:
             try:
-                item = await asyncio.wait_for(anext(streamer), timeout)
+                item = await loop.wait_for_with_timeout(
+                    functools.partial(anext, streamer), timeout)
             except StopAsyncIteration:
                 break
             else:
@@ -45,7 +47,7 @@ async def timeout(source, timeout):
 @operator(pipable=True)
 async def delay(source, delay):
     """Delay the iteration of an asynchronous sequence."""
-    await asyncio.sleep(delay)
+    await get_loop().sleep(delay)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             yield item

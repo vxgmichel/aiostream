@@ -19,7 +19,7 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
     The sequences are awaited concurrently, although it's possible to limit
     the amount of running sequences using the `task_limit` argument.
 
-    The ``switch`` argument enables the switch mecanism, which cause the
+    The ``switch`` argument enables the switch mechanism, which cause the
     previous subsequence to be discarded when a new one is created.
 
     The items can either be generated in order or as soon as they're received,

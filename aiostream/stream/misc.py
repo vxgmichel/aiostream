@@ -1,9 +1,9 @@
 """Extra operators."""
-import asyncio
 import builtins
 
 from .transform import map
 from ..core import operator
+from ..loops import get_loop
 
 __all__ = ['action', 'print']
 
@@ -15,7 +15,7 @@ def action(source, func):
 
     The given function can be synchronous or asynchronous.
     """
-    if asyncio.iscoroutinefunction(func):
+    if get_loop().iscoroutinefunction(func):
         async def innerfunc(arg):
             await func(arg)
             return arg

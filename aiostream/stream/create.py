@@ -1,6 +1,5 @@
 """Non-pipable creation operators."""
 
-import asyncio
 import inspect
 import builtins
 import itertools
@@ -9,6 +8,8 @@ import collections
 from ..stream import time
 from ..core import operator, streamcontext
 from ..aiter_utils import is_async_iterable
+from ..loops import get_loop
+
 
 __all__ = ['iterate', 'preserve',
            'just', 'throw', 'empty', 'never', 'repeat',
@@ -21,7 +22,7 @@ __all__ = ['iterate', 'preserve',
 async def from_iterable(it):
     """Generate values from a regular iterable."""
     for item in it:
-        await asyncio.sleep(0)
+        await get_loop().sleep(0)
         yield item
 
 
@@ -84,11 +85,7 @@ async def never():
     """Hang forever without generating any value."""
     if False:
         yield
-    future = asyncio.Future()
-    try:
-        await future
-    finally:
-        future.cancel()
+    await get_loop().sleep_forever()
 
 
 @operator
