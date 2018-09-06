@@ -17,6 +17,7 @@ setup(
 
     packages=['aiostream', 'aiostream.stream'],
     setup_requires=['pytest-runner' if TESTING else ''],
+    install_requires=['sniffio'],
     tests_require=['pytest', 'pytest-asyncio', 'pytest-cov'],
 
     description="Generator-based operators for asynchronous iteration",
