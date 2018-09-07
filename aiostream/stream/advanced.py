@@ -49,7 +49,7 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
             # Process result
             else:
 
-                # Switch mecanism
+                # Switch mechanism
                 if switch and streamer is main_streamer:
                     results.clear()
                     await manager.cleanup()
