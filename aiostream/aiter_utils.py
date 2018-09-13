@@ -2,7 +2,7 @@
 
 import warnings
 import functools
-from collections import AsyncIterator
+from collections.abc import AsyncIterator
 
 __all__ = ['aiter', 'anext', 'await_', 'async_',
            'is_async_iterable', 'assert_async_iterable',
