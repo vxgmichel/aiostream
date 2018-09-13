@@ -2,7 +2,7 @@
 
 import inspect
 import functools
-from collections import AsyncIterable, Awaitable
+from collections.abc import AsyncIterable, Awaitable
 
 from .aiter_utils import AsyncIteratorContext
 from .aiter_utils import aitercontext, assert_async_iterable
