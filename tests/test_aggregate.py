@@ -68,10 +68,21 @@ async def test_groupby(assert_run, event_loop):
     async def odd_or_even(x):
         return await asyncio.sleep(1, result=x % 2)
 
+    def block_odd_or_even(x):
+        return x % 2
+
     with event_loop.assert_cleanup():
         xs = stream.range(5) | add_resource.pipe(1) | pipe.group_by(odd_or_even)
         await assert_run(xs, [[(0, [0, 2, 4]), (1, [1, 3])]])
 
     with event_loop.assert_cleanup():
         xs = stream.range(0) | add_resource.pipe(1) | pipe.group_by(odd_or_even)
+        await assert_run(xs, [[]])
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(5) | add_resource.pipe(1) | pipe.group_by(block_odd_or_even)
+        await assert_run(xs, [[(0, [0, 2, 4]), (1, [1, 3])]])
+
+    with event_loop.assert_cleanup():
+        xs = stream.range(0) | add_resource.pipe(1) | pipe.group_by(block_odd_or_even)
         await assert_run(xs, [[]])
