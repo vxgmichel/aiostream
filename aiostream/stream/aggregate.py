@@ -6,6 +6,7 @@ import operator as op
 from . import select
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
+from collections import defaultdict
 
 __all__ = ['accumulate', 'reduce', 'list', 'group_by']
 
@@ -67,7 +68,7 @@ async def group_by(source, func=lambda x: x):
     """ Generated a tuple of key value pairs based of
     key from the ``key`` function.
     """
-    grouped = dict()
+    grouped = defaultdict(lambda : [])
     iscorofunc = asyncio.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
@@ -76,9 +77,6 @@ async def group_by(source, func=lambda x: x):
                 key = await value
             else:
                 key = value
-            if key in grouped:
-                grouped[key].append(item)
-            else:
-                grouped[key] = [item]
+            grouped[key].append(item)
     items = [(key, value) for key, value in grouped.items()]
     yield items
