@@ -4,7 +4,8 @@ import asyncio
 import inspect
 import builtins
 import itertools
-import collections
+
+from collections.abc import Iterable
 
 from ..stream import time
 from ..core import operator, streamcontext
@@ -39,7 +40,7 @@ def iterate(it):
     """Generate values from a sychronous or asynchronous iterable."""
     if is_async_iterable(it):
         return from_async_iterable.raw(it)
-    if isinstance(it, collections.Iterable):
+    if isinstance(it, Iterable):
         return from_iterable.raw(it)
     raise TypeError(
         f"{type(it).__name__!r} object is not (async) iterable")
