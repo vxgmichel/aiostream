@@ -3,92 +3,95 @@ concurrently.
 """
 
 import asyncio
-from collections import OrderedDict, deque
-
-from .core import streamcontext
 from .aiter_utils import anext
+from .core import streamcontext
 from .context_utils import AsyncExitStack
 
 
-class StreamerManager:
-    """An asynchronous context manager to deal with several streamers running
-    concurrently."""
-
-    def __init__(self, task_limit=None):
-        """The number of concurrent task can be limited using the task_limit
-        argument."""
-        # Argument check
-        if task_limit is not None and not task_limit > 0:
-            raise ValueError('The task limit must be None or greater than 0')
-        # Initialize internals
-        self.pending = deque()
-        self.task_limit = task_limit
-        self.stack = AsyncExitStack()
-        self.streamers = OrderedDict()
-        self.stack.callback(self.cleanup)
-
-    @property
-    def full(self):
-        """Indicates that the task limit has been reached."""
-        if self.task_limit is None:
-            return False
-        return len(self.streamers) >= self.task_limit
+class TaskGroup:
 
     async def __aenter__(self):
-        """Asynchronous context manager support."""
-        await self.stack.__aenter__()
         return self
 
     async def __aexit__(self, *args):
-        """Asynchronous context manager support."""
-        return await self.stack.__aexit__(*args)
+        return
 
-    async def enter(self, source):
-        """Enter a stream and schedule the streamer in a safe manner."""
-        streamer = await self.stack.enter_context(streamcontext(source))
-        self.schedule(streamer)
+    def create_task(self, coro):
+        return asyncio.ensure_future(coro)
+
+    async def wait_any(self, tasks):
+        done, _ = await asyncio.wait(tasks, return_when="FIRST_COMPLETED")
+        return done
+
+    async def wait_all(self, tasks):
+        if not tasks:
+            return set()
+        done, _ = await asyncio.wait(tasks)
+        return done
+
+    async def stop_task(self, task):
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
+class StreamerManager:
+
+    def __init__(self):
+        self.tasks = {}
+        self.streamers = []
+        self.group = TaskGroup()
+        self.stack = AsyncExitStack()
+
+    async def __aenter__(self):
+        await self.stack.__aenter__()
+        await self.stack.enter_context(self.group)
+        return self
+
+    async def __aexit__(self, *args):
+        try:
+            await self.clean()
+        finally:
+            return await self.stack.__aexit__(*args)
+
+    async def enter_and_create_task(self, aiter):
+        streamer = await self.stack.enter_context(streamcontext(aiter))
+        self.streamers.append(streamer)
+        self.create_task(streamer)
         return streamer
 
-    async def cleanup(self):
-        """Clean up all pending and active streamers."""
-        # Clear pending streamers
-        for streamer in self.pending:
-            await streamer.aclose()
-        self.pending.clear()
-        # Clear active streamers
-        for task, streamer in self.streamers.items():
-            task.cancel()
-            await streamer.aclose()
-        self.streamers.clear()
+    def create_task(self, streamer):
+        assert streamer in self.streamers
+        assert streamer not in self.tasks
+        self.tasks[streamer] = self.group.create_task(anext(streamer))
 
-    def schedule(self, streamer):
-        """Schedule the given streamer to produce its next item."""
-        # The task limit is reached
-        if self.full:
-            self.pending.append(streamer)
-        # Schedule next task
-        else:
-            task = asyncio.ensure_future(anext(streamer))
-            self.streamers[task] = streamer
+    async def wait_single_event(self, filters):
+        tasks = [self.tasks[streamer] for streamer in filters]
+        done = await self.group.wait_any(tasks)
+        for streamer in filters:
+            if self.tasks.get(streamer) in done:
+                return streamer, self.tasks.pop(streamer)
 
-    def restore(self):
-        """Restore as many pending streamers as possible."""
-        while self.pending and not self.full:
-            self.schedule(self.pending.popleft())
+    async def clean_streamer(self, streamer):
+        self.streamers.remove(streamer)
+        task = self.tasks.pop(streamer, None)
+        if task is not None:
+            await self.group.stop_task(task)
+        await streamer.aclose()
+        # TODO: Remove the streamer from the stack to prevent a memory leak
 
-    async def completed(self):
-        """Asynchronously yield (streamer, getter) tuples as soon as the
-        scheduled streamers produce an item, or raise an exception."""
-        # Loop over wait operation
-        while self.streamers:
-            tasks = list(self.streamers)
-            # Sorted wait for first completed item
-            done, _ = await asyncio.wait(tasks, return_when="FIRST_COMPLETED")
-            for task in sorted(done, key=tasks.index):
-                # A cleanup can be performed between two yield statements
-                if task not in self.streamers:
-                    continue
-                # Yield a (streamer, getter) tuple
-                yield self.streamers.pop(task), task.result
-            # Restore
-            self.restore()
+    async def clean_streamers(self, streamers):
+        tasks = [
+            self.group.create_task(self.clean_streamer(streamer))
+            for streamer in streamers]
+        done = await self.group.wait_all(tasks)
+        # Raise exception if any
+        for task in done:
+            task.result()
+
+    async def clean(self):
+        await self.clean_streamers(self.streamers)
+        assert not self.tasks
+        assert not self.streamers
