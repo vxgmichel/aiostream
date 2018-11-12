@@ -8,6 +8,20 @@ from ..core import operator, streamcontext
 __all__ = ['spaceout', 'delay', 'timeout']
 
 
+async def wait_for(aw, timeout):
+    task = asyncio.ensure_future(aw)
+    try:
+        return await asyncio.wait_for(task, timeout)
+    finally:
+        # Python 3.6 compatibility
+        if not task.done():  # pragma: no cover
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+
 @operator(pipable=True)
 async def spaceout(source, interval):
     """Make sure the elements of an asynchronous sequence are separated
@@ -35,7 +49,7 @@ async def timeout(source, timeout):
     async with streamcontext(source) as streamer:
         while True:
             try:
-                item = await asyncio.wait_for(anext(streamer), timeout)
+                item = await wait_for(anext(streamer), timeout)
             except StopAsyncIteration:
                 break
             else:
