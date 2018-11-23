@@ -122,11 +122,39 @@ class AsyncIteratorContext(AsyncIterator):
         self._state = self._RUNNING
         return self
 
-    async def __aexit__(self, *args):
+    async def __aexit__(self, typ, value, traceback):
         try:
-            if self._state != self._FINISHED and \
-               hasattr(self._aiterator, 'aclose'):
-                await self._aiterator.aclose()
+            if self._state == self._FINISHED:
+                return False
+            try:
+                # No exception to throw
+                if typ is None:
+                    return False
+                # Prevent GeneratorExit from being silenced
+                if typ is GeneratorExit:
+                    return False
+                # No method to throw
+                if not hasattr(self._aiterator, 'athrow'):
+                    return False
+                # No frame to throw
+                if not getattr(self._aiterator, "ag_frame", True):
+                    return False
+                # Throw
+                try:
+                    await self._aiterator.athrow(typ, value, traceback)
+                    raise RuntimeError(
+                        "Async iterator didn't stop after athrow()")
+                # Exception has been (most probably) silenced
+                except StopAsyncIteration as exc:
+                    return exc is not value
+                # A (possibly new) exception has been raised
+                except BaseException as exc:
+                    if exc is value:
+                        return False
+                    raise
+            finally:
+                if hasattr(self._aiterator, 'aclose'):
+                    await self._aiterator.aclose()
         finally:
             self._state = self._FINISHED
 
