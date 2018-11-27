@@ -14,7 +14,7 @@ async def test_concatmap(assert_run, event_loop):
         xs = stream.range(0, 6, 2, interval=1)
         ys = xs | pipe.concatmap(lambda x: stream.range(x, x+2, interval=5))
         await assert_run(ys, [0, 1, 2, 3, 4, 5])
-        assert event_loop.steps == [1, 1, 3, 1, 1]
+        assert event_loop.steps == [1, 1, 3, 5, 5]
 
     # Sequential run
     with event_loop.assert_cleanup():
@@ -32,7 +32,7 @@ async def test_concatmap(assert_run, event_loop):
             lambda x: stream.range(x, x+2, interval=5),
             task_limit=2)
         await assert_run(ys, [0, 1, 2, 3, 4, 5])
-        assert event_loop.steps == [1, 4, 1, 5]
+        assert event_loop.steps == [1, 4, 1, 4, 5]
 
     # Make sure item arrive as soon as possible
     with event_loop.assert_cleanup():

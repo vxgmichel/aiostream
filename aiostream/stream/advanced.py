@@ -1,8 +1,7 @@
 """Advanced operators (to deal with streams of higher order) ."""
 
-from collections import OrderedDict, deque, defaultdict
-
 from . import combine
+
 from ..core import operator
 from ..manager import StreamerManager
 
@@ -25,56 +24,76 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
     The items can either be generated in order or as soon as they're received,
     depending on the ``ordered`` argument.
     """
-    # Data structures
-    results = OrderedDict()
-    finished = defaultdict(bool)
+
+    # Task limit
+    if task_limit is not None and not task_limit > 0:
+        raise ValueError('The task limit must be None or greater than 0')
 
     # Safe context
-    async with StreamerManager(task_limit) as manager:
+    async with StreamerManager() as manager:
 
-        # Initialize
-        main_streamer = await manager.enter(source)
+        main_streamer = await manager.enter_and_create_task(source)
 
         # Loop over events
-        async for streamer, getter in manager.completed():
+        while manager.tasks:
+
+            # Extract streamer groups
+            substreamers = manager.streamers[1:]
+            mainstreamers = [main_streamer] if main_streamer in manager.tasks else []
+
+            # Switch - use the main streamer then the substreamer
+            if switch:
+                filters = mainstreamers + substreamers
+            # Concat - use the first substreamer then the main streamer
+            elif ordered:
+                filters = substreamers[:1] + mainstreamers
+            # Flat - use the substreamers then the main streamer
+            else:
+                filters = substreamers + mainstreamers
+
+            # Wait for next event
+            streamer, task = await manager.wait_single_event(filters)
 
             # Get result
             try:
-                result = getter()
+                result = task.result()
 
             # End of stream
             except StopAsyncIteration:
-                finished[streamer] = True
+
+                # Main streamer is finished
+                if streamer is main_streamer:
+                    main_streamer = None
+
+                # A substreamer is finished
+                else:
+                    await manager.clean_streamer(streamer)
+
+                    # Re-schedule the main streamer if necessary
+                    if main_streamer is not None and main_streamer not in manager.tasks:
+                        manager.create_task(main_streamer)
 
             # Process result
             else:
 
                 # Switch mecanism
                 if switch and streamer is main_streamer:
-                    results.clear()
-                    await manager.cleanup()
+                    await manager.clean_streamers(substreamers)
 
                 # Setup a new source
                 if streamer is main_streamer:
-                    results[await manager.enter(result)] = deque()
+                    await manager.enter_and_create_task(result)
 
-                # Append the result
+                    # Re-schedule the main streamer if task limit allows it
+                    if task_limit is None or task_limit > len(manager.tasks):
+                        manager.create_task(streamer)
+
+                # Yield the result
                 else:
-                    results[streamer].append(result)
+                    yield result
 
-                # Re-schedule streamer
-                manager.schedule(streamer)
-
-            # Yield results
-            for streamer, queue in results.items():
-
-                # Yield all items
-                while queue:
-                    yield queue.popleft()
-
-                # Guarantee order
-                if ordered and not finished[streamer]:
-                    break
+                    # Re-schedule the streamer
+                    manager.create_task(streamer)
 
 
 # Advanced operators (for streams of higher order)
