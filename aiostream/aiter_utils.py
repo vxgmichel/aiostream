@@ -159,7 +159,11 @@ class AsyncIteratorContext(AsyncIterator):
                     raise
             finally:
                 if hasattr(self._aiterator, 'aclose'):
-                    await self._aiterator.aclose()
+                    try:
+                        await self._aiterator.aclose()
+                    # Work around bpo-35409
+                    except GeneratorExit:
+                        pass
         finally:
             self._state = self._FINISHED
 
