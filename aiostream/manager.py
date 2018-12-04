@@ -3,9 +3,10 @@ concurrently.
 """
 
 import asyncio
+from .aiter_utils import AsyncExitStack
+
 from .aiter_utils import anext
 from .core import streamcontext
-from .context_utils import AsyncExitStack
 
 
 class TaskGroup:
@@ -29,7 +30,7 @@ class TaskGroup:
         done, _ = await asyncio.wait(tasks)
         return done
 
-    async def stop_task(self, task):
+    async def cancel_task(self, task):
         task.cancel()
         try:
             await task
@@ -47,17 +48,22 @@ class StreamerManager:
 
     async def __aenter__(self):
         await self.stack.__aenter__()
-        await self.stack.enter_context(self.group)
+        await self.stack.enter_async_context(self.group)
         return self
 
     async def __aexit__(self, *args):
-        try:
-            await self.clean()
-        finally:
-            return await self.stack.__aexit__(*args)
+        for streamer in self.streamers:
+            task = self.tasks.pop(streamer, None)
+            if task is not None:
+                self.stack.push_async_callback(self.group.cancel_task, task)
+            self.stack.push_async_exit(streamer)
+        self.tasks.clear()
+        self.streamers.clear()
+        return await self.stack.__aexit__(*args)
 
     async def enter_and_create_task(self, aiter):
-        streamer = await self.stack.enter_context(streamcontext(aiter))
+        streamer = streamcontext(aiter)
+        await streamer.__aenter__()
         self.streamers.append(streamer)
         self.create_task(streamer)
         return streamer
@@ -75,12 +81,11 @@ class StreamerManager:
                 return streamer, self.tasks.pop(streamer)
 
     async def clean_streamer(self, streamer):
-        self.streamers.remove(streamer)
         task = self.tasks.pop(streamer, None)
         if task is not None:
-            await self.group.stop_task(task)
+            await self.group.cancel_task(task)
         await streamer.aclose()
-        # TODO: Remove the streamer from the stack to prevent a memory leak
+        self.streamers.remove(streamer)
 
     async def clean_streamers(self, streamers):
         tasks = [
@@ -90,8 +95,3 @@ class StreamerManager:
         # Raise exception if any
         for task in done:
             task.result()
-
-    async def clean(self):
-        await self.clean_streamers(self.streamers)
-        assert not self.tasks
-        assert not self.streamers
