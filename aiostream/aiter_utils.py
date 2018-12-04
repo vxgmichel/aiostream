@@ -4,10 +4,15 @@ import warnings
 import functools
 from collections.abc import AsyncIterator
 
+try:
+    from contextlib import AsyncExitStack
+except ImportError:  # pragma: no cover
+    from async_exit_stack import AsyncExitStack
+
 __all__ = ['aiter', 'anext', 'await_', 'async_',
            'is_async_iterable', 'assert_async_iterable',
            'is_async_iterator', 'assert_async_iterator',
-           'AsyncIteratorContext', 'aitercontext']
+           'AsyncIteratorContext', 'aitercontext', 'AsyncExitStack']
 
 
 # Magic method shorcuts

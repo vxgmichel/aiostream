@@ -3,8 +3,7 @@
 import asyncio
 import builtins
 
-from ..aiter_utils import anext
-from ..context_utils import AsyncExitStack
+from ..aiter_utils import AsyncExitStack, anext
 from ..core import operator, streamcontext
 
 from . import create
@@ -42,7 +41,7 @@ async def zip(*sources):
     """
     async with AsyncExitStack() as stack:
         # Handle resources
-        streamers = [await stack.enter_context(streamcontext(source))
+        streamers = [await stack.enter_async_context(streamcontext(source))
                      for source in sources]
         # Loop over items
         while True:

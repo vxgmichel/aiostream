@@ -3,9 +3,10 @@ concurrently.
 """
 
 import asyncio
+from .aiter_utils import AsyncExitStack
+
 from .aiter_utils import anext
 from .core import streamcontext
-from .context_utils import AsyncExitStack
 
 
 class TaskGroup:
@@ -47,7 +48,7 @@ class StreamerManager:
 
     async def __aenter__(self):
         await self.stack.__aenter__()
-        await self.stack.enter_context(self.group)
+        await self.stack.enter_async_context(self.group)
         return self
 
     async def __aexit__(self, *args):
@@ -57,7 +58,7 @@ class StreamerManager:
             return await self.stack.__aexit__(*args)
 
     async def enter_and_create_task(self, aiter):
-        streamer = await self.stack.enter_context(streamcontext(aiter))
+        streamer = await self.stack.enter_async_context(streamcontext(aiter))
         self.streamers.append(streamer)
         self.create_task(streamer)
         return streamer
