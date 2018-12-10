@@ -2,7 +2,7 @@
 import pytest
 import asyncio
 
-from aiostream import stream, pipe, async_, await_
+from aiostream import stream, pipe, async_, await_, compat
 from aiostream.test_utils import assert_run, event_loop, add_resource
 
 # Pytest fixtures
@@ -95,7 +95,7 @@ async def test_map(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.count(1)
         ys = xs | pipe.map(asyncio.sleep, xs, task_limit=1) | pipe.timeout(5)
-        await assert_run(ys, [1, 2, 3, 4], asyncio.TimeoutError())
+        await assert_run(ys, [1, 2, 3, 4], compat.timeout_error())
 
     # Force await
     with event_loop.assert_cleanup():

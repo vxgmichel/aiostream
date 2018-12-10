@@ -37,7 +37,7 @@ async def test_starmap(assert_run, event_loop):
 async def test_cycle(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.empty() | pipe.cycle() | pipe.timeout(1)
-        await assert_run(xs, [], asyncio.TimeoutError())
+        await assert_run(xs, [], TimeoutError())
 
     with event_loop.assert_cleanup():
         xs = (
@@ -46,7 +46,7 @@ async def test_cycle(assert_run, event_loop):
             | pipe.cycle()
             | pipe.timeout(1)
         )
-        await assert_run(xs, [], asyncio.TimeoutError())
+        await assert_run(xs, [], TimeoutError())
 
     with event_loop.assert_cleanup():
         xs = stream.just(1) | add_resource.pipe(1) | pipe.cycle()

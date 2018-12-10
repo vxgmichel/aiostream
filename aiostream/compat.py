@@ -2,7 +2,8 @@ from asyncio import iscoroutinefunction
 
 import math
 import anyio
-from anyio import sleep, fail_after, create_task_group, create_semaphore
+from anyio._backends.asyncio import asynccontextmanager
+from anyio import sleep, create_task_group, create_semaphore
 
 __all__ = ['iscoroutinefunction', 'time', 'sleep_forever', 'open_channel',
            'sleep', 'fail_after', 'create_task_group', 'create_semaphore']
@@ -26,6 +27,29 @@ async def time():
         import curio
         return await curio.clock()
     raise RuntimeError("Asynclib detection failed")
+
+
+def timeout_error():
+    asynclib = anyio._detect_running_asynclib()
+    if asynclib == 'asyncio':
+        import asyncio
+        return asyncio.TimeoutError()
+    if asynclib == 'trio':
+        import trio
+        return trio.TooSlowError()
+    if asynclib == 'curio':
+        import curio
+        return curio.TimeoutError()
+    raise RuntimeError("Asynclib detection failed")
+
+
+@asynccontextmanager
+async def fail_after(*args, **kwargs):
+    try:
+        async with anyio.fail_after(*args, **kwargs) as value:
+            yield value
+    except TimeoutError:
+        raise timeout_error()
 
 
 def open_channel(capacity=0):

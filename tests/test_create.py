@@ -1,7 +1,7 @@
 
 import pytest
 import asyncio
-from aiostream import stream, pipe
+from aiostream import stream, pipe, compat
 from aiostream.test_utils import assert_run, event_loop
 
 # Pytest fixtures
@@ -53,7 +53,7 @@ async def test_empty(assert_run):
 @pytest.mark.asyncio
 async def test_never(assert_run, event_loop):
     xs = stream.never() | pipe.timeout(30.)
-    await assert_run(xs, [], asyncio.TimeoutError())
+    await assert_run(xs, [], compat.timeout_error())
     assert event_loop.steps == [30.]
 
 
