@@ -1,4 +1,7 @@
-import asyncio
+#!/usr/bin/env python3
+
+import argparse
+from anyio import run
 from aiostream import stream, pipe
 
 
@@ -36,6 +39,8 @@ async def main():
 
 
 # Run main coroutine
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Run the aiostream demo")
+    parser.add_argument('backend', nargs='?', default='asyncio')
+    namespace = parser.parse_args()
+    run(main, backend=namespace.backend)
