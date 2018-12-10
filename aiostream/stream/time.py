@@ -1,25 +1,10 @@
 """Time-specific operators."""
 
-import asyncio
-
+from .. import compat
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
 
 __all__ = ['spaceout', 'delay', 'timeout']
-
-
-async def wait_for(aw, timeout):
-    task = asyncio.ensure_future(aw)
-    try:
-        return await asyncio.wait_for(task, timeout)
-    finally:
-        # Python 3.6 compatibility
-        if not task.done():  # pragma: no cover
-            task.cancel()
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
 
 
 @operator(pipable=True)
@@ -28,14 +13,13 @@ async def spaceout(source, interval):
     in time by the given interval.
     """
     timeout = 0
-    loop = asyncio.get_event_loop()
     async with streamcontext(source) as streamer:
         async for item in streamer:
-            delta = timeout - loop.time()
+            delta = timeout - await compat.time()
             delay = delta if delta > 0 else 0
-            await asyncio.sleep(delay)
+            await compat.sleep(delay)
             yield item
-            timeout = loop.time() + interval
+            timeout = await compat.time() + interval
 
 
 @operator(pipable=True)
@@ -49,7 +33,8 @@ async def timeout(source, timeout):
     async with streamcontext(source) as streamer:
         while True:
             try:
-                item = await wait_for(anext(streamer), timeout)
+                async with compat.fail_after(timeout):
+                    item = await anext(streamer)
             except StopAsyncIteration:
                 break
             else:
@@ -59,7 +44,7 @@ async def timeout(source, timeout):
 @operator(pipable=True)
 async def delay(source, delay):
     """Delay the iteration of an asynchronous sequence."""
-    await asyncio.sleep(delay)
+    await compat.sleep(delay)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             yield item

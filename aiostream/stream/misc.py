@@ -1,7 +1,8 @@
 """Extra operators."""
-import asyncio
+
 import builtins
 
+from .. import compat
 from .transform import map
 from ..core import operator
 
@@ -15,7 +16,7 @@ def action(source, func):
 
     The given function can be synchronous or asynchronous.
     """
-    if asyncio.iscoroutinefunction(func):
+    if compat.iscoroutinefunction(func):
         async def innerfunc(arg):
             await func(arg)
             return arg

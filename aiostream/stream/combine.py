@@ -135,7 +135,7 @@ def map(source, func, *more_sources, ordered=True, task_limit=None):
         ...
         ys = stream.map(xs, async_(lambda ms: asyncio.sleep(ms / 1000)))
     """
-    if asyncio.iscoroutinefunction(func):
+    if compat.iscoroutinefunction(func):
         return amap.raw(
             source, func, *more_sources,
             ordered=ordered, task_limit=task_limit)

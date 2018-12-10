@@ -1,9 +1,9 @@
 """Selection operators."""
 
-import asyncio
 import builtins
 import collections
 
+from .. import compat
 from . import transform
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
@@ -180,7 +180,7 @@ async def filter(source, func):
     if it should be forwarded, ``False`` otherwise.
     The function can either be synchronous or asynchronous.
     """
-    iscorofunc = asyncio.iscoroutinefunction(func)
+    iscorofunc = compat.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)
@@ -201,7 +201,7 @@ async def until(source, func):
     corresponding to the condition to meet. The function can either be
     synchronous or asynchronous.
     """
-    iscorofunc = asyncio.iscoroutinefunction(func)
+    iscorofunc = compat.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)
@@ -223,7 +223,7 @@ async def takewhile(source, func):
     corresponding to the condition to meet. The function can either be
     synchronous or asynchronous.
     """
-    iscorofunc = asyncio.iscoroutinefunction(func)
+    iscorofunc = compat.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)
