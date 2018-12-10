@@ -1,9 +1,8 @@
 """Combination operators."""
 
-import asyncio
 import builtins
 
-from ..aiter_utils import AsyncExitStack, anext
+from .. import compat
 from ..core import operator, streamcontext
 
 from . import create
@@ -39,19 +38,27 @@ async def zip(*sources):
     Note: the different sequences are awaited in parrallel, so that their
     waiting times don't add up.
     """
-    async with AsyncExitStack() as stack:
-        # Handle resources
-        streamers = [await stack.enter_async_context(streamcontext(source))
-                     for source in sources]
-        # Loop over items
+
+    async with compat.create_task_group() as group:
+        item_channels = []
+        control_send_channel, control_receive_channel = compat.open_channel(
+            len(sources))
+
+        async def task(source, item_channel):
+            await advanced.streamer_task(
+                source, item_channel, control_receive_channel)
+            await group.cancel_scope.cancel()
+
+        for source in sources:
+            item_send_channel, item_receive_channel = compat.open_channel()
+            item_channels.append(item_receive_channel)
+            await group.spawn(task, source, item_send_channel)
+
         while True:
-            try:
-                coros = builtins.map(anext, streamers)
-                items = await asyncio.gather(*coros)
-            except StopAsyncIteration:
-                break
-            else:
-                yield tuple(items)
+            items = [await channel.receive() for channel in item_channels]
+            yield tuple(items)
+            for channel in item_channels:
+                await control_send_channel.send(None)
 
 
 @operator(pipable=True)
