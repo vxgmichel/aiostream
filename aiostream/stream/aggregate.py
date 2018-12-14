@@ -40,7 +40,7 @@ async def accumulate(source, func=op.add, initializer=None):
 
 
 @operator(pipable=True)
-def reduce(source, func, initializer=None):
+async def reduce(source, func, initializer=None):
     """Apply a function of two arguments cumulatively to the items
     of an asynchronous sequence, reducing the sequence to a single value.
 
@@ -49,7 +49,14 @@ def reduce(source, func, initializer=None):
     sequence is empty.
     """
     acc = accumulate.raw(source, func, initializer)
-    return select.item.raw(acc, -1)
+    last_item = select.item.raw(acc, -1)
+    async with streamcontext(last_item) as streamer:
+        try:
+            item = await anext(streamer)
+        except IndexError:
+            raise TypeError("reduce() of empty sequence with no initial value")
+        else:
+            yield item
 
 
 @operator(pipable=True)
