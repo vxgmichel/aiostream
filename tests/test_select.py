@@ -2,12 +2,6 @@
 import asyncio
 import pytest
 
-from aiostream import stream, pipe
-from aiostream.test_utils import assert_run, event_loop, add_resource
-
-# Pytest fixtures
-assert_run, event_loop
-
 
 @pytest.mark.asyncio
 async def test_take(assert_run, event_loop):

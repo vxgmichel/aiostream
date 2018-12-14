@@ -3,11 +3,7 @@
 import pytest
 import asyncio
 
-from aiostream.test_utils import event_loop
 from aiostream.aiter_utils import AsyncIteratorContext, aitercontext, anext
-
-# Pytest fixtures
-event_loop
 
 
 # Some async iterators for testing

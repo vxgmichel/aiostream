@@ -2,10 +2,6 @@
 import pytest
 import asyncio
 from aiostream import stream, pipe
-from aiostream.test_utils import assert_run, event_loop
-
-# Pytest fixtures
-assert_run, event_loop
 
 
 @pytest.mark.asyncio

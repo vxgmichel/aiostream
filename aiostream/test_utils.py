@@ -2,69 +2,69 @@
 
 import asyncio
 from unittest.mock import Mock
-from contextlib import contextmanager
 
 import pytest
 
 from .core import StreamEmpty, operator, streamcontext
 
-__all__ = ['add_resource', 'assert_run', 'event_loop']
+__all__ = ['add_resource', 'assert_run']
 
 
-@operator(pipable=True)
-async def add_resource(source, cleanup_time):
-    """Simulate an open resource in a stream operator."""
-    try:
-        loop = asyncio.get_event_loop()
-        loop.open_resources += 1
-        loop.resources += 1
-        async with streamcontext(source) as streamer:
-            async for item in streamer:
-                yield item
-    finally:
+@pytest.fixture
+def add_resource():
+    resources = 0
+    open_resources = 0
+
+    @operator(pipable=True)
+    async def add_resource(source, cleanup_time):
+        """Simulate an open resource in a stream operator."""
+        nonlocal resources, open_resources
         try:
-            await asyncio.sleep(cleanup_time)
+            resources += 1
+            open_resources += 1
+            async with streamcontext(source) as streamer:
+                async for item in streamer:
+                    yield item
         finally:
-            loop.open_resources -= 1
+            try:
+                await asyncio.sleep(cleanup_time)
+            finally:
+                open_resources -= 1
 
-
-def compare_exceptions(exc1, exc2):
-    """Compare two exceptions together."""
-    return (
-        exc1 == exc2 or
-        exc1.__class__ == exc2.__class__ and
-        exc1.args == exc2.args)
+    yield add_resource
+    assert resources > 0
+    assert open_resources == 0
 
 
 async def assert_aiter(source, values, exception=None):
     """Check the results of a stream using a streamcontext."""
-    result = []
-    exception_type = type(exception) if exception else ()
+    if exception is not None:
+        with pytest.raises(type(exception)) as record:
+            await assert_aiter(source, values)
+        assert str(record.value) == str(exception)
+        return
     try:
+        result = []
         async with streamcontext(source) as streamer:
             async for item in streamer:
                 result.append(item)
-    except exception_type as exc:
+    finally:
         assert result == values
-        assert compare_exceptions(exc, exception)
-    else:
-        assert result == values
-        assert exception is None
 
 
 async def assert_await(source, values, exception=None):
     """Check the results of a stream using by awaiting it."""
-    exception_type = type(exception) if exception else ()
+    if exception is not None:
+        with pytest.raises(type(exception)) as record:
+            await assert_await(source, values)
+        assert str(record.value) == str(exception)
+        return
     try:
         result = await source
     except StreamEmpty:
         assert values == []
-        assert exception is None
-    except exception_type as exc:
-        assert compare_exceptions(exc, exception)
     else:
         assert result == values[-1]
-        assert exception is None
 
 
 @pytest.fixture(
@@ -72,19 +72,6 @@ async def assert_await(source, values, exception=None):
     ids=['aiter', 'await'])
 def assert_run(request):
     """Parametrized fixture returning a stream runner."""
-    return request.param
-
-
-@pytest.fixture
-def event_loop():
-    """Fixture providing a test event loop.
-
-    The event loop simulate and records the sleep operation,
-    available as event_loop.steps
-
-    It also tracks simulated resources and make sure they are
-    all released before the loop is closed.
-    """
 
     class TimeTrackingTestLoop(asyncio.BaseEventLoop):
 
@@ -95,23 +82,24 @@ def event_loop():
             self._time = 0
             self._timers = []
             self._selector = Mock()
-            self.clear()
+            self._busy_count = 0
+            self._steps = []
 
         # Loop internals
 
         def _run_once(self):
             super()._run_once()
             # Update internals
-            self.busy_count += 1
+            self._busy_count += 1
             self._timers = sorted(
-                when for when in self._timers if when > loop.time())
+                when for when in self._timers if when > self.time())
             # Time advance
             if self.time_to_go:
                 when = self._timers.pop(0)
-                step = when - loop.time()
-                self.steps.append(step)
+                step = when - self.time()
+                self._steps.append(step)
                 self.advance_time(step)
-                self.busy_count = 0
+                self._busy_count = 0
 
         def _process_events(self, event_list):
             return
@@ -134,29 +122,20 @@ def event_loop():
 
         @property
         def stuck(self):
-            return self.busy_count > self.stuck_threshold
+            return self._busy_count > self.stuck_threshold
 
         @property
         def time_to_go(self):
             return self._timers and (self.stuck or not self._ready)
 
-        # Resource management
+    def assert_run(source, value, exception=None, steps=[]):
+        loop = TimeTrackingTestLoop()
+        try:
+            asyncio.set_event_loop(loop)
+            coro = request.param(source, value, exception)
+            loop.run_until_complete(coro)
+            assert loop._steps == steps
+        finally:
+            loop.close()
 
-        def clear(self):
-            self.steps = []
-            self.open_resources = 0
-            self.resources = 0
-            self.busy_count = 0
-
-        @contextmanager
-        def assert_cleanup(self):
-            self.clear()
-            yield self
-            assert self.open_resources == 0
-            self.clear()
-
-    loop = TimeTrackingTestLoop()
-    asyncio.set_event_loop(loop)
-    with loop.assert_cleanup():
-        yield loop
-    loop.close()
+    yield assert_run

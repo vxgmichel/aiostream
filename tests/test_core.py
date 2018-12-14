@@ -1,10 +1,6 @@
 import pytest
 
-from aiostream.test_utils import event_loop, add_resource
 from aiostream import stream, streamcontext, operator
-
-# Pytest fixtures
-event_loop
 
 
 @pytest.mark.asyncio
