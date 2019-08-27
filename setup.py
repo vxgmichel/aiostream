@@ -8,7 +8,7 @@ UPLOAD = 'upload_sphinx' in sys.argv
 if not UPLOAD and sys.version_info < (3, 6):
     raise RuntimeError("aiostream requires Python 3.6")
 
-with open("README.rst") as f:
+with open("README.rst", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
