@@ -56,23 +56,23 @@ Stream operators
 
 The `stream operators`_ are separated in 7 categories:
 
-+--------------------+--------------------------------------------------------------------------------+
-| **creation**       | iterate_, preserve_, just_, empty_, throw_, never_, repeat_, count_, range_    |
-+--------------------+--------------------------------------------------------------------------------+
-| **transformation** | map_, enumerate_, starmap_, cycle_, chunks_                                    |
-+--------------------+--------------------------------------------------------------------------------+
-| **selection**      | take_, takelast_, skip_, skiplast_, getitem_, filter_, takewhile_, dropwhile_  |
-+--------------------+--------------------------------------------------------------------------------+
-| **combination**    | map_, zip_, merge_, chain_, ziplatest_                                         |
-+--------------------+--------------------------------------------------------------------------------+
-| **aggregation**    | accumulate_, reduce_, list_                                                    |
-+--------------------+--------------------------------------------------------------------------------+
-| **advanced**       | concat_, flatten_, switch_, concatmap_, flatmap_, switchmap_                   |
-+--------------------+--------------------------------------------------------------------------------+
-| **timing**         | spaceout_, timeout_, delay_                                                    |
-+--------------------+--------------------------------------------------------------------------------+
-| **miscellaneous**  | action_, print_                                                                |
-+--------------------+--------------------------------------------------------------------------------+
++--------------------+---------------------------------------------------------------------------------------+
+| **creation**       | iterate_, preserve_, just_, call_, empty_, throw_, never_, repeat_, count_, range_    |
++--------------------+---------------------------------------------------------------------------------------+
+| **transformation** | map_, enumerate_, starmap_, cycle_, chunks_                                           |
++--------------------+---------------------------------------------------------------------------------------+
+| **selection**      | take_, takelast_, skip_, skiplast_, getitem_, filter_, takewhile_, dropwhile_         |
++--------------------+---------------------------------------------------------------------------------------+
+| **combination**    | map_, zip_, merge_, chain_, ziplatest_                                                |
++--------------------+---------------------------------------------------------------------------------------+
+| **aggregation**    | accumulate_, reduce_, list_                                                           |
++--------------------+---------------------------------------------------------------------------------------+
+| **advanced**       | concat_, flatten_, switch_, concatmap_, flatmap_, switchmap_                          |
++--------------------+---------------------------------------------------------------------------------------+
+| **timing**         | spaceout_, timeout_, delay_                                                           |
++--------------------+---------------------------------------------------------------------------------------+
+| **miscellaneous**  | action_, print_                                                                       |
++--------------------+---------------------------------------------------------------------------------------+
 
 
 Demonstration
@@ -145,6 +145,7 @@ Vincent Michel: vxgmichel@gmail.com
 .. _iterate: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.iterate
 .. _preserve: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.preserve
 .. _just: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.just
+.. _call: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.call
 .. _throw: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.throw
 .. _empty: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.empty
 .. _never: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.never

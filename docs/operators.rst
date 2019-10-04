@@ -47,6 +47,8 @@ Creation operators
 
 .. autoclass:: just
 
+.. autoclass:: call
+
 .. autoclass:: empty
 
 .. autoclass:: throw

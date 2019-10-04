@@ -12,7 +12,7 @@ from ..core import operator, streamcontext
 from ..aiter_utils import is_async_iterable
 
 __all__ = ['iterate', 'preserve',
-           'just', 'throw', 'empty', 'never', 'repeat',
+           'just', 'call', 'throw', 'empty', 'never', 'repeat',
            'range', 'count']
 
 
@@ -63,6 +63,18 @@ async def just(value):
         yield await value
     else:
         yield value
+
+
+@operator
+async def call(func, *args, **kwargs):
+    """Call the given and generate a single value.
+
+    Await if the provided function is asynchronous.
+    """
+    if asyncio.iscoroutinefunction(func):
+        yield await func(*args, **kwargs)
+    else:
+        yield func(*args, **kwargs)
 
 
 @operator

@@ -14,6 +14,28 @@ async def test_just(assert_run):
     xs = stream.just(value)
     await assert_run(xs, [3])
 
+    async def four():
+        return 4
+
+    xs = stream.just(four())
+    await assert_run(xs, [4])
+
+
+@pytest.mark.asyncio
+async def test_call(assert_run):
+
+    def myfunc(a, b, c=0, d=4):
+        return a, b, c, d
+
+    xs = stream.call(myfunc, 1, 2, c=3)
+    await assert_run(xs, [(1, 2, 3, 4)])
+
+    async def myasyncfunc(a, b, c=0, d=4):
+        return a, b, c, d
+
+    xs = stream.call(myasyncfunc, 1, 2, c=3)
+    await assert_run(xs, [(1, 2, 3, 4)])
+
 
 @pytest.mark.asyncio
 async def test_throw(assert_run):

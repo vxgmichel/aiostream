@@ -132,35 +132,50 @@ class AsyncIteratorContext(AsyncIterator):
             if self._state == self._FINISHED:
                 return False
             try:
+
                 # No exception to throw
                 if typ is None:
                     return False
+
                 # Prevent GeneratorExit from being silenced
                 if typ is GeneratorExit:
                     return False
+
                 # No method to throw
                 if not hasattr(self._aiterator, 'athrow'):
                     return False
+
                 # No frame to throw
                 if not getattr(self._aiterator, "ag_frame", True):
                     return False
+
                 # Throw
                 try:
                     await self._aiterator.athrow(typ, value, traceback)
                     raise RuntimeError(
                         "Async iterator didn't stop after athrow()")
+
                 # Exception has been (most probably) silenced
                 except StopAsyncIteration as exc:
                     return exc is not value
+
                 # A (possibly new) exception has been raised
                 except BaseException as exc:
                     if exc is value:
                         return False
                     raise
             finally:
-                if hasattr(self._aiterator, 'aclose'):
+                # Look for an aclose method
+                aclose = getattr(self._aiterator, 'aclose', None)
+
+                # The ag_running attribute only exists for python >= 3.8
+                running = getattr(self._aiterator, 'ag_running', False)
+
+                # A RuntimeError is raised if aiterator is already running
+                if aclose and not running:
                     try:
-                        await self._aiterator.aclose()
+                        await aclose()
+
                     # Work around bpo-35409
                     except GeneratorExit:
                         pass
