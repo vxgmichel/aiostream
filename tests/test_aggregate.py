@@ -53,8 +53,8 @@ async def test_reduce(assert_run, event_loop):
 @pytest.mark.asyncio
 async def test_list(assert_run, event_loop):
     with event_loop.assert_cleanup():
-        xs = stream.range(5) | add_resource.pipe(1) | pipe.list()
-        await assert_run(xs, [[0, 1, 2, 3, 4]])
+        xs = stream.range(3) | add_resource.pipe(1) | pipe.list()
+        await assert_run(xs, [[], [0], [0, 1], [0, 1, 2]])
 
     with event_loop.assert_cleanup():
         xs = stream.range(0) | add_resource.pipe(1) | pipe.list()
