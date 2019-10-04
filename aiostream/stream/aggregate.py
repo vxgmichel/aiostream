@@ -54,9 +54,20 @@ def reduce(source, func, initializer=None):
 
 @operator(pipable=True)
 async def list(source):
-    """Generate a single list from an asynchronous sequence."""
+    """Build a list from an asynchronous sequence.
+
+    All the intermediate steps are generated, starting from the empty list.
+
+    This operator can be used to easily convert a stream into a list::
+
+        lst = await stream.list(x)
+
+    ..note:: The same list object is produced at each step in order to avoid
+    memory copies.
+    """
     result = []
+    yield result
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result.append(item)
-    yield result
+            yield result
