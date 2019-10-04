@@ -93,6 +93,8 @@ Selection operators
 
 .. autoclass:: filter
 
+.. autoclass:: until
+
 .. autoclass:: takewhile
 
 .. autoclass:: dropwhile

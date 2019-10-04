@@ -9,7 +9,7 @@ from ..aiter_utils import anext
 from ..core import operator, streamcontext
 
 __all__ = ['take', 'takelast', 'skip', 'skiplast',
-           'getitem', 'filter', 'dropwhile', 'takewhile']
+           'getitem', 'filter', 'until', 'dropwhile', 'takewhile']
 
 
 @operator(pipable=True)
@@ -191,8 +191,33 @@ async def filter(source, func):
 
 
 @operator(pipable=True)
+async def until(source, func):
+    """Forward an asynchronous sequence until a condition is met.
+
+    Contrary to the ``takewhile`` operator, the last tested element is included
+    in the sequence.
+
+    The given function takes the item as an argument and returns a boolean
+    corresponding to the condition to meet. The function can either be
+    synchronous or asynchronous.
+    """
+    iscorofunc = asyncio.iscoroutinefunction(func)
+    async with streamcontext(source) as streamer:
+        async for item in streamer:
+            result = func(item)
+            if iscorofunc:
+                result = await result
+            yield item
+            if result:
+                return
+
+
+@operator(pipable=True)
 async def takewhile(source, func):
     """Forward an asynchronous sequence while a condition is met.
+
+    Contrary to the ``until`` operator, the last tested element is not included
+    in the sequence.
 
     The given function takes the item as an argument and returns a boolean
     corresponding to the condition to meet. The function can either be

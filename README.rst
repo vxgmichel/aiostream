@@ -61,7 +61,7 @@ The `stream operators`_ are separated in 7 categories:
 +--------------------+---------------------------------------------------------------------------------------+
 | **transformation** | map_, enumerate_, starmap_, cycle_, chunks_                                           |
 +--------------------+---------------------------------------------------------------------------------------+
-| **selection**      | take_, takelast_, skip_, skiplast_, getitem_, filter_, takewhile_, dropwhile_         |
+| **selection**      | take_, takelast_, skip_, skiplast_, getitem_, filter_, until_, takewhile_, dropwhile_ |
 +--------------------+---------------------------------------------------------------------------------------+
 | **combination**    | map_, zip_, merge_, chain_, ziplatest_                                                |
 +--------------------+---------------------------------------------------------------------------------------+
@@ -165,8 +165,9 @@ Vincent Michel: vxgmichel@gmail.com
 .. _skiplast: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.skiplast
 .. _getitem: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.getitem
 .. _filter: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.filter
-.. _dropwhile: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.dropwhile
+.. _until: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.until
 .. _takewhile: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.takewhile
+.. _dropwhile: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.dropwhile
 
 .. _chain: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.chain
 .. _zip: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.zip
