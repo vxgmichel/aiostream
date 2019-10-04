@@ -94,7 +94,7 @@ def amap(source, corofn, *more_sources, ordered=True, task_limit=None):
     """
 
     def func(*args):
-        return create.just(corofn(*args))
+        return create.call(corofn, *args)
 
     if ordered:
         return advanced.concatmap.raw(
