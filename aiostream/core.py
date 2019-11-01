@@ -126,6 +126,11 @@ class Stream(AsyncIterable, Awaitable):
         from .stream import getitem
         return getitem(self, value)
 
+    # Disable sync iteration
+    # This is necessary because __getitem__ is defined
+    # which is a valid fallback for for-loops in python
+    __iter__ = None
+
     def stream(self):
         """Return a streamer context for safe iteration.
 
