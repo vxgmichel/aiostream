@@ -47,3 +47,19 @@ def test_operator_from_method():
             @classmethod
             async def method(cls, arg):
                 yield 1
+
+
+@pytest.mark.asyncio
+async def test_error_on_sync_iteration(event_loop):
+    xs = stream.range(3)
+
+    # Stream raises a TypeError
+    with pytest.raises(TypeError):
+        for x in xs:
+            assert False
+
+    # Streamer raises a TypeError
+    async with xs.stream() as streamer:
+        with pytest.raises(TypeError):
+            for x in streamer:
+                assert False
