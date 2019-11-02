@@ -117,7 +117,8 @@ class AsyncIteratorContext(AsyncIterator):
                 "AsyncIteratorContext is closed and cannot be iterated")
         if self._state == self._STANDBY:
             warnings.warn(
-                "AsyncIteratorContext is iterated outside of its context")
+                "AsyncIteratorContext is iterated outside of its context",
+                stacklevel=2)
         return anext(self._aiterator)
 
     async def __aenter__(self):
