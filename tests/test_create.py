@@ -107,6 +107,39 @@ async def test_async_iterable(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
+async def test_iterate_from_callback_and_sentinel(assert_run):
+    lst = [None, 3, 2, 1]
+    xs = stream.create.from_callable_and_sentinel(lst.pop, None)
+    await assert_run(xs, [1, 2, 3])
+    assert lst == []
+
+    lst = [None, 3, 2, 1]
+    xs = stream.iterate(lst.pop, None)
+    await assert_run(xs, [1, 2, 3])
+    assert lst == []
+
+
+@pytest.mark.asyncio
+async def test_iterate_from_async_callback_and_sentinel(assert_run):
+    queue = asyncio.Queue()
+    await queue.put(1)
+    await queue.put(2)
+    await queue.put(3)
+    await queue.put(None)
+
+    xs = stream.create.from_callable_and_sentinel(queue.get, None)
+    await assert_run(xs, [1, 2, 3])
+
+    await queue.put(1)
+    await queue.put(2)
+    await queue.put(3)
+    await queue.put(None)
+
+    xs = stream.iterate(queue.get, None)
+    await assert_run(xs, [1, 2, 3])
+
+
+@pytest.mark.asyncio
 async def test_non_iterable(assert_run):
     with pytest.raises(TypeError):
         stream.iterate(None)

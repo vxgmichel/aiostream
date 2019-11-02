@@ -36,8 +36,34 @@ def from_async_iterable(ait):
 
 
 @operator
-def iterate(it):
-    """Generate values from a sychronous or asynchronous iterable."""
+async def from_callable_and_sentinel(callback, sentinel):
+    """Generate values from a callable and a sentinel.
+
+    Similar to ``iter(callable, sentinel)``, but awaits if the provided
+    callable is asynchronous.
+    """
+    while True:
+        if asyncio.iscoroutinefunction(callback):
+            item = await callback()
+        else:
+            item = callback()
+        if item == sentinel:
+            return
+        yield item
+
+
+@operator
+def iterate(*args):
+    """Generate values from a sychronous or asynchronous iterable.
+
+    Alternatively, generate values from a callable and a sentinel,
+    similar to ``ìter(callable, sentinel)``. In this case, the provided
+    callable can either be synchronous or asynchronous.
+    """
+    try:
+        return from_callable_and_sentinel.raw(*args)
+    except TypeError:
+        it, = args
     if is_async_iterable(it):
         return from_async_iterable.raw(it)
     if isinstance(it, Iterable):
