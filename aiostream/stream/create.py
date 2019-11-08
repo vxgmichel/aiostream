@@ -67,7 +67,7 @@ async def just(value):
 
 @operator
 async def call(func, *args, **kwargs):
-    """Call the given and generate a single value.
+    """Call the given function and generate a single value.
 
     Await if the provided function is asynchronous.
     """
