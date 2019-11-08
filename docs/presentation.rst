@@ -1,11 +1,11 @@
 Presentation
 ============
 
-aiostream_ provides a collection of stream operators that can be combined to create
+aiostream_ provides a collection of `stream operators <operators.html>`_ that can be combined to create
 asynchronous pipelines of operations.
 
 It can be seen as an asynchronous version of itertools_, although some aspects are slightly different.
-Essentially, all the provided operators return a unified interface called a stream.
+Essentially, all the provided operators return a unified interface called a `stream <core.html#stream-base-class>`_.
 A stream is an enhanced asynchronous iterable providing the following features:
 
   - **Operator pipe-lining** - using pipe symbol ``|``
