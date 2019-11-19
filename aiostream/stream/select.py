@@ -243,7 +243,7 @@ async def dropwhile(source, func):
     corresponding to the condition to meet. The function can either be
     synchronous or asynchronous.
     """
-    iscorofunc = asyncio.iscoroutinefunction(func)
+    iscorofunc = compat.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)

@@ -71,7 +71,7 @@ async def call(func, *args, **kwargs):
 
     Await if the provided function is asynchronous.
     """
-    if asyncio.iscoroutinefunction(func):
+    if compat.iscoroutinefunction(func):
         yield await func(*args, **kwargs)
     else:
         yield func(*args, **kwargs)

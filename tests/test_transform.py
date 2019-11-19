@@ -2,7 +2,7 @@
 import pytest
 import asyncio
 
-from aiostream import stream, pipe
+from aiostream import stream, pipe, compat
 from aiostream.test_utils import assert_run, event_loop, add_resource
 
 # Pytest fixtures
@@ -37,7 +37,7 @@ async def test_starmap(assert_run, event_loop):
 async def test_cycle(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.empty() | pipe.cycle() | pipe.timeout(1)
-        await assert_run(xs, [], TimeoutError())
+        await assert_run(xs, [], compat.timeout_error())
 
     with event_loop.assert_cleanup():
         xs = (
@@ -46,7 +46,7 @@ async def test_cycle(assert_run, event_loop):
             | pipe.cycle()
             | pipe.timeout(1)
         )
-        await assert_run(xs, [], TimeoutError())
+        await assert_run(xs, [], compat.timeout_error())
 
     with event_loop.assert_cleanup():
         xs = stream.just(1) | add_resource.pipe(1) | pipe.cycle()
