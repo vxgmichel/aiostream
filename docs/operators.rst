@@ -3,18 +3,24 @@ Stream operators
 
 .. module:: aiostream.stream
 
-The stream operators are separated in 7 categories:
+The stream operators produce objects of
+the `Stream <core.html#stream-base-class>`_ class.
+
+They are separated in 7 categories:
 
 .. include:: table.rst.inc
 
 They can be found in the :mod:`aiostream.stream` module.
+
+Custom stream operators can be created using the `@operator <core.html#operator-decorator>`_ decorator.
+
 
 Pipe-lining
 -----------
 
 Most of the operators have a :meth:`pipe` method corresponding to their equivalent pipe operator.
 They are also gathered and accessible through the :mod:`aiostream.pipe` module.
-The pipe operators allow a 2-step instanciation.
+The pipe operators allow a 2-step instantiation.
 
 For instance, the following stream::
 
@@ -28,7 +34,7 @@ and can be written as::
 
   ys = xs | pipe.map(lambda x: x**2)
 
-This synthax comes in handy when several operators are chained::
+This syntax comes in handy when several operators are chained::
 
   ys = (xs
       | pipe.operator1(*args1)
