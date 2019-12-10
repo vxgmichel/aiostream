@@ -19,17 +19,18 @@ async def controlled_anext(streamer, semaphore=None):
         return await anext(streamer)
 
 
-async def streamer_task(source, item_channel, control_channel, semaphore=None):
+async def streamer_task(source, item_channel, semaphore=None):
     # Enter semaphore
     if semaphore is not None:
         async with semaphore:
-            return await streamer_task(source, item_channel, control_channel)
+            return await streamer_task(source, item_channel)
     # Loop over items
+    control_send_channel, control_receive_channel = compat.open_channel(1)
     async with item_channel:
         async with streamcontext(source) as streamer:
             async for item in streamer:
-                await item_channel.send(item)
-                await control_channel.receive()
+                await item_channel.send((control_send_channel, item))
+                await control_receive_channel.receive()
 
 
 # Advanced operators (for streams of higher order)
@@ -48,7 +49,7 @@ async def concat(source, task_limit=None):
     if task_limit is not None and not task_limit > 0:
         raise ValueError('The task limit must be None or greater than 0')
 
-    async def meta_task(group, meta_channel, control_channel, semaphore):
+    async def meta_task(group, meta_channel, semaphore):
         # Controlled context
         async with meta_channel:
             async with streamcontext(source) as streamer:
@@ -69,7 +70,6 @@ async def concat(source, task_limit=None):
                         streamer_task,
                         subsource,
                         send_channel,
-                        control_channel.clone(),
                         semaphore)
 
                     # Let the streamer task start
@@ -82,16 +82,14 @@ async def concat(source, task_limit=None):
         semaphore = None if task_limit is None else compat.create_semaphore(task_limit)
         capacity = float('inf') if task_limit is None else task_limit
         meta_send_channel, meta_receive_channel = compat.open_channel(capacity)
-        control_send_channel, control_receive_channel = compat.open_channel()
-        await group.spawn(
-            meta_task, group, meta_send_channel, control_receive_channel, semaphore)
+        await group.spawn(meta_task, group, meta_send_channel, semaphore)
 
         # Loop over channels
         async for channel in meta_receive_channel:
             # Loop over items
-            async for item in channel:
+            async for control_channel, item in channel:
                 yield item
-                await control_send_channel.send(None)
+                await control_channel.send(None)
 
 
 @operator(pipable=True)
@@ -108,7 +106,7 @@ async def flatten(source, task_limit=None):
     if task_limit is not None and not task_limit > 0:
         raise ValueError('The task limit must be None or greater than 0')
 
-    async def meta_task(group, item_channel, control_channel, semaphore):
+    async def meta_task(group, item_channel, semaphore):
         # Controlled context
         async with item_channel:
             async with streamcontext(source) as streamer:
@@ -127,7 +125,6 @@ async def flatten(source, task_limit=None):
                         streamer_task,
                         subsource,
                         item_channel.clone(),
-                        control_channel.clone(),
                         semaphore)
 
                     # Let the task start
@@ -139,14 +136,12 @@ async def flatten(source, task_limit=None):
         # Create channels and spawn meta task
         semaphore = None if task_limit is None else compat.create_semaphore(task_limit)
         item_send_channel, item_receive_channel = compat.open_channel()
-        control_send_channel, control_receive_channel = compat.open_channel()
-        await group.spawn(
-            meta_task, group, item_send_channel, control_receive_channel, semaphore)
+        await group.spawn(meta_task, group, item_send_channel, semaphore)
 
         # Loop over items
-        async for item in item_receive_channel:
+        async for control_channel, item in item_receive_channel:
             yield item
-            await control_send_channel.send(None)
+            await control_channel.send(None)
 
 
 @operator(pipable=True)
@@ -162,7 +157,7 @@ async def switch(source):
     closed) are propagated.
     """
 
-    async def meta_task(item_channel, control_channel):
+    async def meta_task(item_channel):
         # Controlled context
         async with item_channel:
             async with streamcontext(source) as streamer:
@@ -181,8 +176,7 @@ async def switch(source):
                         await group.spawn(
                             streamer_task,
                             subsource,
-                            item_channel.clone(),
-                            control_channel.clone())
+                            item_channel.clone())
 
                         # Get next subsource
                         try:
@@ -198,14 +192,12 @@ async def switch(source):
 
         # Create channels and spawn meta task
         item_send_channel, item_receive_channel = compat.open_channel()
-        control_send_channel, control_receive_channel = compat.open_channel()
-        await group.spawn(
-            meta_task, item_send_channel, control_receive_channel)
+        await group.spawn(meta_task, item_send_channel)
 
         # Loop over items
-        async for item in item_receive_channel:
+        async for control_channel, item in item_receive_channel:
             yield item
-            await control_send_channel.send(None)
+            await control_channel.send(None)
 
 
 # Advanced *-map operators

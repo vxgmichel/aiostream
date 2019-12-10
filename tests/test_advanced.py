@@ -77,10 +77,11 @@ async def test_switchmap(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.range(0, 30, 10, interval=3)
         ys = xs | pipe.switchmap(lambda x: stream.range(x, x+5, interval=1))
-        await assert_run(ys, [0, 1, 2, 10, 11, 12, 20, 21, 22, 23, 24])
+        await assert_run(ys, [0, 1, 2, 3, 10, 11, 12, 13, 20, 21, 22, 23, 24])
         assert event_loop.steps == [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
     # Test cleanup procedure
+
     with event_loop.assert_cleanup():
         xs = stream.range(0, 5, interval=1)
         ys = xs | pipe.switchmap(lambda x: stream.range(x, x+2, interval=2))

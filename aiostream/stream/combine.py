@@ -41,12 +41,9 @@ async def zip(*sources):
 
     async with compat.create_task_group() as group:
         item_channels = []
-        control_send_channel, control_receive_channel = compat.open_channel(
-            len(sources))
 
         async def task(source, item_channel):
-            await advanced.streamer_task(
-                source, item_channel, control_receive_channel)
+            await advanced.streamer_task(source, item_channel)
             await group.cancel_scope.cancel()
 
         for source in sources:
@@ -55,10 +52,11 @@ async def zip(*sources):
             await group.spawn(task, source, item_send_channel)
 
         while True:
-            items = [await channel.receive() for channel in item_channels]
+            fetched = [await channel.receive() for channel in item_channels]
+            control_channels, items = builtins.zip(*fetched)
             yield tuple(items)
-            for channel in item_channels:
-                await control_send_channel.send(None)
+            for control_channel in control_channels:
+                await control_channel.send(None)
 
 
 @operator(pipable=True)
