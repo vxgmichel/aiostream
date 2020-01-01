@@ -63,3 +63,15 @@ async def test_error_on_sync_iteration(event_loop):
         with pytest.raises(TypeError):
             for x in streamer:
                 assert False
+
+
+@pytest.mark.asyncio
+async def test_error_on_entering_a_stream(event_loop):
+    xs = stream.range(3)
+
+    # Stream raises a TypeError
+    with pytest.raises(TypeError) as ctx:
+        async with xs:
+            assert False
+
+    assert "Use the `stream` method" in str(ctx.value)
