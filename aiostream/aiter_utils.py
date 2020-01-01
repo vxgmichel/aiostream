@@ -104,7 +104,7 @@ class AsyncIteratorContext(AsyncIterator):
         assert_async_iterator(aiterator)
         if isinstance(aiterator, AsyncIteratorContext):
             raise TypeError(
-                f'{aiterator!r} is already an AsyncIteratorContext')
+                f"{aiterator!r} is already an AsyncIteratorContext")
         self._state = self._STANDBY
         self._aiterator = aiterator
 
@@ -114,17 +114,20 @@ class AsyncIteratorContext(AsyncIterator):
     def __anext__(self):
         if self._state == self._FINISHED:
             raise RuntimeError(
-                "AsyncIteratorContext is closed and cannot be iterated")
+                f"{type(self).__name__} is closed and cannot be iterated")
         if self._state == self._STANDBY:
             warnings.warn(
-                "AsyncIteratorContext is iterated outside of its context",
+                f"{type(self).__name__} is iterated outside of its context",
                 stacklevel=2)
         return anext(self._aiterator)
 
     async def __aenter__(self):
+        if self._state == self._RUNNING:
+            raise RuntimeError(
+                f"{type(self).__name__} has already been entered")
         if self._state == self._FINISHED:
             raise RuntimeError(
-                "AsyncIteratorContext is closed and cannot be iterated")
+                f"{type(self).__name__} is closed and cannot be iterated")
         self._state = self._RUNNING
         return self
 
@@ -189,7 +192,7 @@ class AsyncIteratorContext(AsyncIterator):
     async def athrow(self, exc):
         if self._state == self._FINISHED:
             raise RuntimeError(
-                'AsyncIteratorContext is closed and cannot be used')
+                f"{type(self).__name__} is closed and cannot be used")
         return await self._aiterator.athrow(exc)
 
 
