@@ -144,6 +144,17 @@ class Stream(AsyncIterable, Awaitable):
         """
         return self.__aiter__()
 
+    # Advertise the proper synthax for entering a stream context
+
+    __aexit__ = None
+
+    async def __aenter__(self):
+        raise TypeError(
+            "A stream object cannot be used as a context manager. "
+            "Use the `stream` method instead: "
+            "`async with xs.stream() as streamer`"
+        )
+
 
 class Streamer(AsyncIteratorContext, Stream):
     """Enhanced asynchronous iterator context.
