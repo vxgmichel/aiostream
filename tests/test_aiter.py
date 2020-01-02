@@ -59,6 +59,12 @@ class not_an_agen(list):
 async def test_simple_aitercontext(event_loop):
 
     async with aitercontext(agen()) as safe_gen:
+
+        # Cannot enter twice
+        with pytest.raises(RuntimeError):
+            async with safe_gen:
+                pass
+
         it = iter(range(5))
         async for item in safe_gen:
             assert item == next(it)
