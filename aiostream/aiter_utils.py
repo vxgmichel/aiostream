@@ -96,7 +96,6 @@ class AsyncIteratorContext(AsyncIterator):
 
     _STANDBY = "STANDBY"
     _RUNNING = "RUNNING"
-    _EXHAUSTED = "EXHAUSTED"
     _FINISHED = "FINISHED"
 
     def __init__(self, aiterator):
@@ -151,15 +150,8 @@ class AsyncIteratorContext(AsyncIterator):
     async def __anext__(self):
         # Unsafe iteration
         if self._state == self._STANDBY:
-<<<<<<< HEAD
-            warnings.warn(
-                f"{type(self).__name__} is iterated outside of its context",
-                stacklevel=2)
-            await self.__aenter__()
-=======
             raise RuntimeError(
-                "AsyncIteratorContext is iterated outside of its context")
->>>>>>> Simplify exception logic in AsyncIteratorContext
+                f"{type(self).__name__} is iterated outside of its context")
 
         # Closed context
         if self._state == self._FINISHED:
@@ -178,7 +170,6 @@ class AsyncIteratorContext(AsyncIterator):
             # Unwrap the result
             return result.unwrap()
 
-
     async def __aenter__(self):
         if self._state in self._RUNNING:
             raise RuntimeError(
@@ -188,29 +179,30 @@ class AsyncIteratorContext(AsyncIterator):
                 f"{type(self).__name__} is closed and cannot be entered")
         self._state = self._RUNNING
 
-        await self._sync_sender.__aenter__()
         await self._task_group.__aenter__()
         await self._task_group.spawn(self._task_target)
         return self
 
     async def __aexit__(self, typ, value, traceback):
+        # Idempotency
+        if self._state == self._FINISHED:
+            return
+
+        # Make sure the task group is exited
         try:
-            if self._state == self._FINISHED:
-                return
-            try:
-                try:
-                    if typ in (None, GeneratorExit):
-                        await self._task_group.cancel_scope.cancel()
-                finally:
-                    if typ is GeneratorExit:
-                        await self._task_group.__aexit__(None, None, None)
-                    else:
-                        await self._task_group.__aexit__(typ, value, traceback)
-            finally:
-                await self._sync_sender.__aexit__(*sys.exc_info())
+
+            # Throwing a GeneratorExit into the cancel scope is not a good idea
+            if typ is GeneratorExit:
+                typ, value, traceback = None, None, None
+
+            # Cancel the task group if necessary
+            if typ is None:
+                await self._task_group.cancel_scope.cancel()
+
+        # Perform the task group teardown
         finally:
             self._state = self._FINISHED
->>>>>>> Re-implement async iterator context
+            await self._task_group.__aexit__(typ, value, traceback)
 
 
 def aitercontext(aiterable, *, cls=AsyncIteratorContext):
