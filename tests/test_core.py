@@ -1,14 +1,10 @@
 import pytest
 
-from aiostream.test_utils import event_loop, add_resource
 from aiostream import stream, streamcontext, operator
-
-# Pytest fixtures
-event_loop
 
 
 @pytest.mark.asyncio
-async def test_streamcontext(event_loop):
+async def test_streamcontext(event_loop, add_resource):
 
     with event_loop.assert_cleanup():
         xs = stream.range(3) | add_resource.pipe(1)

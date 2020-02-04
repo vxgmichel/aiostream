@@ -6,26 +6,31 @@ from contextlib import contextmanager
 
 import pytest
 
+from . import compat
 from .core import StreamEmpty, operator, streamcontext
 
 __all__ = ['add_resource', 'assert_run', 'event_loop']
 
 
-@operator(pipable=True)
-async def add_resource(source, cleanup_time):
-    """Simulate an open resource in a stream operator."""
-    try:
-        loop = asyncio.get_event_loop()
-        loop.open_resources += 1
-        loop.resources += 1
-        async with streamcontext(source) as streamer:
-            async for item in streamer:
-                yield item
-    finally:
+@pytest.fixture
+def add_resource(event_loop):
+
+    @operator(pipable=True)
+    async def add_resource(source, cleanup_time):
+        """Simulate an open resource in a stream operator."""
         try:
-            await asyncio.sleep(cleanup_time)
+            event_loop.open_resources += 1
+            event_loop.resources += 1
+            async with streamcontext(source) as streamer:
+                async for item in streamer:
+                    yield item
         finally:
-            loop.open_resources -= 1
+            try:
+                await compat.sleep(cleanup_time)
+            finally:
+                event_loop.open_resources -= 1
+
+    return add_resource
 
 
 def compare_exceptions(exc1, exc2):

@@ -3,14 +3,10 @@ import asyncio
 import pytest
 
 from aiostream import stream, pipe
-from aiostream.test_utils import assert_run, event_loop, add_resource
-
-# Pytest fixtures
-assert_run, event_loop
 
 
 @pytest.mark.asyncio
-async def test_take(assert_run, event_loop):
+async def test_take(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.count() | add_resource.pipe(1) | pipe.take(3)
         await assert_run(xs, [0, 1, 2])
@@ -21,19 +17,19 @@ async def test_take(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_takelast(assert_run, event_loop):
+async def test_takelast(assert_run, event_loop, add_resource):
     xs = stream.range(10) | add_resource.pipe(1) | pipe.takelast(3)
     await assert_run(xs, [7, 8, 9])
 
 
 @pytest.mark.asyncio
-async def test_skip(assert_run, event_loop):
+async def test_skip(assert_run, event_loop, add_resource):
     xs = stream.range(10) | add_resource.pipe(1) | pipe.skip(8)
     await assert_run(xs, [8, 9])
 
 
 @pytest.mark.asyncio
-async def test_skiplast(assert_run, event_loop):
+async def test_skiplast(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(10) | add_resource.pipe(1) | pipe.skiplast(8)
         await assert_run(xs, [0, 1])
@@ -44,7 +40,7 @@ async def test_skiplast(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_filterindex(assert_run, event_loop):
+async def test_filterindex(assert_run, event_loop, add_resource):
     filterindex = stream.select.filterindex
     xs = (stream.range(10)
           | add_resource.pipe(1)
@@ -53,7 +49,7 @@ async def test_filterindex(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_slice(assert_run, event_loop):
+async def test_slice(assert_run, event_loop, add_resource):
     slice = stream.select.slice
 
     with event_loop.assert_cleanup():
@@ -88,7 +84,7 @@ async def test_slice(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_item(assert_run, event_loop):
+async def test_item(assert_run, event_loop, add_resource):
     item = stream.select.item
 
     with event_loop.assert_cleanup():
@@ -111,7 +107,7 @@ async def test_item(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_getitem(assert_run, event_loop):
+async def test_getitem(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(5) | add_resource.pipe(1) | pipe.getitem(2)
         await assert_run(xs, [2])
@@ -143,7 +139,7 @@ async def test_getitem(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_filter(assert_run, event_loop):
+async def test_filter(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = (stream.range(1, 10)
               | add_resource.pipe(1)
@@ -163,7 +159,7 @@ async def test_filter(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_until(assert_run, event_loop):
+async def test_until(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = (stream.range(1, 10)
               | add_resource.pipe(1)
@@ -183,7 +179,7 @@ async def test_until(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_takewhile(assert_run, event_loop):
+async def test_takewhile(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = (stream.range(1, 10)
               | add_resource.pipe(1)
@@ -203,7 +199,7 @@ async def test_takewhile(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_dropwhile(assert_run, event_loop):
+async def test_dropwhile(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = (stream.range(1, 10)
               | add_resource.pipe(1)

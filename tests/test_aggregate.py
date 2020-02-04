@@ -4,14 +4,10 @@ import asyncio
 import operator
 
 from aiostream import stream, pipe
-from aiostream.test_utils import assert_run, event_loop, add_resource
-
-# Pytest fixtures
-assert_run, event_loop
 
 
 @pytest.mark.asyncio
-async def test_aggregate(assert_run, event_loop):
+async def test_aggregate(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(5) | add_resource.pipe(1) | pipe.accumulate()
         await assert_run(xs, [0, 1, 3, 6, 10])
@@ -36,7 +32,7 @@ async def test_aggregate(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_reduce(assert_run, event_loop):
+async def test_reduce(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(5) | add_resource.pipe(1) | pipe.reduce(min)
         await assert_run(xs, [0])
@@ -51,7 +47,7 @@ async def test_reduce(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_list(assert_run, event_loop):
+async def test_list(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(3) | add_resource.pipe(1) | pipe.list()
         await assert_run(xs, [[], [0], [0, 1], [0, 1, 2]])

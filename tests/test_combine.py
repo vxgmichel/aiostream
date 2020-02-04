@@ -3,14 +3,10 @@ import pytest
 import asyncio
 
 from aiostream import stream, pipe, async_, await_, compat
-from aiostream.test_utils import assert_run, event_loop, add_resource
-
-# Pytest fixtures
-assert_run, event_loop
 
 
 @pytest.mark.asyncio
-async def test_chain(assert_run, event_loop):
+async def test_chain(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(5) + stream.range(5, 10)
         await assert_run(xs, list(range(10)))
@@ -22,7 +18,7 @@ async def test_chain(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_zip(assert_run, event_loop):
+async def test_zip(assert_run, event_loop, add_resource):
     xs = stream.range(5) | add_resource.pipe(1.0)
     ys = xs | pipe.zip(xs, xs)
     expected = [(x,)*3 for x in range(5)]

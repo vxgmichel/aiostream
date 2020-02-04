@@ -3,10 +3,6 @@ import pytest
 import asyncio
 
 from aiostream import stream, pipe, compat
-from aiostream.test_utils import assert_run, event_loop, add_resource
-
-# Pytest fixtures
-assert_run, event_loop
 
 
 @pytest.mark.asyncio
@@ -34,7 +30,7 @@ async def test_starmap(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_cycle(assert_run, event_loop):
+async def test_cycle(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.empty() | pipe.cycle() | pipe.timeout(1)
         await assert_run(xs, [], compat.timeout_error())
@@ -55,7 +51,7 @@ async def test_cycle(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_chunks(assert_run, event_loop):
+async def test_chunks(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(3, interval=1) | pipe.chunks(3)
         await assert_run(xs, [[0, 1, 2]])

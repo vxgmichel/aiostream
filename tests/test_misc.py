@@ -5,14 +5,10 @@ import pytest
 import asyncio
 
 from aiostream import stream, pipe
-from aiostream.test_utils import assert_run, event_loop, add_resource
-
-# Pytest fixtures
-assert_run, event_loop
 
 
 @pytest.mark.asyncio
-async def test_action(assert_run, event_loop):
+async def test_action(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         lst = []
         xs = stream.range(3) | add_resource.pipe(1) | pipe.action(lst.append)
@@ -29,7 +25,7 @@ async def test_action(assert_run, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_print(assert_run, event_loop):
+async def test_print(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         f = io.StringIO()
         xs = stream.range(3) | add_resource.pipe(1) | pipe.print(file=f)

@@ -1,15 +1,10 @@
 
 import pytest
-import asyncio
 from aiostream import stream, pipe, compat
-from aiostream.test_utils import assert_run, event_loop
-
-# Pytest fixtures
-assert_run, event_loop
 
 
 @pytest.mark.asyncio
-async def test_just(assert_run):
+async def test_just(assert_run, event_loop):
     value = 3
     xs = stream.just(value)
     await assert_run(xs, [3])
@@ -95,7 +90,8 @@ async def test_async_iterable(assert_run, event_loop):
 
     async def agen():
         for x in range(2, 5):
-            yield await asyncio.sleep(1.0, result=x**2)
+            await compat.sleep(1.0)
+            yield x**2
 
     xs = stream.create.from_async_iterable(agen())
     await assert_run(xs, [4, 9, 16])
