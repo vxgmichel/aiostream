@@ -3,18 +3,14 @@
 import sys
 import warnings
 import functools
-from . import compat
 from collections.abc import AsyncIterator
 
-try:
-    from contextlib import AsyncExitStack
-except ImportError:  # pragma: no cover
-    from async_exit_stack import AsyncExitStack
+from . import compat
 
 __all__ = ['aiter', 'anext', 'await_', 'async_',
            'is_async_iterable', 'assert_async_iterable',
            'is_async_iterator', 'assert_async_iterator',
-           'AsyncIteratorContext', 'aitercontext', 'AsyncExitStack']
+           'AsyncIteratorContext', 'aitercontext']
 
 
 # Magic method shorcuts
