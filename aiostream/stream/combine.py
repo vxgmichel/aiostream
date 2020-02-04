@@ -43,8 +43,9 @@ async def zip(*sources):
         item_channels = []
 
         async def task(source, item_channel):
-            await advanced.streamer_task(source, item_channel)
-            await group.cancel_scope.cancel()
+            await advanced.streamer_task(
+                source, item_channel, cancel=group.cancel_scope
+            )
 
         for source in sources:
             item_send_channel, item_receive_channel = compat.open_channel()

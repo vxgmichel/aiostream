@@ -6,7 +6,11 @@ from asyncio import iscoroutinefunction
 import anyio
 import sniffio
 
-from async_generator import asynccontextmanager
+try:
+    from contextlib import asynccontextmanager
+except ImportError:
+    from async_generator import asynccontextmanager  # pragma: no cover
+
 from anyio import (
     create_task_group, create_semaphore, open_cancel_scope, create_lock
 )
@@ -34,16 +38,15 @@ async def time():
 @asynccontextmanager
 async def safe_generator(obj):
     asynclib = sniffio.current_async_library()
-    if asynclib != 'curio' or not inspect.isasyncgen(obj):
-        yield
-        return
-
-    import curio
-    curio.meta.finalize._finalized.add(obj)
-    try:
+    if asynclib == 'curio' and inspect.isasyncgen(obj):
+        import curio
+        curio.meta.finalize._finalized.add(obj)
+        try:
+            yield obj
+        finally:
+            curio.meta.finalize._finalized.discard(obj)
+    else:
         yield obj
-    finally:
-        curio.meta.finalize._finalized.discard(obj)
 
 
 def timeout_error():
@@ -57,7 +60,7 @@ def timeout_error():
     if asynclib == 'curio':
         import curio
         return curio.TaskTimeout()
-    raise RuntimeError("Asynclib detection failed")
+    raise RuntimeError("Asynclib detection failed")  # pragma: no cover
 
 
 def fail_after(*args, **kwargs):

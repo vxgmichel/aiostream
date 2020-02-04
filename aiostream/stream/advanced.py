@@ -19,7 +19,7 @@ async def controlled_anext(streamer, semaphore=None):
         return await anext(streamer)
 
 
-async def streamer_task(source, item_channel, semaphore=None):
+async def streamer_task(source, item_channel, semaphore=None, cancel=None):
     # Enter semaphore
     if semaphore is not None:
         async with semaphore:
@@ -31,6 +31,8 @@ async def streamer_task(source, item_channel, semaphore=None):
             async for item in streamer:
                 await item_channel.send((control_send_channel, item))
                 await control_receive_channel.receive()
+            if cancel is not None:
+                await cancel.cancel()
 
 
 # Advanced operators (for streams of higher order)

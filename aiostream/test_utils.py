@@ -81,7 +81,7 @@ def assert_run(request, event_loop):
 
 
 @pytest.fixture
-def event_loop(anyio_backend, monkeypatch, autojump_clock):
+def event_loop(anyio_backend, monkeypatch):
     """Fixture providing a test event loop.
 
     The event loop simulate and records the sleep operation,
@@ -152,7 +152,7 @@ class ResourceMixin:
 class NotAnActualLoop(ResourceMixin):
 
     def monotonic(self):
-        return time.monotonic() * 1000
+        return time.monotonic() * 20
 
     def clear(self):
         super().clear()
