@@ -6,12 +6,17 @@ import sniffio
 
 from async_generator import asynccontextmanager
 from anyio import (
-    sleep, create_task_group, create_semaphore, open_cancel_scope, create_lock
+    create_task_group, create_semaphore, open_cancel_scope, create_lock
 )
 
 __all__ = ['iscoroutinefunction', 'time', 'sleep_forever', 'open_channel',
            'sleep', 'fail_after', 'create_task_group', 'create_semaphore',
            'open_cancel_scope', 'create_lock']
+
+
+async def sleep(time, result=None):
+    await anyio.sleep(time)
+    return result
 
 
 async def sleep_forever():
@@ -48,7 +53,7 @@ async def fail_after(*args, **kwargs):
 
 
 def open_channel(capacity=0):
-    asynclib = anyio.sniffio.current_async_library()
+    asynclib = sniffio.current_async_library()
     if asynclib == 'trio':
         import trio
         return trio.open_memory_channel(capacity)

@@ -1,20 +1,16 @@
 
 
 import pytest
-import asyncio
 
-from aiostream.test_utils import event_loop
+from aiostream import compat
 from aiostream.aiter_utils import AsyncIteratorContext, aitercontext, anext
-
-# Pytest fixtures
-event_loop
 
 
 # Some async iterators for testing
 
 async def agen():
     for x in range(5):
-        await asyncio.sleep(1)
+        await compat.sleep(1)
         yield x
 
 
@@ -55,7 +51,7 @@ class not_an_agen(list):
 
 # Tests
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_simple_aitercontext(event_loop):
 
     async with aitercontext(agen()) as safe_gen:
@@ -81,7 +77,7 @@ async def test_simple_aitercontext(event_loop):
             pass
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_aitercontext_wrong_usage(event_loop):
     safe_gen = aitercontext(agen())
     with pytest.raises(RuntimeError):
@@ -99,7 +95,7 @@ async def test_aitercontext_wrong_usage(event_loop):
                 pass
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_raise_in_aitercontext(event_loop):
     with pytest.raises(ZeroDivisionError):
         async with aitercontext(agen()) as safe_gen:
@@ -124,7 +120,7 @@ async def test_raise_in_aitercontext(event_loop):
             raise GeneratorExit
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_not_an_agen_in_aitercontext(event_loop):
     async with aitercontext(not_an_agen([1])) as safe_gen:
         async for item in safe_gen:

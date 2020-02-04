@@ -3,8 +3,8 @@ import pytest
 from aiostream import stream, pipe, compat
 
 
-@pytest.mark.asyncio
-async def test_just(assert_run, event_loop):
+@pytest.mark.anyio
+async def test_just(assert_run):
     value = 3
     xs = stream.just(value)
     await assert_run(xs, [3])
@@ -16,7 +16,7 @@ async def test_just(assert_run, event_loop):
     await assert_run(xs, [4])
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_call(assert_run):
 
     def myfunc(a, b, c=0, d=4):
@@ -32,27 +32,27 @@ async def test_call(assert_run):
     await assert_run(xs, [(1, 2, 3, 4)])
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_throw(assert_run):
     exception = RuntimeError('Oops')
     xs = stream.throw(exception)
     await assert_run(xs, [], exception)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_empty(assert_run):
     xs = stream.empty()
     await assert_run(xs, [])
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_never(assert_run, event_loop):
     xs = stream.never() | pipe.timeout(30.)
     await assert_run(xs, [], compat.timeout_error())
     assert event_loop.steps == [30.]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_repeat(assert_run):
     xs = stream.repeat(1, 3)
     await assert_run(xs, [1, 1, 1])
@@ -61,20 +61,20 @@ async def test_repeat(assert_run):
     await assert_run(xs, [2, 2, 2, 2])
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_range(assert_run, event_loop):
     xs = stream.range(3, 10, 2, interval=1.0)
     await assert_run(xs, [3, 5, 7, 9])
     assert event_loop.steps == [1, 1, 1]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_count(assert_run):
     xs = stream.count(3, 2)[:4]
     await assert_run(xs, [3, 5, 7, 9])
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_iterable(assert_run):
     lst = [9, 4, 8, 3, 1]
 
@@ -85,7 +85,7 @@ async def test_iterable(assert_run):
     await assert_run(xs, lst)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_async_iterable(assert_run, event_loop):
 
     async def agen():
@@ -102,7 +102,7 @@ async def test_async_iterable(assert_run, event_loop):
     assert event_loop.steps == [1.0, 1.0, 1.0]*2
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_non_iterable(assert_run):
     with pytest.raises(TypeError):
         stream.iterate(None)
@@ -111,7 +111,7 @@ async def test_non_iterable(assert_run):
         stream.create.from_async_iterable(None)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_preserve(assert_run, event_loop):
 
     async def agen():

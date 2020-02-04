@@ -1,7 +1,7 @@
 """Utilities for testing stream operators."""
 
 import asyncio
-from unittest.mock import Mock
+from unittest.mock import Mock, ANY
 from contextlib import contextmanager
 
 import pytest
@@ -73,13 +73,13 @@ async def assert_await(source, values, exception=None):
 @pytest.fixture(
     params=[assert_aiter, assert_await],
     ids=['aiter', 'await'])
-def assert_run(request):
+def assert_run(request, event_loop):
     """Parametrized fixture returning a stream runner."""
     return request.param
 
 
 @pytest.fixture
-def event_loop():
+def event_loop(anyio_backend, monkeypatch, autojump_clock):
     """Fixture providing a test event loop.
 
     The event loop simulate and records the sleep operation,
@@ -89,7 +89,46 @@ def event_loop():
     all released before the loop is closed.
     """
 
-    class TimeTrackingTestLoop(asyncio.BaseEventLoop):
+    backend_options = {
+        "asyncio": {"use_uvloop": False},
+        "trio": {"clock": autojump_clock}
+    }[anyio_backend]
+
+    def patched_run(*args, **kwargs):
+        kwargs = {"backend_options": backend_options, **kwargs}
+        return compat.anyio.run(*args, **kwargs)
+
+    monkeypatch.setattr("anyio.pytest_plugin.run", patched_run)
+
+    class ResourceMixin:
+
+        def clear(self):
+            self.steps = []
+            self.open_resources = 0
+            self.resources = 0
+            self.busy_count = 0
+
+        @contextmanager
+        def assert_cleanup(self):
+            self.clear()
+            yield self
+            assert self.open_resources == 0
+            self.clear()
+
+    if anyio_backend in ("trio", "curio"):
+
+        class NotAnActualLoop(ResourceMixin):
+
+            def clear(self):
+                super().clear()
+                self.steps = ANY
+
+        loop = NotAnActualLoop()
+        with loop.assert_cleanup():
+            yield loop
+        return
+
+    class TimeTrackingTestLoop(asyncio.BaseEventLoop, ResourceMixin):
 
         stuck_threshold = 100
 
@@ -142,21 +181,6 @@ def event_loop():
         @property
         def time_to_go(self):
             return self._timers and (self.stuck or not self._ready)
-
-        # Resource management
-
-        def clear(self):
-            self.steps = []
-            self.open_resources = 0
-            self.resources = 0
-            self.busy_count = 0
-
-        @contextmanager
-        def assert_cleanup(self):
-            self.clear()
-            yield self
-            assert self.open_resources == 0
-            self.clear()
 
     loop = TimeTrackingTestLoop()
     asyncio.set_event_loop(loop)

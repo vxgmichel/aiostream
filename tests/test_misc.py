@@ -2,12 +2,11 @@
 
 import io
 import pytest
-import asyncio
 
-from aiostream import stream, pipe
+from aiostream import stream, pipe, async_, compat
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_action(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         lst = []
@@ -16,15 +15,15 @@ async def test_action(assert_run, event_loop, add_resource):
         assert lst == [0, 1, 2]
 
     with event_loop.assert_cleanup():
-        queue = asyncio.Queue()
-        xs = stream.range(3) | add_resource.pipe(1) | pipe.action(queue.put)
+        queue = compat.anyio.create_queue(0)
+        xs = stream.range(3) | add_resource.pipe(1) | pipe.action(async_(queue.put))
         await assert_run(xs, [0, 1, 2])
         assert queue.get_nowait() == 0
         assert queue.get_nowait() == 1
         assert queue.get_nowait() == 2
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_print(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         f = io.StringIO()

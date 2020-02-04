@@ -7,7 +7,7 @@ from aiostream.test_utils import assert_run, event_loop
 assert_run, event_loop
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_concatmap(assert_run, event_loop):
     # Concurrent run
     with event_loop.assert_cleanup():
@@ -43,7 +43,7 @@ async def test_concatmap(assert_run, event_loop):
         assert event_loop.steps == [1, 1, 1]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_flatmap(assert_run, event_loop):
     # Concurrent run
     with event_loop.assert_cleanup():
@@ -71,7 +71,7 @@ async def test_flatmap(assert_run, event_loop):
         assert event_loop.steps == [1, 4, 1, 5]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_switchmap(assert_run, event_loop):
 
     with event_loop.assert_cleanup():

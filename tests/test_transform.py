@@ -1,11 +1,10 @@
 
 import pytest
-import asyncio
 
 from aiostream import stream, pipe, compat
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_starmap(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.range(5)
@@ -17,19 +16,19 @@ async def test_starmap(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.range(1, 4)
         ys = stream.range(1, 4)
-        zs = xs | pipe.zip(ys) | pipe.starmap(asyncio.sleep)
+        zs = xs | pipe.zip(ys) | pipe.starmap(compat.sleep)
         await assert_run(zs, [1, 2, 3])
         assert event_loop.steps == [1, 1, 1]
 
     with event_loop.assert_cleanup():
         xs = stream.range(1, 4)
         ys = stream.range(1, 4)
-        zs = xs | pipe.zip(ys) | pipe.starmap(asyncio.sleep, task_limit=1)
+        zs = xs | pipe.zip(ys) | pipe.starmap(compat.sleep, task_limit=1)
         await assert_run(zs, [1, 2, 3])
         assert event_loop.steps == [1, 2, 3]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_cycle(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.empty() | pipe.cycle() | pipe.timeout(1)
@@ -50,7 +49,7 @@ async def test_cycle(assert_run, event_loop, add_resource):
         assert event_loop.steps == [1]*5
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_chunks(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(3, interval=1) | pipe.chunks(3)

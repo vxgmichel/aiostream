@@ -5,7 +5,7 @@ import pytest
 from aiostream import stream, pipe, compat
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_timeout(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.range(3) | pipe.timeout(5)

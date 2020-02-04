@@ -23,7 +23,11 @@ setup(
         'sniffio>=1.1.0,<2',
         'async_generator>=1.10,<2',
     ],
-    tests_require=['pytest', 'pytest-asyncio', 'pytest-cov'],
+    tests_require=[
+        'pytest',
+        'pytest-trio',
+        'pytest-asyncio',
+        'pytest-cov'],
 
     description="Generator-based operators for asynchronous iteration",
     long_description=long_description,
