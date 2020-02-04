@@ -18,9 +18,9 @@ async def test_action(assert_run, event_loop, add_resource):
         queue = compat.anyio.create_queue(0)
         xs = stream.range(3) | add_resource.pipe(1) | pipe.action(async_(queue.put))
         await assert_run(xs, [0, 1, 2])
-        assert queue.get_nowait() == 0
-        assert queue.get_nowait() == 1
-        assert queue.get_nowait() == 2
+        assert await queue.get() == 0
+        assert await queue.get() == 1
+        assert await queue.get() == 2
 
 
 @pytest.mark.anyio

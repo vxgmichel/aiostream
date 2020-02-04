@@ -34,11 +34,9 @@ async def timeout(source, timeout):
         while True:
             try:
                 async with compat.fail_after(timeout):
-                    item = await anext(streamer)
+                    yield await anext(streamer)
             except StopAsyncIteration:
                 break
-            else:
-                yield item
 
 
 @operator(pipable=True)

@@ -1,6 +1,8 @@
-from asyncio import iscoroutinefunction
 
 import math
+import inspect
+from asyncio import iscoroutinefunction
+
 import anyio
 import sniffio
 
@@ -29,6 +31,21 @@ async def time():
     return await anyio.current_time()
 
 
+@asynccontextmanager
+async def safe_generator(obj):
+    asynclib = sniffio.current_async_library()
+    if asynclib != 'curio' or not inspect.isasyncgen(obj):
+        yield
+        return
+
+    import curio
+    curio.meta.finalize._finalized.add(obj)
+    try:
+        yield obj
+    finally:
+        curio.meta.finalize._finalized.discard(obj)
+
+
 def timeout_error():
     asynclib = sniffio.current_async_library()
     if asynclib == 'asyncio':
@@ -39,17 +56,25 @@ def timeout_error():
         return trio.TooSlowError()
     if asynclib == 'curio':
         import curio
-        return curio.TimeoutError()
+        return curio.TaskTimeout()
     raise RuntimeError("Asynclib detection failed")
 
 
-@asynccontextmanager
-async def fail_after(*args, **kwargs):
-    try:
-        async with anyio.fail_after(*args, **kwargs) as value:
-            yield value
-    except TimeoutError:
-        raise timeout_error()
+def fail_after(*args, **kwargs):
+
+    async def _fail_after():
+        try:
+            async with anyio.fail_after(*args, **kwargs) as value:
+                yield value
+        except TimeoutError:
+            raise timeout_error()
+
+    asynclib = sniffio.current_async_library()
+    if asynclib == 'curio':
+        import curio.meta
+        _fail_after = curio.meta.safe_generator(_fail_after)
+
+    return asynccontextmanager(_fail_after)()
 
 
 def open_channel(capacity=0):

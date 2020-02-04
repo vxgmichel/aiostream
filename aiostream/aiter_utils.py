@@ -111,8 +111,9 @@ class AsyncIteratorContext(AsyncIterator):
         self._sync_sender, self._sync_receiver = compat.open_channel()
 
     async def _task_target(self):
+
         # Control the memory channel
-        async with self._item_sender:
+        async with self._item_sender, compat.safe_generator(self._aiterator):
 
             # Control aiterator life span
             try:
@@ -180,6 +181,7 @@ class AsyncIteratorContext(AsyncIterator):
 
         await self._task_group.__aenter__()
         await self._task_group.spawn(self._task_target)
+
         return self
 
     async def __aexit__(self, typ, value, traceback):

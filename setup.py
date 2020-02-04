@@ -25,9 +25,10 @@ setup(
     ],
     tests_require=[
         'pytest',
-        'pytest-trio',
         'pytest-asyncio',
-        'pytest-cov'],
+        'pytest-cov',
+        'trio',
+        'curio'],
 
     description="Generator-based operators for asynchronous iteration",
     long_description=long_description,
