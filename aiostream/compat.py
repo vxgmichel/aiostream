@@ -2,7 +2,9 @@ from asyncio import iscoroutinefunction
 
 import math
 import anyio
-from anyio._backends._asyncio import asynccontextmanager
+import sniffio
+
+from async_generator import asynccontextmanager
 from anyio import (
     sleep, create_task_group, create_semaphore, open_cancel_scope, create_lock
 )
@@ -23,7 +25,7 @@ async def time():
 
 
 def timeout_error():
-    asynclib = anyio.sniffio.current_async_library()
+    asynclib = sniffio.current_async_library()
     if asynclib == 'asyncio':
         import asyncio
         return asyncio.TimeoutError()

@@ -17,7 +17,12 @@ setup(
 
     packages=['aiostream', 'aiostream.stream'],
     setup_requires=['pytest-runner' if TESTING else ''],
-    install_requires=['anyio', 'async_exit_stack;python_version<"3.7"'],
+    install_requires=[
+        'anyio>=1.2.3,<2',
+        'outcome>=1.0.1,<2',
+        'sniffio>=1.1.0,<2',
+        'async_generator>=1.10,<2',
+    ],
     tests_require=['pytest', 'pytest-asyncio', 'pytest-cov'],
 
     description="Generator-based operators for asynchronous iteration",
