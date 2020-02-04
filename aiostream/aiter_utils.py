@@ -141,7 +141,7 @@ class AsyncIteratorContext(AsyncIterator):
                             await aclose()
 
                     # Work around bpo-35409
-                    except GeneratorExit:
+                    except GeneratorExit:  # pragma: no cover
                         pass
 
     def __aiter__(self):

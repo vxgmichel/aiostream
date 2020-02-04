@@ -112,10 +112,10 @@ def event_loop():
                 self.busy_count = 0
 
         def _process_events(self, event_list):
-            return
+            return  # pragma: no cover
 
         def _write_to_self(self):
-            return
+            return  # pragma: no cover
 
         # Time management
 

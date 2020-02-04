@@ -93,6 +93,11 @@ async def test_aitercontext_wrong_usage(event_loop):
     with pytest.raises(TypeError):
         AsyncIteratorContext(safe_gen)
 
+    async with safe_gen:
+        with pytest.raises(RuntimeError):
+            async with safe_gen:
+                pass
+
 
 @pytest.mark.asyncio
 async def test_raise_in_aitercontext(event_loop):

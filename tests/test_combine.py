@@ -84,6 +84,10 @@ async def test_map(assert_run, event_loop):
     with pytest.raises(ValueError):
         await (stream.range(1, 4) | pipe.map(asyncio.sleep, task_limit=0))
 
+    with pytest.raises(ValueError):
+        await (stream.range(1, 4)
+               | pipe.map(asyncio.sleep, task_limit=0, ordered=False))
+
     # Break
     with event_loop.assert_cleanup():
         xs = stream.count(1)

@@ -75,6 +75,12 @@ async def test_flatmap(assert_run, event_loop):
 async def test_switchmap(assert_run, event_loop):
 
     with event_loop.assert_cleanup():
+        xs = stream.empty()
+        ys = xs | pipe.switchmap(lambda x: stream.range(x, x+5, interval=1))
+        await assert_run(ys, [])
+        assert event_loop.steps == []
+
+    with event_loop.assert_cleanup():
         xs = stream.range(0, 30, 10, interval=3)
         ys = xs | pipe.switchmap(lambda x: stream.range(x, x+5, interval=1))
         await assert_run(ys, [0, 1, 2, 3, 10, 11, 12, 13, 20, 21, 22, 23, 24])
