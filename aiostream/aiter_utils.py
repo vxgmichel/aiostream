@@ -1,6 +1,5 @@
 """Utilities for asynchronous iteration."""
 
-import sys
 import functools
 from collections.abc import AsyncIterator
 

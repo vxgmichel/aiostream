@@ -31,9 +31,9 @@ async def add_resource(source, cleanup_time):
 def compare_exceptions(exc1, exc2):
     """Compare two exceptions together."""
     return (
-        exc1 == exc2 or
-        exc1.__class__ == exc2.__class__ and
-        exc1.args == exc2.args)
+        exc1 == exc2
+        or exc1.__class__ == exc2.__class__
+        and exc1.args == exc2.args)
 
 
 async def assert_aiter(source, values, exception=None):

@@ -193,7 +193,8 @@ def ziplatest(*sources, partial=True, default=None):
 
     # Filter partial result
     filtered = accumulated if partial else select.filter.raw(
-            accumulated, lambda x: len(x) == n)
+        accumulated, lambda x: len(x) == n
+    )
 
     # Convert the state dict to a tuple
     return smap.raw(
