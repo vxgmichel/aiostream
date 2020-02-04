@@ -84,7 +84,7 @@ async def test_simple_aitercontext(event_loop):
 @pytest.mark.asyncio
 async def test_aitercontext_wrong_usage(event_loop):
     safe_gen = aitercontext(agen())
-    with pytest.warns(UserWarning):
+    with pytest.raises(RuntimeError):
         await anext(safe_gen)
 
     with pytest.raises(TypeError):

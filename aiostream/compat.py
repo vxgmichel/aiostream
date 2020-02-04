@@ -3,11 +3,11 @@ from asyncio import iscoroutinefunction
 import math
 import anyio
 from anyio._backends._asyncio import asynccontextmanager
-from anyio import sleep, create_task_group, create_semaphore, open_cancel_scope
+from anyio import sleep, create_task_group, create_semaphore, open_cancel_scope, create_lock
 
 __all__ = ['iscoroutinefunction', 'time', 'sleep_forever', 'open_channel',
            'sleep', 'fail_after', 'create_task_group', 'create_semaphore',
-           'open_cancel_scope']
+           'open_cancel_scope', 'create_lock']
 
 
 async def sleep_forever():

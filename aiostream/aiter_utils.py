@@ -1,9 +1,10 @@
 """Utilities for asynchronous iteration."""
 
 import sys
-import warnings
 import functools
 from collections.abc import AsyncIterator
+
+import outcome
 
 from . import compat
 
@@ -95,9 +96,8 @@ class AsyncIteratorContext(AsyncIterator):
 
     _STANDBY = "STANDBY"
     _RUNNING = "RUNNING"
-    _FINISHED = "FINISHED"
-    _BUSY = "BUSY"
     _EXHAUSTED = "EXHAUSTED"
+    _FINISHED = "FINISHED"
 
     def __init__(self, aiterator):
         """Initialize with an asynchronous iterator."""
@@ -107,6 +107,7 @@ class AsyncIteratorContext(AsyncIterator):
                 f"{aiterator!r} is already an AsyncIteratorContext")
         self._state = self._STANDBY
         self._aiterator = aiterator
+        self._lock = compat.create_lock()
         self._task_group = compat.create_task_group()
         self._item_sender, self._item_receiver = compat.open_channel()
         self._sync_sender, self._sync_receiver = compat.open_channel()
@@ -121,21 +122,8 @@ class AsyncIteratorContext(AsyncIterator):
                 # Loop over items, using handshake synchronization
                 while True:
                     await self._sync_receiver.receive()
-
-                    # Propagate items
-                    try:
-                        item = await anext(self._aiterator)
-                        await self._item_sender.send((item, None))
-                        continue
-
-                    # Stop the iteration
-                    except StopAsyncIteration:
-                        break
-
-                    # Propagate exceptions
-                    except Exception as exc:
-                        await self._item_sender.send((None, exc))
-                        break
+                    result = await outcome.acapture(anext, self._aiterator)
+                    await self._item_sender.send(result)
 
             # Safely terminates aiterator
             finally:
@@ -163,45 +151,36 @@ class AsyncIteratorContext(AsyncIterator):
     async def __anext__(self):
         # Unsafe iteration
         if self._state == self._STANDBY:
+<<<<<<< HEAD
             warnings.warn(
                 f"{type(self).__name__} is iterated outside of its context",
                 stacklevel=2)
             await self.__aenter__()
+=======
+            raise RuntimeError(
+                "AsyncIteratorContext is iterated outside of its context")
+>>>>>>> Simplify exception logic in AsyncIteratorContext
 
         # Closed context
         if self._state == self._FINISHED:
             raise RuntimeError(
                 f"{type(self).__name__}  is closed and cannot be iterated")
 
-        # Iteration is over
-        if self._state == self._EXHAUSTED:
-            raise StopAsyncIteration
+        # Prevent concurrent access
+        async with self._lock:
 
-        # Perform a handshake
-        if self._state != self._BUSY:
-            self._state = self._BUSY
+            # Perform a handshake
             await self._sync_sender.send(None)
 
-        # Now waits for the next
-        try:
-            item, exc = await anext(self._item_receiver)
+            # Now waits for the next item
+            result = await anext(self._item_receiver)
 
-        # The iterator is exhausted
-        except StopAsyncIteration:
-            self._state = self._EXHAUSTED
-            raise
+            # Unwrap the result
+            return result.unwrap()
 
-        # An exception has been raised
-        if exc is not None:
-            self._state = self._EXHAUSTED
-            raise exc
-
-        # Return the produced item
-        self._state = self._RUNNING
-        return item
 
     async def __aenter__(self):
-        if self._state == self._RUNNING:
+        if self._state in self._RUNNING:
             raise RuntimeError(
                 f"{type(self).__name__} is running and cannot be entered")
         if self._state == self._FINISHED:
