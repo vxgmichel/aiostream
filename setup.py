@@ -3,9 +3,8 @@ import sys
 from setuptools import setup
 
 TESTING = any(x in sys.argv for x in ['test', 'pytest'])
-UPLOAD = 'upload_sphinx' in sys.argv
 
-if not UPLOAD and sys.version_info < (3, 6):
+if sys.version_info < (3, 6):
     raise RuntimeError("aiostream requires Python 3.6")
 
 with open("README.rst", encoding="utf-8") as f:
@@ -27,9 +26,13 @@ setup(
         'pytest',
         'pytest-asyncio',
         'pytest-cov',
-        'trio',
-        'curio'],
-
+        'trio>=0.12,<1',
+        'curio>=0.9,<1'],
+    extras_require={
+        "asyncio": [],
+        "curio": ["curio>=0.9,<1"],
+        "trio": ["trio>=0.12,<1"],
+    },
     description="Generator-based operators for asynchronous iteration",
     long_description=long_description,
     url="https://github.com/vxgmichel/aiostream",
