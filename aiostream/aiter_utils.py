@@ -172,11 +172,12 @@ class AsyncIteratorContext(AsyncIterator):
                 # Look for an aclose method
                 aclose = getattr(self._aiterator, 'aclose', None)
 
-                # The ag_running attribute only exists for python >= 3.8
+                # The ag_running attribute has been introduced with python 3.8
                 running = getattr(self._aiterator, 'ag_running', False)
+                closed = not getattr(self._aiterator, 'ag_frame', True)
 
-                # A RuntimeError is raised if aiterator is already running
-                if aclose and not running:
+                # A RuntimeError is raised if aiterator is running or closed
+                if aclose and not running and not closed:
                     try:
                         await aclose()
 
