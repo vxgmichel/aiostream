@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
 """Run a TCP server that computes euclidean norm of vectors for its clients.
 
 Run the server:
 
-    $ python3.6 norm_server.py
+    $ ./norm_server.py
     Serving on ('127.0.0.1', 8888)
 
 Test using netcat client:
@@ -15,6 +16,7 @@ Test using netcat client:
 """
 
 import asyncio
+import argparse
 from aiostream import stream, pipe
 
 # Constants
@@ -41,11 +43,11 @@ RESULT = """\
 async def euclidean_norm_handler(reader, writer):
 
     # Define lambdas
-    strip =        lambda x: x.decode().strip()
-    nonempty =     lambda x: x != ''
-    square =       lambda x: x ** 2
+    strip = lambda x: x.decode().strip()
+    nonempty = lambda x: x != ''
+    square = lambda x: x ** 2
     write_cursor = lambda x: writer.write(b'> ')
-    square_root =  lambda x: x ** 0.5
+    square_root = lambda x: x ** 0.5
 
     # Create awaitable
     handle_request = (
@@ -75,27 +77,23 @@ async def euclidean_norm_handler(reader, writer):
 
 # Main function
 
-def run_server(bind='127.0.0.1', port=8888):
+async def main(bind="localhost", port=8888):
+    server = await asyncio.start_server(euclidean_norm_handler, bind, port)
+    addr = server.sockets[0].getsockname()
+    print(f'Serving on {addr}')
 
-    # Start the server
-    loop = asyncio.get_event_loop()
-    coro = asyncio.start_server(euclidean_norm_handler, bind, port)
-    server = loop.run_until_complete(coro)
-
-    # Serve requests until Ctrl+C is pressed
-    print('Serving on {}'.format(server.sockets[0].getsockname()))
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-
-    # Close the server
-    server.close()
-    loop.run_until_complete(server.wait_closed())
-    loop.close()
+    async with server:
+        await server.serve_forever()
 
 
 # Main execution
 
 if __name__ == '__main__':
-    run_server()
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--bind", default="localhost", help="bind address (default: localhost)")
+    parser.add_argument(
+        "--port", default=8888, help="socket port (default: 8888)")
+    namespace = parser.parse_args()
+    asyncio.run(main(namespace.bind, namespace.port))
