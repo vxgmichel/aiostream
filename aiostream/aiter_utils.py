@@ -1,18 +1,16 @@
 """Utilities for asynchronous iteration."""
 
-import warnings
 import functools
 from collections.abc import AsyncIterator
 
-try:
-    from contextlib import AsyncExitStack
-except ImportError:  # pragma: no cover
-    from async_exit_stack import AsyncExitStack
+import outcome
+
+from . import compat
 
 __all__ = ['aiter', 'anext', 'await_', 'async_',
            'is_async_iterable', 'assert_async_iterable',
            'is_async_iterator', 'assert_async_iterator',
-           'AsyncIteratorContext', 'aitercontext', 'AsyncExitStack']
+           'AsyncIteratorContext', 'aitercontext']
 
 
 # Magic method shorcuts
@@ -100,75 +98,35 @@ class AsyncIteratorContext(AsyncIterator):
     _FINISHED = "FINISHED"
 
     def __init__(self, aiterator):
-        """Initialize with an asynchrnous iterator."""
+        """Initialize with an asynchronous iterator."""
         assert_async_iterator(aiterator)
         if isinstance(aiterator, AsyncIteratorContext):
             raise TypeError(
                 f"{aiterator!r} is already an AsyncIteratorContext")
         self._state = self._STANDBY
         self._aiterator = aiterator
+        self._lock = compat.create_lock()
+        self._task_group = compat.create_task_group()
+        self._item_sender, self._item_receiver = compat.open_channel()
+        self._sync_sender, self._sync_receiver = compat.open_channel()
 
-    def __aiter__(self):
-        return self
+    async def _task_target(self):
 
-    def __anext__(self):
-        if self._state == self._FINISHED:
-            raise RuntimeError(
-                f"{type(self).__name__} is closed and cannot be iterated")
-        if self._state == self._STANDBY:
-            warnings.warn(
-                f"{type(self).__name__} is iterated outside of its context",
-                stacklevel=2)
-        return anext(self._aiterator)
+        # Control the memory channel
+        async with self._item_sender, compat.safe_generator(self._aiterator):
 
-    async def __aenter__(self):
-        if self._state == self._RUNNING:
-            raise RuntimeError(
-                f"{type(self).__name__} has already been entered")
-        if self._state == self._FINISHED:
-            raise RuntimeError(
-                f"{type(self).__name__} is closed and cannot be iterated")
-        self._state = self._RUNNING
-        return self
-
-    async def __aexit__(self, typ, value, traceback):
-        try:
-            if self._state == self._FINISHED:
-                return False
+            # Control aiterator life span
             try:
 
-                # No exception to throw
-                if typ is None:
-                    return False
+                # Loop over items, using handshake synchronization
+                while True:
+                    await self._sync_receiver.receive()
+                    result = await outcome.acapture(anext, self._aiterator)
+                    await self._item_sender.send(result)
 
-                # Prevent GeneratorExit from being silenced
-                if typ is GeneratorExit:
-                    return False
-
-                # No method to throw
-                if not hasattr(self._aiterator, 'athrow'):
-                    return False
-
-                # No frame to throw
-                if not getattr(self._aiterator, "ag_frame", True):
-                    return False
-
-                # Throw
-                try:
-                    await self._aiterator.athrow(typ, value, traceback)
-                    raise RuntimeError(
-                        "Async iterator didn't stop after athrow()")
-
-                # Exception has been (most probably) silenced
-                except StopAsyncIteration as exc:
-                    return exc is not value
-
-                # A (possibly new) exception has been raised
-                except BaseException as exc:
-                    if exc is value:
-                        return False
-                    raise
+            # Safely terminates aiterator
             finally:
+
                 # Look for an aclose method
                 aclose = getattr(self._aiterator, 'aclose', None)
 
@@ -179,22 +137,73 @@ class AsyncIteratorContext(AsyncIterator):
                 # A RuntimeError is raised if aiterator is running or closed
                 if aclose and not running and not closed:
                     try:
-                        await aclose()
+                        async with compat.open_cancel_scope(shield=True):
+                            await aclose()
 
                     # Work around bpo-35409
-                    except GeneratorExit:
+                    except GeneratorExit:  # pragma: no cover
                         pass
-        finally:
-            self._state = self._FINISHED
 
-    async def aclose(self):
-        await self.__aexit__(None, None, None)
+    def __aiter__(self):
+        return self
 
-    async def athrow(self, exc):
+    async def __anext__(self):
+        # Unsafe iteration
+        if self._state == self._STANDBY:
+            raise RuntimeError(
+                f"{type(self).__name__} is iterated outside of its context")
+
+        # Closed context
         if self._state == self._FINISHED:
             raise RuntimeError(
-                f"{type(self).__name__} is closed and cannot be used")
-        return await self._aiterator.athrow(exc)
+                f"{type(self).__name__}  is closed and cannot be iterated")
+
+        # Prevent concurrent access
+        async with self._lock:
+
+            # Perform a handshake
+            await self._sync_sender.send(None)
+
+            # Now waits for the next item
+            result = await anext(self._item_receiver)
+
+            # Unwrap the result
+            return result.unwrap()
+
+    async def __aenter__(self):
+        if self._state in self._RUNNING:
+            raise RuntimeError(
+                f"{type(self).__name__} is running and cannot be entered")
+        if self._state == self._FINISHED:
+            raise RuntimeError(
+                f"{type(self).__name__} is closed and cannot be entered")
+        self._state = self._RUNNING
+
+        await self._task_group.__aenter__()
+        await self._task_group.spawn(self._task_target)
+
+        return self
+
+    async def __aexit__(self, typ, value, traceback):
+        # Idempotency
+        if self._state == self._FINISHED:
+            return
+
+        # Make sure the task group is exited
+        try:
+
+            # Throwing a GeneratorExit into the cancel scope is not a good idea
+            if typ is GeneratorExit:
+                typ, value, traceback = None, None, None
+
+            # Cancel the task group if necessary
+            if typ is None:
+                await self._task_group.cancel_scope.cancel()
+
+        # Perform the task group teardown
+        finally:
+            self._state = self._FINISHED
+            await self._task_group.__aexit__(typ, value, traceback)
 
 
 def aitercontext(aiterable, *, cls=AsyncIteratorContext):

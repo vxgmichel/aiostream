@@ -1,4 +1,9 @@
-import asyncio
+"""
+Example that builds a simple pipeline
+"""
+
+import anyio
+import argparse
 from aiostream import stream, pipe
 
 
@@ -15,7 +20,11 @@ async def main():
     print('11² + 13² = ', await xs)
 
 
-# Run main coroutine
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+# Run the main coroutine
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        'backend', nargs='?', default='asyncio',
+        help="Use one of `trio`, `curio` or `asyncio` (default)")
+    namespace = parser.parse_args()
+    anyio.run(main, backend=namespace.backend)

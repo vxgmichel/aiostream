@@ -1,12 +1,12 @@
 """Non-pipable creation operators."""
 
-import asyncio
 import inspect
 import builtins
 import itertools
-
 from collections.abc import Iterable
 
+
+from .. import compat
 from ..stream import time
 from ..core import operator, streamcontext
 from ..aiter_utils import is_async_iterable
@@ -22,7 +22,7 @@ __all__ = ['iterate', 'preserve',
 async def from_iterable(it):
     """Generate values from a regular iterable."""
     for item in it:
-        await asyncio.sleep(0)
+        await compat.sleep(0)
         yield item
 
 
@@ -71,7 +71,7 @@ async def call(func, *args, **kwargs):
 
     Await if the provided function is asynchronous.
     """
-    if asyncio.iscoroutinefunction(func):
+    if compat.iscoroutinefunction(func):
         yield await func(*args, **kwargs)
     else:
         yield func(*args, **kwargs)
@@ -97,11 +97,7 @@ async def never():
     """Hang forever without generating any value."""
     if False:
         yield
-    future = asyncio.Future()
-    try:
-        await future
-    finally:
-        future.cancel()
+    await compat.sleep_forever()
 
 
 @operator

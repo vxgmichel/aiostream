@@ -15,6 +15,8 @@ A stream is an enhanced asynchronous iterable providing the following features:
   - **Slicing and indexing** - using square brackets ``[]``
   - **Concatenation** - using addition symbol ``+``
 
+The libary transparently support `asyncio`_, `curio`_ and `trio`_.
+
 
 Requirements
 ------------
@@ -22,6 +24,18 @@ Requirements
 The stream operators rely heavily on asynchronous generators (`PEP 525`_):
 
 - python >= 3.6
+
+The compatibility between the different async libraries is provided by `anyio`_:
+
+- anyio >= 1.2.3
+
+You can check the requirements for your async library using the corresponding extra requirements:
+
+.. sourcecode:: console
+
+    $ pip install aiostream[asyncio]
+    $ pip install aiostream[curio]
+    $ pip install aiostream[trio]
 
 
 Stream operators
@@ -40,6 +54,21 @@ Demonstration
 The following example demonstrates most of the streams capabilities:
 
 .. literalinclude:: ../examples/demo.py
+   :start-after: import argparse
+   :end-before: # Run the main coroutine
+
+This example transparently supports asyncio, curio and trio:
+
+.. sourcecode:: python
+
+    import asyncio
+    asyncio.run(main())
+
+    import curio
+    curio.run(main)
+
+    import trio
+    trio.run(main)
 
 More examples are available in the `example section <examples.html>`_.
 
@@ -60,3 +89,7 @@ This library is inspired by:
 .. _Rx: http://reactivex.io/
 .. _aioreactive: http://github.com/dbrattli/aioreactive
 .. _itertools: http://docs.python.org/3/library/itertools.html
+.. _asyncio: https://docs.python.org/3/library/asyncio.html
+.. _curio: https://github.com/dabeaz/curio
+.. _trio: https://github.com/python-trio/trio
+.. _anyio: https://github.com/agronholm/anyio

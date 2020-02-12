@@ -1,8 +1,8 @@
 """Transformation operators."""
 
-import asyncio
 import itertools
 
+from .. import compat
 from ..core import operator, streamcontext
 
 from . import select
@@ -46,7 +46,7 @@ def starmap(source, func, ordered=True, task_limit=None):
     to run sequentially. This argument is ignored if the provided function
     is synchronous.
     """
-    if asyncio.iscoroutinefunction(func):
+    if compat.iscoroutinefunction(func):
         async def starfunc(args):
             return await func(*args)
     else:
@@ -69,7 +69,7 @@ async def cycle(source):
             async for item in streamer:
                 yield item
             # Prevent blocking while loop if the stream is empty
-            await asyncio.sleep(0)
+            await compat.sleep(0)
 
 
 @operator(pipable=True)

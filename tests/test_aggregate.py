@@ -1,17 +1,12 @@
 
 import pytest
-import asyncio
 import operator
 
-from aiostream import stream, pipe
-from aiostream.test_utils import assert_run, event_loop, add_resource
-
-# Pytest fixtures
-assert_run, event_loop
+from aiostream import stream, pipe, compat
 
 
-@pytest.mark.asyncio
-async def test_aggregate(assert_run, event_loop):
+@pytest.mark.anyio
+async def test_aggregate(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(5) | add_resource.pipe(1) | pipe.accumulate()
         await assert_run(xs, [0, 1, 3, 6, 10])
@@ -27,7 +22,8 @@ async def test_aggregate(assert_run, event_loop):
         await assert_run(xs, [])
 
     async def sleepmax(x, y):
-        return await asyncio.sleep(1, result=max(x, y))
+        await compat.sleep(1)
+        return max(x, y)
 
     with event_loop.assert_cleanup():
         xs = stream.range(3) | add_resource.pipe(1) | pipe.accumulate(sleepmax)
@@ -35,8 +31,8 @@ async def test_aggregate(assert_run, event_loop):
         assert event_loop.steps == [1]*3
 
 
-@pytest.mark.asyncio
-async def test_reduce(assert_run, event_loop):
+@pytest.mark.anyio
+async def test_reduce(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(5) | add_resource.pipe(1) | pipe.reduce(min)
         await assert_run(xs, [0])
@@ -50,8 +46,8 @@ async def test_reduce(assert_run, event_loop):
         await assert_run(xs, [], IndexError("Index out of range"))
 
 
-@pytest.mark.asyncio
-async def test_list(assert_run, event_loop):
+@pytest.mark.anyio
+async def test_list(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         xs = stream.range(3) | add_resource.pipe(1) | pipe.list()
         await assert_run(xs, [[], [0], [0, 1], [0, 1, 2]])

@@ -1,6 +1,11 @@
-import asyncio
+"""
+Example that shows how to define custom operators
+"""
+
+import argparse
 import random as random_module
 
+import anyio
 from aiostream import operator, pipe, streamcontext
 
 
@@ -8,7 +13,7 @@ from aiostream import operator, pipe, streamcontext
 async def random(offset=0., width=1., interval=0.1):
     """Generate a stream of random numbers."""
     while True:
-        await asyncio.sleep(interval)
+        await anyio.sleep(interval)
         yield offset + width * random_module.random()
 
 
@@ -35,7 +40,11 @@ async def main():
     print(await xs)
 
 
-# Run main coroutine
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+# Run the main coroutine
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        'backend', nargs='?', default='asyncio',
+        help="Use one of `trio`, `curio` or `asyncio` (default)")
+    namespace = parser.parse_args()
+    anyio.run(main, backend=namespace.backend)

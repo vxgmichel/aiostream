@@ -1,4 +1,10 @@
-import asyncio
+#!/usr/bin/env python3
+"""
+Example to demonstrate the main aiostream features
+"""
+
+import anyio
+import argparse
 from aiostream import stream, pipe
 
 
@@ -35,7 +41,11 @@ async def main():
     print(await stream.list(one_two_three))
 
 
-# Run main coroutine
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+# Run the main coroutine
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        'backend', nargs='?', default='asyncio',
+        help="Use one of `trio`, `curio` or `asyncio` (default)")
+    namespace = parser.parse_args()
+    anyio.run(main, backend=namespace.backend)

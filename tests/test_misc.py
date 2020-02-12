@@ -2,17 +2,12 @@
 
 import io
 import pytest
-import asyncio
 
-from aiostream import stream, pipe
-from aiostream.test_utils import assert_run, event_loop, add_resource
-
-# Pytest fixtures
-assert_run, event_loop
+from aiostream import stream, pipe, async_, compat
 
 
-@pytest.mark.asyncio
-async def test_action(assert_run, event_loop):
+@pytest.mark.anyio
+async def test_action(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         lst = []
         xs = stream.range(3) | add_resource.pipe(1) | pipe.action(lst.append)
@@ -20,16 +15,16 @@ async def test_action(assert_run, event_loop):
         assert lst == [0, 1, 2]
 
     with event_loop.assert_cleanup():
-        queue = asyncio.Queue()
-        xs = stream.range(3) | add_resource.pipe(1) | pipe.action(queue.put)
+        queue = compat.anyio.create_queue(0)
+        xs = stream.range(3) | add_resource.pipe(1) | pipe.action(async_(queue.put))
         await assert_run(xs, [0, 1, 2])
-        assert queue.get_nowait() == 0
-        assert queue.get_nowait() == 1
-        assert queue.get_nowait() == 2
+        assert await queue.get() == 0
+        assert await queue.get() == 1
+        assert await queue.get() == 2
 
 
-@pytest.mark.asyncio
-async def test_print(assert_run, event_loop):
+@pytest.mark.anyio
+async def test_print(assert_run, event_loop, add_resource):
     with event_loop.assert_cleanup():
         f = io.StringIO()
         xs = stream.range(3) | add_resource.pipe(1) | pipe.print(file=f)
