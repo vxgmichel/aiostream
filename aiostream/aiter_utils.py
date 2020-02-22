@@ -187,7 +187,7 @@ class AsyncIteratorContext(AsyncIterator):
 
                     # Work around bpo-35409
                     except GeneratorExit:
-                        pass
+                        pass  # pragma: no cover
         finally:
             self._state = self._FINISHED
 
