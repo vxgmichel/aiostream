@@ -126,6 +126,12 @@ async def test_merge(assert_run, event_loop):
         await assert_run(ys[:3], [0, 1, 2])
         assert event_loop.steps == [1, 1]
 
+    with event_loop.assert_cleanup():
+        xs = stream.just(1) + stream.never()
+        ys = xs | pipe.merge(xs) | pipe.timeout(1)
+        await assert_run(ys, [1, 1], asyncio.TimeoutError())
+        assert event_loop.steps == [1]
+
 
 @pytest.mark.asyncio
 async def test_ziplatest(assert_run, event_loop):

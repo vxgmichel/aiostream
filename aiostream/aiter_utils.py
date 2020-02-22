@@ -153,6 +153,10 @@ class AsyncIteratorContext(AsyncIterator):
                 if not getattr(self._aiterator, "ag_frame", True):
                     return False
 
+                # Cannot throw at the moment
+                if getattr(self._aiterator, 'ag_running', False):
+                    return False
+
                 # Throw
                 try:
                     await self._aiterator.athrow(typ, value, traceback)
