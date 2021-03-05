@@ -132,6 +132,19 @@ async def test_merge(assert_run, event_loop):
         await assert_run(ys, [1, 1], asyncio.TimeoutError())
         assert event_loop.steps == [1]
 
+    # Reproduce issue #65
+    with event_loop.assert_cleanup():
+        xs = stream.iterate([1, 2])
+        ys = stream.iterate([3, 4])
+        zs = stream.merge(xs, ys) | pipe.take(3)
+        await assert_run(zs, [1, 2, 3])
+
+    with event_loop.assert_cleanup():
+        xs = stream.iterate([1, 2, 3])
+        ys = stream.throw(ZeroDivisionError)
+        zs = stream.merge(xs, ys) | pipe.delay(1) | pipe.take(3)
+        await assert_run(zs, [1, 2, 3])
+
 
 @pytest.mark.asyncio
 async def test_ziplatest(assert_run, event_loop):
