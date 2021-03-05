@@ -11,31 +11,45 @@ from .core import streamcontext
 
 class TaskGroup:
 
+    def __init__(self):
+        self._pending = set()
+
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, *args):
-        return
+        for task in self._pending:
+            await self.cancel_task(task)  # pragma: no cover
 
     def create_task(self, coro):
-        return asyncio.ensure_future(coro)
+        task = asyncio.ensure_future(coro)
+        self._pending.add(task)
+        return task
 
     async def wait_any(self, tasks):
         done, _ = await asyncio.wait(tasks, return_when="FIRST_COMPLETED")
+        self._pending -= done
         return done
 
     async def wait_all(self, tasks):
         if not tasks:
             return set()
         done, _ = await asyncio.wait(tasks)
+        self._pending -= done
         return done
 
     async def cancel_task(self, task):
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
+        if not task.done():
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+        # Note that an exception on a finished task might get discarded here.
+        # This makes sense since we don't know in which context the exception
+        # was meant to be processed. For instance, a `StopAsyncIteration`
+        # might be raised to notify that the end of a streamer has been reached.
+        self._pending.discard(task)
 
 
 class StreamerManager:
