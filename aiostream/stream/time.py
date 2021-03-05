@@ -5,7 +5,7 @@ import asyncio
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
 
-__all__ = ['spaceout', 'delay', 'timeout']
+__all__ = ["spaceout", "delay", "timeout"]
 
 
 async def wait_for(aw, timeout):

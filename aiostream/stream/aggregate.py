@@ -7,7 +7,7 @@ from . import select
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
 
-__all__ = ['accumulate', 'reduce', 'list']
+__all__ = ["accumulate", "reduce", "list"]
 
 
 @operator(pipable=True)

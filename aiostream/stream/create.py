@@ -11,12 +11,22 @@ from ..stream import time
 from ..core import operator, streamcontext
 from ..aiter_utils import is_async_iterable
 
-__all__ = ['iterate', 'preserve',
-           'just', 'call', 'throw', 'empty', 'never', 'repeat',
-           'range', 'count']
+__all__ = [
+    "iterate",
+    "preserve",
+    "just",
+    "call",
+    "throw",
+    "empty",
+    "never",
+    "repeat",
+    "range",
+    "count",
+]
 
 
 # Convert regular iterables
+
 
 @operator
 async def from_iterable(it):
@@ -42,8 +52,7 @@ def iterate(it):
         return from_async_iterable.raw(it)
     if isinstance(it, Iterable):
         return from_iterable.raw(it)
-    raise TypeError(
-        f"{type(it).__name__!r} object is not (async) iterable")
+    raise TypeError(f"{type(it).__name__!r} object is not (async) iterable")
 
 
 @operator
@@ -55,6 +64,7 @@ async def preserve(ait):
 
 
 # Simple operators
+
 
 @operator
 async def just(value):
@@ -118,6 +128,7 @@ def repeat(value, times=None, *, interval=0):
 
 
 # Counting operators
+
 
 @operator
 def range(*args, interval=0):

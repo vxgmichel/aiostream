@@ -1,5 +1,3 @@
-
-
 import pytest
 import asyncio
 
@@ -11,6 +9,7 @@ event_loop
 
 
 # Some async iterators for testing
+
 
 async def agen():
     for x in range(5):
@@ -42,7 +41,6 @@ async def stuck_agen():
 
 
 class not_an_agen(list):
-
     def __aiter__(self):
         return self
 
@@ -54,6 +52,7 @@ class not_an_agen(list):
 
 
 # Tests
+
 
 @pytest.mark.asyncio
 async def test_simple_aitercontext(event_loop):
@@ -68,7 +67,7 @@ async def test_simple_aitercontext(event_loop):
         it = iter(range(5))
         async for item in safe_gen:
             assert item == next(it)
-    assert event_loop.steps == [1]*5
+    assert event_loop.steps == [1] * 5
 
     # Exiting is idempotent
     await safe_gen.__aexit__(None, None, None)
@@ -113,13 +112,13 @@ async def test_raise_in_aitercontext(event_loop):
     with pytest.raises(ZeroDivisionError):
         async with aitercontext(agen()) as safe_gen:
             async for _ in safe_gen:
-                1/0
+                1 / 0
 
     with pytest.raises(ZeroDivisionError):
         async with aitercontext(agen()) as safe_gen:
             async for _ in safe_gen:
                 pass
-            1/0
+            1 / 0
 
     with pytest.raises(GeneratorExit):
         async with aitercontext(agen()) as safe_gen:
@@ -138,7 +137,7 @@ async def test_silence_exception_in_aitercontext(event_loop):
     async with aitercontext(silence_agen()) as safe_gen:
         async for item in safe_gen:
             assert item == 1
-            1/0
+            1 / 0
 
     # Silencing a generator exit is forbidden
     with pytest.raises(GeneratorExit):
@@ -153,7 +152,7 @@ async def test_reraise_exception_in_aitercontext(event_loop):
         async with aitercontext(reraise_agen()) as safe_gen:
             async for item in safe_gen:
                 assert item == 1
-                1/0
+                1 / 0
     assert type(info.value.__cause__) is ZeroDivisionError
 
     with pytest.raises(RuntimeError) as info:
@@ -170,7 +169,7 @@ async def test_stuck_in_aitercontext(event_loop):
         async with aitercontext(stuck_agen()) as safe_gen:
             async for item in safe_gen:
                 assert item == 1
-                1/0
+                1 / 0
     assert "didn't stop after athrow" in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
@@ -192,4 +191,4 @@ async def test_not_an_agen_in_aitercontext(event_loop):
     with pytest.raises(ZeroDivisionError):
         async with aitercontext(not_an_agen([1])) as safe_gen:
             async for item in safe_gen:
-                1/0
+                1 / 0

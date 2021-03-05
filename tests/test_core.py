@@ -30,18 +30,21 @@ async def test_streamcontext(event_loop):
 def test_operator_from_method():
 
     with pytest.raises(ValueError):
+
         class A:
             @operator
             async def method(self, arg):
                 yield 1
 
     with pytest.raises(ValueError):
+
         class B:
             @operator
             async def method(cls, arg):
                 yield 1
 
     with pytest.raises(AttributeError):
+
         class C:
             @operator
             @classmethod

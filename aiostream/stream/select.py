@@ -8,8 +8,17 @@ from . import transform
 from ..aiter_utils import anext
 from ..core import operator, streamcontext
 
-__all__ = ['take', 'takelast', 'skip', 'skiplast',
-           'getitem', 'filter', 'until', 'dropwhile', 'takewhile']
+__all__ = [
+    "take",
+    "takelast",
+    "skip",
+    "skiplast",
+    "getitem",
+    "filter",
+    "until",
+    "dropwhile",
+    "takewhile",
+]
 
 
 @operator(pipable=True)
@@ -24,7 +33,7 @@ async def take(source, n):
             return
         async for i, item in streamer:
             yield item
-            if i >= n-1:
+            if i >= n - 1:
                 return
 
 
@@ -113,8 +122,7 @@ def slice(source, *args):
     # Filter the last items
     if stop is not None:
         if stop >= 0 and start < 0:
-            raise ValueError(
-                "Positive stop with negative start is not supported")
+            raise ValueError("Positive stop with negative start is not supported")
         elif stop >= 0:
             source = take.raw(source, stop - start)
         else:

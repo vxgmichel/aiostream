@@ -8,7 +8,7 @@ import pytest
 
 from .core import StreamEmpty, operator, streamcontext
 
-__all__ = ['add_resource', 'assert_run', 'event_loop']
+__all__ = ["add_resource", "assert_run", "event_loop"]
 
 
 @operator(pipable=True)
@@ -30,10 +30,7 @@ async def add_resource(source, cleanup_time):
 
 def compare_exceptions(exc1, exc2):
     """Compare two exceptions together."""
-    return (
-        exc1 == exc2 or
-        exc1.__class__ == exc2.__class__ and
-        exc1.args == exc2.args)
+    return exc1 == exc2 or exc1.__class__ == exc2.__class__ and exc1.args == exc2.args
 
 
 async def assert_aiter(source, values, exception=None):
@@ -65,9 +62,7 @@ async def assert_await(source, values, exception=None):
         assert exception is None
 
 
-@pytest.fixture(
-    params=[assert_aiter, assert_await],
-    ids=['aiter', 'await'])
+@pytest.fixture(params=[assert_aiter, assert_await], ids=["aiter", "await"])
 def assert_run(request):
     """Parametrized fixture returning a stream runner."""
     return request.param
@@ -101,8 +96,7 @@ def event_loop():
             super()._run_once()
             # Update internals
             self.busy_count += 1
-            self._timers = sorted(
-                when for when in self._timers if when > loop.time())
+            self._timers = sorted(when for when in self._timers if when > loop.time())
             # Time advance
             if self.time_to_go:
                 when = self._timers.pop(0)

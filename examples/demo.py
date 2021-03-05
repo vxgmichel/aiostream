@@ -8,7 +8,7 @@ async def main():
     xs = stream.count(interval=0.2)
 
     # Operators can be piped using '|'
-    ys = xs | pipe.map(lambda x: x**2)
+    ys = xs | pipe.map(lambda x: x ** 2)
 
     # Streams can be sliced
     zs = ys[1:10:2]
@@ -20,13 +20,13 @@ async def main():
         async for z in streamer:
 
             # Print 1, 9, 25, 49 and 81
-            print('->', z)
+            print("->", z)
 
     # Streams can be awaited and return the last value
-    print('9² = ', await zs)
+    print("9² = ", await zs)
 
     # Streams can run several times
-    print('9² = ', await zs)
+    print("9² = ", await zs)
 
     # Streams can be concatenated
     one_two_three = stream.just(1) + stream.range(2, 4)

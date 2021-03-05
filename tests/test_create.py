@@ -1,4 +1,3 @@
-
 import pytest
 import asyncio
 from aiostream import stream, pipe
@@ -23,7 +22,6 @@ async def test_just(assert_run):
 
 @pytest.mark.asyncio
 async def test_call(assert_run):
-
     def myfunc(a, b, c=0, d=4):
         return a, b, c, d
 
@@ -39,7 +37,7 @@ async def test_call(assert_run):
 
 @pytest.mark.asyncio
 async def test_throw(assert_run):
-    exception = RuntimeError('Oops')
+    exception = RuntimeError("Oops")
     xs = stream.throw(exception)
     await assert_run(xs, [], exception)
 
@@ -52,9 +50,9 @@ async def test_empty(assert_run):
 
 @pytest.mark.asyncio
 async def test_never(assert_run, event_loop):
-    xs = stream.never() | pipe.timeout(30.)
+    xs = stream.never() | pipe.timeout(30.0)
     await assert_run(xs, [], asyncio.TimeoutError())
-    assert event_loop.steps == [30.]
+    assert event_loop.steps == [30.0]
 
 
 @pytest.mark.asyncio
@@ -92,10 +90,9 @@ async def test_iterable(assert_run):
 
 @pytest.mark.asyncio
 async def test_async_iterable(assert_run, event_loop):
-
     async def agen():
         for x in range(2, 5):
-            yield await asyncio.sleep(1.0, result=x**2)
+            yield await asyncio.sleep(1.0, result=x ** 2)
 
     xs = stream.create.from_async_iterable(agen())
     await assert_run(xs, [4, 9, 16])
@@ -103,7 +100,7 @@ async def test_async_iterable(assert_run, event_loop):
 
     xs = stream.iterate(agen())
     await assert_run(xs, [4, 9, 16])
-    assert event_loop.steps == [1.0, 1.0, 1.0]*2
+    assert event_loop.steps == [1.0, 1.0, 1.0] * 2
 
 
 @pytest.mark.asyncio
@@ -117,14 +114,13 @@ async def test_non_iterable(assert_run):
 
 @pytest.mark.asyncio
 async def test_preserve(assert_run, event_loop):
-
     async def agen():
         yield 1
         yield 2
 
     xs = stream.iterate(agen())[0]
     await assert_run(xs, [1])
-    await assert_run(xs, [], IndexError('Index out of range'))
+    await assert_run(xs, [], IndexError("Index out of range"))
 
     ys = stream.preserve(agen())[0]
     await assert_run(ys, [1])

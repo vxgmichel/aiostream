@@ -5,7 +5,7 @@ from aiostream import operator, pipe, streamcontext
 
 
 @operator
-async def random(offset=0., width=1., interval=0.1):
+async def random(offset=0.0, width=1.0, interval=0.1):
     """Generate a stream of random numbers."""
     while True:
         await asyncio.sleep(interval)
@@ -28,10 +28,11 @@ def square(source):
 
 async def main():
     xs = (
-        random()              # Stream random numbers
-        | square.pipe()       # Square the values
-        | pipe.take(5)        # Take the first five
-        | pipe.accumulate())  # Sum the values
+        random()  # Stream random numbers
+        | square.pipe()  # Square the values
+        | pipe.take(5)  # Take the first five
+        | pipe.accumulate()
+    )  # Sum the values
     print(await xs)
 
 

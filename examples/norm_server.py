@@ -38,28 +38,29 @@ RESULT = """\
 
 # Client handler
 
+
 async def euclidean_norm_handler(reader, writer):
 
     # Define lambdas
-    strip =        lambda x: x.decode().strip()
-    nonempty =     lambda x: x != ''
-    square =       lambda x: x ** 2
-    write_cursor = lambda x: writer.write(b'> ')
-    square_root =  lambda x: x ** 0.5
+    strip = lambda x: x.decode().strip()
+    nonempty = lambda x: x != ""
+    square = lambda x: x ** 2
+    write_cursor = lambda x: writer.write(b"> ")
+    square_root = lambda x: x ** 0.5
 
     # Create awaitable
     handle_request = (
         stream.iterate(reader)
-        | pipe.print('string: {}')
+        | pipe.print("string: {}")
         | pipe.map(strip)
         | pipe.takewhile(nonempty)
         | pipe.map(float)
         | pipe.map(square)
-        | pipe.print('square: {:.2f}')
+        | pipe.print("square: {:.2f}")
         | pipe.action(write_cursor)
         | pipe.accumulate(initializer=0)
         | pipe.map(square_root)
-        | pipe.print('norm -> {:.2f}')
+        | pipe.print("norm -> {:.2f}")
     )
 
     # Loop over norm computations
@@ -75,7 +76,8 @@ async def euclidean_norm_handler(reader, writer):
 
 # Main function
 
-def run_server(bind='127.0.0.1', port=8888):
+
+def run_server(bind="127.0.0.1", port=8888):
 
     # Start the server
     loop = asyncio.get_event_loop()
@@ -83,7 +85,7 @@ def run_server(bind='127.0.0.1', port=8888):
     server = loop.run_until_complete(coro)
 
     # Serve requests until Ctrl+C is pressed
-    print('Serving on {}'.format(server.sockets[0].getsockname()))
+    print("Serving on {}".format(server.sockets[0].getsockname()))
     try:
         loop.run_forever()
     except KeyboardInterrupt:
@@ -97,5 +99,5 @@ def run_server(bind='127.0.0.1', port=8888):
 
 # Main execution
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_server()
