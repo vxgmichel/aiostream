@@ -19,7 +19,7 @@ class TaskGroup:
 
     async def __aexit__(self, *args):
         for task in self._pending:
-            await self.cancel_task(task)
+            await self.cancel_task(task)  # pragma: no cover
 
     def create_task(self, coro):
         task = asyncio.ensure_future(coro)
