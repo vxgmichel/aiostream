@@ -1,6 +1,6 @@
 import sphinx_rtd_theme
 
-VERSION = open("../setup.py").read().split("version='")[1].split("'")[0]
+VERSION = open("../setup.py").read().split('version="')[1].split('"')[0]
 
 project = "aiostream"
 version = VERSION
