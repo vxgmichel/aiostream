@@ -42,8 +42,8 @@ async def test_concatmap(assert_run, event_loop):
         await assert_run(zs, [2, 3, 4, 5])
         assert event_loop.steps == [1, 1, 1]
 
-    # An exception might get discarded if the result can be produced before the processing of
-    # the exception is required
+    # An exception might get discarded if the result can be produced before the
+    # processing of the exception is required
     with event_loop.assert_cleanup():
         xs = stream.iterate([True, False])
         ys = xs | pipe.concatmap(
