@@ -10,7 +10,7 @@ from . import create
 from . import aggregate
 from .combine import map, amap, smap
 
-__all__ = ['map', 'enumerate', 'starmap', 'cycle', 'chunks']
+__all__ = ["map", "enumerate", "starmap", "cycle", "chunks"]
 
 # map, amap and smap are also transform operators
 map, amap, smap
@@ -47,11 +47,15 @@ def starmap(source, func, ordered=True, task_limit=None):
     is synchronous.
     """
     if asyncio.iscoroutinefunction(func):
+
         async def starfunc(args):
             return await func(*args)
+
     else:
+
         def starfunc(args):
             return func(*args)
+
     return map.raw(source, starfunc, ordered=ordered, task_limit=task_limit)
 
 
@@ -81,5 +85,5 @@ async def chunks(source, n):
     """
     async with streamcontext(source) as streamer:
         async for first in streamer:
-            xs = select.take(create.preserve(streamer), n-1)
+            xs = select.take(create.preserve(streamer), n - 1)
             yield [first] + await aggregate.list(xs)

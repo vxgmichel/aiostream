@@ -1,4 +1,3 @@
-
 import pytest
 import asyncio
 import operator
@@ -17,9 +16,11 @@ async def test_aggregate(assert_run, event_loop):
         await assert_run(xs, [0, 1, 3, 6, 10])
 
     with event_loop.assert_cleanup():
-        xs = (stream.range(2, 4)
-              | add_resource.pipe(1)
-              | pipe.accumulate(func=operator.mul, initializer=2))
+        xs = (
+            stream.range(2, 4)
+            | add_resource.pipe(1)
+            | pipe.accumulate(func=operator.mul, initializer=2)
+        )
         await assert_run(xs, [2, 4, 12])
 
     with event_loop.assert_cleanup():
@@ -32,7 +33,7 @@ async def test_aggregate(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.range(3) | add_resource.pipe(1) | pipe.accumulate(sleepmax)
         await assert_run(xs, [0, 1, 2])
-        assert event_loop.steps == [1]*3
+        assert event_loop.steps == [1] * 3
 
 
 @pytest.mark.asyncio

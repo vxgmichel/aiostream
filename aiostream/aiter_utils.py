@@ -9,13 +9,23 @@ try:
 except ImportError:  # pragma: no cover
     from async_exit_stack import AsyncExitStack
 
-__all__ = ['aiter', 'anext', 'await_', 'async_',
-           'is_async_iterable', 'assert_async_iterable',
-           'is_async_iterator', 'assert_async_iterator',
-           'AsyncIteratorContext', 'aitercontext', 'AsyncExitStack']
+__all__ = [
+    "aiter",
+    "anext",
+    "await_",
+    "async_",
+    "is_async_iterable",
+    "assert_async_iterable",
+    "is_async_iterator",
+    "assert_async_iterator",
+    "AsyncIteratorContext",
+    "aitercontext",
+    "AsyncExitStack",
+]
 
 
 # Magic method shorcuts
+
 
 def aiter(obj):
     """Access aiter magic method."""
@@ -39,17 +49,20 @@ async def await_(obj):
 
 def async_(fn):
     """Wrap the given function into a coroutine function."""
+
     @functools.wraps(fn)
     async def wrapper(*args, **kwargs):
         return await fn(*args, **kwargs)
+
     return wrapper
 
 
 # Iterability helpers
 
+
 def is_async_iterable(obj):
     """Check if the given object is an asynchronous iterable."""
-    return hasattr(obj, '__aiter__')
+    return hasattr(obj, "__aiter__")
 
 
 def assert_async_iterable(obj):
@@ -57,13 +70,12 @@ def assert_async_iterable(obj):
     asynchronous iterable.
     """
     if not is_async_iterable(obj):
-        raise TypeError(
-            f"{type(obj).__name__!r} object is not async iterable")
+        raise TypeError(f"{type(obj).__name__!r} object is not async iterable")
 
 
 def is_async_iterator(obj):
     """Check if the given object is an asynchronous iterator."""
-    return hasattr(obj, '__anext__')
+    return hasattr(obj, "__anext__")
 
 
 def assert_async_iterator(obj):
@@ -71,11 +83,11 @@ def assert_async_iterator(obj):
     asynchronous iterator.
     """
     if not is_async_iterator(obj):
-        raise TypeError(
-            f"{type(obj).__name__!r} object is not an async iterator")
+        raise TypeError(f"{type(obj).__name__!r} object is not an async iterator")
 
 
 # Async iterator context
+
 
 class AsyncIteratorContext(AsyncIterator):
     """Asynchronous iterator with context management.
@@ -103,8 +115,7 @@ class AsyncIteratorContext(AsyncIterator):
         """Initialize with an asynchrnous iterator."""
         assert_async_iterator(aiterator)
         if isinstance(aiterator, AsyncIteratorContext):
-            raise TypeError(
-                f"{aiterator!r} is already an AsyncIteratorContext")
+            raise TypeError(f"{aiterator!r} is already an AsyncIteratorContext")
         self._state = self._STANDBY
         self._aiterator = aiterator
 
@@ -114,20 +125,22 @@ class AsyncIteratorContext(AsyncIterator):
     def __anext__(self):
         if self._state == self._FINISHED:
             raise RuntimeError(
-                f"{type(self).__name__} is closed and cannot be iterated")
+                f"{type(self).__name__} is closed and cannot be iterated"
+            )
         if self._state == self._STANDBY:
             warnings.warn(
                 f"{type(self).__name__} is iterated outside of its context",
-                stacklevel=2)
+                stacklevel=2,
+            )
         return anext(self._aiterator)
 
     async def __aenter__(self):
         if self._state == self._RUNNING:
-            raise RuntimeError(
-                f"{type(self).__name__} has already been entered")
+            raise RuntimeError(f"{type(self).__name__} has already been entered")
         if self._state == self._FINISHED:
             raise RuntimeError(
-                f"{type(self).__name__} is closed and cannot be iterated")
+                f"{type(self).__name__} is closed and cannot be iterated"
+            )
         self._state = self._RUNNING
         return self
 
@@ -146,7 +159,7 @@ class AsyncIteratorContext(AsyncIterator):
                     return False
 
                 # No method to throw
-                if not hasattr(self._aiterator, 'athrow'):
+                if not hasattr(self._aiterator, "athrow"):
                     return False
 
                 # No frame to throw
@@ -154,14 +167,13 @@ class AsyncIteratorContext(AsyncIterator):
                     return False
 
                 # Cannot throw at the moment
-                if getattr(self._aiterator, 'ag_running', False):
+                if getattr(self._aiterator, "ag_running", False):
                     return False
 
                 # Throw
                 try:
                     await self._aiterator.athrow(typ, value, traceback)
-                    raise RuntimeError(
-                        "Async iterator didn't stop after athrow()")
+                    raise RuntimeError("Async iterator didn't stop after athrow()")
 
                 # Exception has been (most probably) silenced
                 except StopAsyncIteration as exc:
@@ -174,11 +186,11 @@ class AsyncIteratorContext(AsyncIterator):
                     raise
             finally:
                 # Look for an aclose method
-                aclose = getattr(self._aiterator, 'aclose', None)
+                aclose = getattr(self._aiterator, "aclose", None)
 
                 # The ag_running attribute has been introduced with python 3.8
-                running = getattr(self._aiterator, 'ag_running', False)
-                closed = not getattr(self._aiterator, 'ag_frame', True)
+                running = getattr(self._aiterator, "ag_running", False)
+                closed = not getattr(self._aiterator, "ag_frame", True)
 
                 # A RuntimeError is raised if aiterator is running or closed
                 if aclose and not running and not closed:
@@ -196,8 +208,7 @@ class AsyncIteratorContext(AsyncIterator):
 
     async def athrow(self, exc):
         if self._state == self._FINISHED:
-            raise RuntimeError(
-                f"{type(self).__name__} is closed and cannot be used")
+            raise RuntimeError(f"{type(self).__name__} is closed and cannot be used")
         return await self._aiterator.athrow(exc)
 
 

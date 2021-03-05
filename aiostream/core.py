@@ -7,17 +7,20 @@ from collections.abc import AsyncIterable, Awaitable
 from .aiter_utils import AsyncIteratorContext
 from .aiter_utils import aitercontext, assert_async_iterable
 
-__all__ = ['Stream', 'Streamer', 'StreamEmpty', 'operator', 'streamcontext']
+__all__ = ["Stream", "Streamer", "StreamEmpty", "operator", "streamcontext"]
 
 
 # Exception
 
+
 class StreamEmpty(Exception):
     """Exception raised when awaiting an empty stream."""
+
     pass
 
 
 # Helpers
+
 
 async def wait_stream(aiterable):
     """Wait for an asynchronous iterable to finish and return the last item.
@@ -35,6 +38,7 @@ async def wait_stream(aiterable):
 
 
 # Core objects
+
 
 class Stream(AsyncIterable, Awaitable):
     """Enhanced asynchronous iterable.
@@ -116,6 +120,7 @@ class Stream(AsyncIterable, Awaitable):
         Concatenate with a given asynchronous sequence.
         """
         from .stream import chain
+
         return chain(self, value)
 
     def __getitem__(self, value):
@@ -124,6 +129,7 @@ class Stream(AsyncIterable, Awaitable):
         Accept index or slice to extract the corresponding item(s)
         """
         from .stream import getitem
+
         return getitem(self, value)
 
     # Disable sync iteration
@@ -171,6 +177,7 @@ class Streamer(AsyncIteratorContext, Stream):
             async for item in streamer:
                 await streamer[5]
     """
+
     pass
 
 
@@ -202,6 +209,7 @@ def streamcontext(aiterable):
 
 
 # Operator decorator
+
 
 def operator(func=None, *, pipable=False):
     """Create a stream operator from an asynchronous generator
@@ -265,29 +273,32 @@ def operator(func=None, *, pipable=False):
         name = func.__name__
         module = func.__module__
         extra_doc = func.__doc__
-        doc = extra_doc or f'Regular {name} stream operator.'
+        doc = extra_doc or f"Regular {name} stream operator."
 
         # Extract signature
         signature = inspect.signature(func)
         parameters = list(signature.parameters.values())
-        if parameters and parameters[0].name in ('self', 'cls'):
+        if parameters and parameters[0].name in ("self", "cls"):
             raise ValueError(
-                'An operator cannot be created from a method, '
-                'since the decorated function becomes an operator class')
+                "An operator cannot be created from a method, "
+                "since the decorated function becomes an operator class"
+            )
 
         # Injected parameters
         self_parameter = inspect.Parameter(
-            'self', inspect.Parameter.POSITIONAL_OR_KEYWORD)
+            "self", inspect.Parameter.POSITIONAL_OR_KEYWORD
+        )
         cls_parameter = inspect.Parameter(
-            'cls', inspect.Parameter.POSITIONAL_OR_KEYWORD)
+            "cls", inspect.Parameter.POSITIONAL_OR_KEYWORD
+        )
 
         # Wrapped static method
         original = func
-        original.__qualname__ = name + '.original'
+        original.__qualname__ = name + ".original"
 
         # Raw static method
         raw = func
-        raw.__qualname__ = name + '.raw'
+        raw.__qualname__ = name + ".raw"
 
         # Init method
         def init(self, *args, **kwargs):
@@ -301,10 +312,10 @@ def operator(func=None, *, pipable=False):
         init.__signature__ = signature.replace(parameters=new_parameters)
 
         # Customize init method
-        init.__qualname__ = name + '.__init__'
-        init.__name__ = '__init__'
+        init.__qualname__ = name + ".__init__"
+        init.__name__ = "__init__"
         init.__module__ = module
-        init.__doc__ = f'Initialize the {name} stream.'
+        init.__doc__ = f"Initialize the {name} stream."
 
         if pipable:
 
@@ -316,7 +327,7 @@ def operator(func=None, *, pipable=False):
 
             # Custonize raw method
             raw.__signature__ = signature
-            raw.__qualname__ = name + '.raw'
+            raw.__qualname__ = name + ".raw"
             raw.__module__ = module
             raw.__doc__ = doc
 
@@ -326,15 +337,16 @@ def operator(func=None, *, pipable=False):
 
             # Customize pipe signature
             if parameters and parameters[0].kind in (
-                    inspect.Parameter.POSITIONAL_ONLY,
-                    inspect.Parameter.POSITIONAL_OR_KEYWORD):
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            ):
                 new_parameters = [cls_parameter] + parameters[1:]
             else:
                 new_parameters = [cls_parameter] + parameters
             pipe.__signature__ = signature.replace(parameters=new_parameters)
 
             # Customize pipe method
-            pipe.__qualname__ = name + '.pipe'
+            pipe.__qualname__ = name + ".pipe"
             pipe.__module__ = module
             pipe.__doc__ = f'Pipable "{name}" stream operator.'
             if extra_doc:
@@ -342,12 +354,13 @@ def operator(func=None, *, pipable=False):
 
         # Gather attributes
         attrs = {
-            '__init__': init,
-            '__module__': module,
-            '__doc__': doc,
-            'raw': staticmethod(raw),
-            'original': staticmethod(original),
-            'pipe': classmethod(pipe) if pipable else None}
+            "__init__": init,
+            "__module__": module,
+            "__doc__": doc,
+            "raw": staticmethod(raw),
+            "original": staticmethod(original),
+            "pipe": classmethod(pipe) if pipable else None,
+        }
 
         # Create operator class
         return type(name, bases, attrs)

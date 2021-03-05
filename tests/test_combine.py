@@ -1,4 +1,3 @@
-
 import pytest
 import asyncio
 
@@ -25,7 +24,7 @@ async def test_chain(assert_run, event_loop):
 async def test_zip(assert_run, event_loop):
     xs = stream.range(5) | add_resource.pipe(1.0)
     ys = xs | pipe.zip(xs, xs)
-    expected = [(x,)*3 for x in range(5)]
+    expected = [(x,) * 3 for x in range(5)]
     await assert_run(ys, expected)
 
 
@@ -34,15 +33,15 @@ async def test_map(assert_run, event_loop):
 
     # Synchronous/simple
     with event_loop.assert_cleanup():
-        xs = stream.range(5) | pipe.map(lambda x: x**2)
-        expected = [x**2 for x in range(5)]
+        xs = stream.range(5) | pipe.map(lambda x: x ** 2)
+        expected = [x ** 2 for x in range(5)]
         await assert_run(xs, expected)
 
     # Synchronous/multiple
     with event_loop.assert_cleanup():
         xs = stream.range(5)
-        ys = xs | pipe.map(lambda x, y: x+y, xs)
-        expected = [x*2 for x in range(5)]
+        ys = xs | pipe.map(lambda x, y: x + y, xs)
+        expected = [x * 2 for x in range(5)]
         await assert_run(ys, expected)
 
     # Asynchronous/simple/concurrent
@@ -151,8 +150,8 @@ async def test_ziplatest(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.range(0, 5, 2, interval=2)
         ys = stream.range(1, 5, 2, interval=2) | pipe.delay(1)
-        zs = stream.ziplatest(xs, ys, default='▲')
-        await assert_run(zs, [(0, '▲'), (0, 1), (2, 1), (2, 3), (4, 3)])
+        zs = stream.ziplatest(xs, ys, default="▲")
+        await assert_run(zs, [(0, "▲"), (0, 1), (2, 1), (2, 3), (4, 3)])
         assert event_loop.steps == [1, 1, 1, 1]
 
     with event_loop.assert_cleanup():

@@ -10,7 +10,6 @@ from .core import streamcontext
 
 
 class TaskGroup:
-
     def __init__(self):
         self._pending = set()
 
@@ -53,7 +52,6 @@ class TaskGroup:
 
 
 class StreamerManager:
-
     def __init__(self):
         self.tasks = {}
         self.streamers = []
@@ -104,7 +102,8 @@ class StreamerManager:
     async def clean_streamers(self, streamers):
         tasks = [
             self.group.create_task(self.clean_streamer(streamer))
-            for streamer in streamers]
+            for streamer in streamers
+        ]
         done = await self.group.wait_all(tasks)
         # Raise exception if any
         for task in done:

@@ -11,7 +11,7 @@ from . import select
 from . import advanced
 from . import aggregate
 
-__all__ = ['chain', 'zip', 'map', 'merge', 'ziplatest']
+__all__ = ["chain", "zip", "map", "merge", "ziplatest"]
 
 
 @operator(pipable=True)
@@ -41,8 +41,9 @@ async def zip(*sources):
     """
     async with AsyncExitStack() as stack:
         # Handle resources
-        streamers = [await stack.enter_async_context(streamcontext(source))
-                     for source in sources]
+        streamers = [
+            await stack.enter_async_context(streamcontext(source)) for source in sources
+        ]
         # Loop over items
         while True:
             try:
@@ -98,9 +99,9 @@ def amap(source, corofn, *more_sources, ordered=True, task_limit=None):
 
     if ordered:
         return advanced.concatmap.raw(
-            source, func, *more_sources, task_limit=task_limit)
-    return advanced.flatmap.raw(
-        source, func, *more_sources, task_limit=task_limit)
+            source, func, *more_sources, task_limit=task_limit
+        )
+    return advanced.flatmap.raw(source, func, *more_sources, task_limit=task_limit)
 
 
 @operator(pipable=True)
@@ -137,8 +138,8 @@ def map(source, func, *more_sources, ordered=True, task_limit=None):
     """
     if asyncio.iscoroutinefunction(func):
         return amap.raw(
-            source, func, *more_sources,
-            ordered=ordered, task_limit=task_limit)
+            source, func, *more_sources, ordered=ordered, task_limit=task_limit
+        )
     return smap.raw(source, func, *more_sources)
 
 
@@ -176,20 +177,21 @@ def ziplatest(*sources, partial=True, default=None):
 
     # Add source index to the items
     new_sources = [
-        smap.raw(source, lambda x, i=i: {i: x})
-        for i, source in enumerate(sources)]
+        smap.raw(source, lambda x, i=i: {i: x}) for i, source in enumerate(sources)
+    ]
 
     # Merge the sources
     merged = merge.raw(*new_sources)
 
     # Accumulate the current state in a dict
-    accumulated = aggregate.accumulate.raw(
-        merged, lambda x, e: {**x, **e})
+    accumulated = aggregate.accumulate.raw(merged, lambda x, e: {**x, **e})
 
     # Filter partial result
-    filtered = accumulated if partial else select.filter.raw(
-            accumulated, lambda x: len(x) == n)
+    filtered = (
+        accumulated
+        if partial
+        else select.filter.raw(accumulated, lambda x: len(x) == n)
+    )
 
     # Convert the state dict to a tuple
-    return smap.raw(
-        filtered, lambda x: tuple(builtins.map(getter(x), range(n))))
+    return smap.raw(filtered, lambda x: tuple(builtins.map(getter(x), range(n))))

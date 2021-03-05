@@ -5,11 +5,11 @@ from . import combine
 from ..core import operator
 from ..manager import StreamerManager
 
-__all__ = ['concat', 'flatten', 'switch',
-           'concatmap', 'flatmap', 'switchmap']
+__all__ = ["concat", "flatten", "switch", "concatmap", "flatmap", "switchmap"]
 
 
 # Helper to manage stream of higher order
+
 
 @operator(pipable=True)
 async def base_combine(source, switch=False, ordered=False, task_limit=None):
@@ -27,7 +27,7 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
 
     # Task limit
     if task_limit is not None and not task_limit > 0:
-        raise ValueError('The task limit must be None or greater than 0')
+        raise ValueError("The task limit must be None or greater than 0")
 
     # Safe context
     async with StreamerManager() as manager:
@@ -98,6 +98,7 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
 
 # Advanced operators (for streams of higher order)
 
+
 @operator(pipable=True)
 def concat(source, task_limit=None):
     """Given an asynchronous sequence of sequences, generate the elements
@@ -108,8 +109,7 @@ def concat(source, task_limit=None):
 
     Errors raised in the source or an element sequence are propagated.
     """
-    return base_combine.raw(
-        source, task_limit=task_limit, switch=False, ordered=True)
+    return base_combine.raw(source, task_limit=task_limit, switch=False, ordered=True)
 
 
 @operator(pipable=True)
@@ -122,8 +122,7 @@ def flatten(source, task_limit=None):
 
     Errors raised in the source or an element sequence are propagated.
     """
-    return base_combine.raw(
-        source, task_limit=task_limit, switch=False, ordered=False)
+    return base_combine.raw(source, task_limit=task_limit, switch=False, ordered=False)
 
 
 @operator(pipable=True)
@@ -143,6 +142,7 @@ def switch(source):
 
 # Advanced *-map operators
 
+
 @operator(pipable=True)
 def concatmap(source, func, *more_sources, task_limit=None):
     """Apply a given function that creates a sequence from the elements of one
@@ -155,7 +155,8 @@ def concatmap(source, func, *more_sources, task_limit=None):
     the `task_limit` argument.
     """
     return concat.raw(
-        combine.smap.raw(source, func, *more_sources), task_limit=task_limit)
+        combine.smap.raw(source, func, *more_sources), task_limit=task_limit
+    )
 
 
 @operator(pipable=True)
@@ -172,7 +173,8 @@ def flatmap(source, func, *more_sources, task_limit=None):
     Errors raised in a source or output sequence are propagated.
     """
     return flatten.raw(
-        combine.smap.raw(source, func, *more_sources), task_limit=task_limit)
+        combine.smap.raw(source, func, *more_sources), task_limit=task_limit
+    )
 
 
 @operator(pipable=True)

@@ -1,5 +1,3 @@
-
-
 import io
 import pytest
 import asyncio
@@ -34,14 +32,14 @@ async def test_print(assert_run, event_loop):
         f = io.StringIO()
         xs = stream.range(3) | add_resource.pipe(1) | pipe.print(file=f)
         await assert_run(xs, [0, 1, 2])
-        assert f.getvalue() == '0\n1\n2\n'
+        assert f.getvalue() == "0\n1\n2\n"
 
     with event_loop.assert_cleanup():
         f = io.StringIO()
         xs = (
             stream.range(3)
             | add_resource.pipe(1)
-            | pipe.print('{:.1f}', end='|', file=f)
+            | pipe.print("{:.1f}", end="|", file=f)
         )
         await assert_run(xs, [0, 1, 2])
-        assert f.getvalue() == '0.0|1.0|2.0|'
+        assert f.getvalue() == "0.0|1.0|2.0|"
