@@ -48,6 +48,8 @@ class TaskGroup:
         # This makes sense since we don't know in which context the exception
         # was meant to be processed. For instance, a `StopAsyncIteration`
         # might be raised to notify that the end of a streamer has been reached.
+        if not task.cancelled():
+            task.exception()
         self._pending.discard(task)
 
 
