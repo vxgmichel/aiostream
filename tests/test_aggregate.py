@@ -55,7 +55,8 @@ async def test_reduce(assert_run, event_loop):
 async def test_list(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.range(3) | add_resource.pipe(1) | pipe.list()
-        await assert_run(xs, [[], [0], [0, 1], [0, 1, 2]])
+        # The same list object is yielded at each step
+        await assert_run(xs, [[0, 1, 2], [0, 1, 2], [0, 1, 2], [0, 1, 2]])
 
     with event_loop.assert_cleanup():
         xs = stream.range(0) | add_resource.pipe(1) | pipe.list()

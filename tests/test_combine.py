@@ -144,6 +144,23 @@ async def test_merge(assert_run, event_loop):
         zs = stream.merge(xs, ys) | pipe.delay(1) | pipe.take(3)
         await assert_run(zs, [1, 2, 3])
 
+    # Silencing of a CancelledError
+
+    async def agen1():
+        if False:
+            yield
+        try:
+            await asyncio.sleep(2)
+        except asyncio.CancelledError:
+            return
+
+    async def agen2():
+        yield 1
+
+    with event_loop.assert_cleanup():
+        xs = stream.merge(agen1(), agen2()) | pipe.delay(1) | pipe.take(1)
+        await assert_run(xs, [1])
+
 
 @pytest.mark.asyncio
 async def test_ziplatest(assert_run, event_loop):

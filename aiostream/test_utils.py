@@ -35,16 +35,17 @@ def compare_exceptions(exc1, exc2):
 
 async def assert_aiter(source, values, exception=None):
     """Check the results of a stream using a streamcontext."""
-    it = iter(values)
+    results = []
     exception_type = type(exception) if exception else ()
     try:
         async with streamcontext(source) as streamer:
             async for item in streamer:
-                assert item == next(it)
+                results.append(item)
     except exception_type as exc:
         assert compare_exceptions(exc, exception)
     else:
         assert exception is None
+    assert results == values
 
 
 async def assert_await(source, values, exception=None):
