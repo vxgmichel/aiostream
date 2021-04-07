@@ -17,7 +17,7 @@ class TaskGroup:
         return self
 
     async def __aexit__(self, *args):
-        for task in self._pending:
+        for task in self._pending.copy():
             await self.cancel_task(task)  # pragma: no cover
 
     def create_task(self, coro):
