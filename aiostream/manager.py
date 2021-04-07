@@ -39,19 +39,32 @@ class TaskGroup:
         return done
 
     async def cancel_task(self, task):
-        if not task.done():
-            task.cancel()
-            try:
-                await task
-            except asyncio.CancelledError:
+        try:
+            # The task is already cancelled
+            if task.cancelled():
                 pass
-        # Note that an exception on a finished task might get discarded here.
-        # This makes sense since we don't know in which context the exception
-        # was meant to be processed. For instance, a `StopAsyncIteration`
-        # might be raised to notify that the end of a streamer has been reached.
-        if not task.cancelled():
-            task.exception()
-        self._pending.discard(task)
+            # The task is already finished
+            elif task.done():
+                # Discard the pending exception (if any).
+                # This makes sense since we don't know in which context the exception
+                # was meant to be processed. For instance, a `StopAsyncIteration`
+                # might be raised to notify that the end of a streamer has been reached.
+                task.exception()
+            # The task needs to be cancelled and awaited
+            else:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+                # Silence any exception raised while cancelling the task.
+                # This might happen if the `CancelledError` is silenced, and the
+                # corresponding async generator returns, causing the `anext` call
+                # to raise a `StopAsyncIteration`.
+                except Exception:
+                    pass
+        finally:
+            self._pending.discard(task)
 
 
 class StreamerManager:
