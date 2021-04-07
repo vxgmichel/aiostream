@@ -284,6 +284,14 @@ def operator(func=None, *, pipable=False):
                 "since the decorated function becomes an operator class"
             )
 
+        # Look for "more_sources"
+        for i, p in enumerate(parameters):
+            if p.name == "more_sources" and p.kind == inspect.Parameter.VAR_POSITIONAL:
+                more_sources_index = i
+                break
+        else:
+            more_sources_index = None
+
         # Injected parameters
         self_parameter = inspect.Parameter(
             "self", inspect.Parameter.POSITIONAL_OR_KEYWORD
@@ -304,6 +312,9 @@ def operator(func=None, *, pipable=False):
         def init(self, *args, **kwargs):
             if pipable and args:
                 assert_async_iterable(args[0])
+            if more_sources_index is not None:
+                for source in args[more_sources_index:]:
+                    assert_async_iterable(source)
             factory = functools.partial(self.raw, *args, **kwargs)
             return Stream.__init__(self, factory)
 
@@ -323,6 +334,9 @@ def operator(func=None, *, pipable=False):
             def raw(*args, **kwargs):
                 if args:
                     assert_async_iterable(args[0])
+                if more_sources_index is not None:
+                    for source in args[more_sources_index:]:
+                        assert_async_iterable(source)
                 return func(*args, **kwargs)
 
             # Custonize raw method
