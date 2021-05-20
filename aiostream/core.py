@@ -29,12 +29,12 @@ async def wait_stream(aiterable):
     A StreamEmpty exception is raised if the sequence is empty.
     """
     async with streamcontext(aiterable) as streamer:
+        last_item = unnassigned = object()
         async for item in streamer:
-            item
-        try:
-            return item
-        except NameError:
+            last_item = item
+        if last_item is unnassigned:
             raise StreamEmpty()
+        return last_item
 
 
 # Core objects
