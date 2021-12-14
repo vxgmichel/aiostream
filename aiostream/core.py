@@ -268,6 +268,13 @@ def operator(func=None, *, pipable=False):
     def decorator(func):
         """Inner decorator for stream operator."""
 
+        # First check for classmethod instance, to avoid more confusing errors later on
+        if isinstance(func, classmethod):
+            raise ValueError(
+                "An operator cannot be created from a class method, "
+                "since the decorated function becomes an operator class"
+            )
+
         # Gather data
         bases = (Stream,)
         name = func.__name__

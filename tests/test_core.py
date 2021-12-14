@@ -43,7 +43,7 @@ def test_operator_from_method():
             async def method(cls, arg):
                 yield 1
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError):
 
         class C:
             @operator
