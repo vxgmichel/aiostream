@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9, pypy3]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11.0-alpha.2", "pypy-3.7", "pypy-3.8"]
         # XML coverage reporting is broken for this particular configuration
         exclude:
           - os: windows-latest
