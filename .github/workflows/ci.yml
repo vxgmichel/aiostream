@@ -49,6 +49,10 @@ jobs:
           python-version: 3.8
       - name: Build source distribution
         run: python setup.py sdist
+      - name: Build wheel
+        run: |
+          pip install wheel
+          python setup.py bdist_wheel
       - name: Publish source package on PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
