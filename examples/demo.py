@@ -8,7 +8,7 @@ async def main():
     xs = stream.count(interval=0.2)
 
     # Operators can be piped using '|'
-    ys = xs | pipe.map(lambda x: x ** 2)
+    ys = xs | pipe.map(lambda x: x**2)
 
     # Streams can be sliced
     zs = ys[1:10:2]

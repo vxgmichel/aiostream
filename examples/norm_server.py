@@ -44,9 +44,9 @@ async def euclidean_norm_handler(reader, writer):
     # Define lambdas
     strip = lambda x: x.decode().strip()
     nonempty = lambda x: x != ""
-    square = lambda x: x ** 2
+    square = lambda x: x**2
     write_cursor = lambda x: writer.write(b"> ")
-    square_root = lambda x: x ** 0.5
+    square_root = lambda x: x**0.5
 
     # Create awaitable
     handle_request = (

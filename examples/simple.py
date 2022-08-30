@@ -9,7 +9,7 @@ async def main():
         | pipe.skip(10)  # Skip the first 10 numbers
         | pipe.take(5)  # Take the following 5
         | pipe.filter(lambda x: x % 2)  # Keep odd numbers
-        | pipe.map(lambda x: x ** 2)  # Square the results
+        | pipe.map(lambda x: x**2)  # Square the results
         | pipe.accumulate()  # Add the numbers together
     )
     print("11² + 13² = ", await xs)

@@ -5,7 +5,7 @@ VERSION = open("../setup.py").read().split('version="')[1].split('"')[0]
 project = "aiostream"
 version = VERSION
 author = "Vincent Michel"
-copyright = u"2016, Vincent Michel"
+copyright = "2016, Vincent Michel"
 
 master_doc = "index"
 highlight_language = "python"

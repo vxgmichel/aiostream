@@ -33,8 +33,8 @@ async def test_map(assert_run, event_loop):
 
     # Synchronous/simple
     with event_loop.assert_cleanup():
-        xs = stream.range(5) | pipe.map(lambda x: x ** 2)
-        expected = [x ** 2 for x in range(5)]
+        xs = stream.range(5) | pipe.map(lambda x: x**2)
+        expected = [x**2 for x in range(5)]
         await assert_run(xs, expected)
 
     # Synchronous/multiple

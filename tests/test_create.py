@@ -92,7 +92,7 @@ async def test_iterable(assert_run):
 async def test_async_iterable(assert_run, event_loop):
     async def agen():
         for x in range(2, 5):
-            yield await asyncio.sleep(1.0, result=x ** 2)
+            yield await asyncio.sleep(1.0, result=x**2)
 
     xs = stream.create.from_async_iterable(agen())
     await assert_run(xs, [4, 9, 16])

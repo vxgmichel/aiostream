@@ -17,7 +17,7 @@ async def power(source, exponent):
     """Raise the elements of an asynchronous sequence to the given power."""
     async with streamcontext(source) as streamer:
         async for item in streamer:
-            yield item ** exponent
+            yield item**exponent
 
 
 @operator(pipable=True)
