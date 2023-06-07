@@ -40,13 +40,21 @@ RESULT = """\
 
 
 async def euclidean_norm_handler(reader, writer):
-
     # Define lambdas
-    strip = lambda x: x.decode().strip()
-    nonempty = lambda x: x != ""
-    square = lambda x: x**2
-    write_cursor = lambda x: writer.write(b"> ")
-    square_root = lambda x: x**0.5
+    def strip(x):
+        return x.decode().strip()
+
+    def nonempty(x):
+        return x != ""
+
+    def square(x):
+        return x**2
+
+    def write_cursor(x):
+        return writer.write(b"> ")
+
+    def square_root(x):
+        return x**0.5
 
     # Create awaitable
     handle_request = (
@@ -78,7 +86,6 @@ async def euclidean_norm_handler(reader, writer):
 
 
 def run_server(bind="127.0.0.1", port=8888):
-
     # Start the server
     loop = asyncio.get_event_loop()
     coro = asyncio.start_server(euclidean_norm_handler, bind, port)

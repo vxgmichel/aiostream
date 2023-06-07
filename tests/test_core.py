@@ -9,7 +9,6 @@ event_loop
 
 @pytest.mark.asyncio
 async def test_streamcontext(event_loop):
-
     with event_loop.assert_cleanup():
         xs = stream.range(3) | add_resource.pipe(1)
         async with streamcontext(xs) as streamer:
@@ -28,7 +27,6 @@ async def test_streamcontext(event_loop):
 
 
 def test_operator_from_method():
-
     with pytest.raises(ValueError):
 
         class A:

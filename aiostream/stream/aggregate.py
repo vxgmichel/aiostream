@@ -1,7 +1,11 @@
 """Aggregation operators."""
+from __future__ import annotations
 
 import asyncio
+import builtins
 import operator as op
+from typing import AsyncIterator, Awaitable, Callable, TypeVar, AsyncIterable
+
 
 from . import select
 from ..aiter_utils import anext
@@ -9,9 +13,15 @@ from ..core import operator, streamcontext
 
 __all__ = ["accumulate", "reduce", "list"]
 
+T = TypeVar("T")
+
 
 @operator(pipable=True)
-async def accumulate(source, func=op.add, initializer=None):
+async def accumulate(
+    source: AsyncIterable[T],
+    func: Callable[[T, T], Awaitable[T] | T] = op.add,
+    initializer: T | None = None,
+) -> AsyncIterator[T]:
     """Generate a series of accumulated sums (or other binary function)
     from an asynchronous sequence.
 
@@ -33,14 +43,21 @@ async def accumulate(source, func=op.add, initializer=None):
         yield value
         # Iterate streamer
         async for item in streamer:
-            value = func(value, item)
+            returned = func(value, item)
             if iscorofunc:
-                value = await value
+                assert isinstance(returned, Awaitable)
+                value = await returned
+            else:
+                value = returned  # type: ignore
             yield value
 
 
 @operator(pipable=True)
-def reduce(source, func, initializer=None):
+def reduce(
+    source: AsyncIterable[T],
+    func: Callable[[T, T], Awaitable[T] | T],
+    initializer: T | None = None,
+) -> AsyncIterator[T]:
     """Apply a function of two arguments cumulatively to the items
     of an asynchronous sequence, reducing the sequence to a single value.
 
@@ -53,7 +70,7 @@ def reduce(source, func, initializer=None):
 
 
 @operator(pipable=True)
-async def list(source):
+async def list(source: AsyncIterable[T]) -> AsyncIterator[builtins.list[T]]:
     """Build a list from an asynchronous sequence.
 
     All the intermediate steps are generated, starting from the empty list.
@@ -65,7 +82,7 @@ async def list(source):
     ..note:: The same list object is produced at each step in order to avoid
     memory copies.
     """
-    result = []
+    result: builtins.list[T] = []
     yield result
     async with streamcontext(source) as streamer:
         async for item in streamer:

@@ -1,11 +1,28 @@
 """Core objects for stream operators."""
+from __future__ import annotations
 
 import inspect
 import functools
-from collections.abc import AsyncIterable, Awaitable
+import sys
 
-from .aiter_utils import AsyncIteratorContext
-from .aiter_utils import aitercontext, assert_async_iterable
+from .aiter_utils import AsyncIteratorContext, aiter, assert_async_iterable
+from typing import (
+    Any,
+    AsyncIterator,
+    Callable,
+    Generator,
+    Iterator,
+    Type,
+    Union,
+    TypeVar,
+    Generic,
+    overload,
+    AsyncIterable,
+    Awaitable,
+)
+
+from typing_extensions import ParamSpec, Concatenate
+
 
 __all__ = ["Stream", "Streamer", "StreamEmpty", "operator", "streamcontext"]
 
@@ -21,26 +38,108 @@ class StreamEmpty(Exception):
 
 # Helpers
 
+T = TypeVar("T")
+X = TypeVar("X")
+P = ParamSpec("P")
+Q = ParamSpec("Q")
 
-async def wait_stream(aiterable):
+# Hack for python 3.8 compatibility
+if sys.version_info < (3, 9):
+    P = TypeVar("P")
+
+
+async def wait_stream(aiterable: BaseStream[T]) -> T:
     """Wait for an asynchronous iterable to finish and return the last item.
 
     The iterable is executed within a safe stream context.
     A StreamEmpty exception is raised if the sequence is empty.
     """
+
+    class Unassigned:
+        pass
+
+    last_item: Unassigned | T = Unassigned()
+
     async with streamcontext(aiterable) as streamer:
-        last_item = unnassigned = object()
         async for item in streamer:
             last_item = item
-        if last_item is unnassigned:
-            raise StreamEmpty()
-        return last_item
+
+    if isinstance(last_item, Unassigned):
+        raise StreamEmpty()
+    return last_item
 
 
 # Core objects
 
 
-class Stream(AsyncIterable, Awaitable):
+class BaseStream(AsyncIterable[T], Awaitable[T]):
+    """
+    Base class for streams.
+
+    See `Stream` and `Streamer` for more information.
+    """
+
+    def __init__(self, factory: Callable[[], AsyncIterable[T]]) -> None:
+        """Initialize the stream with an asynchronous iterable factory.
+
+        The factory is a callable and takes no argument.
+        The factory return value is an asynchronous iterable.
+        """
+        aiter = factory()
+        assert_async_iterable(aiter)
+        self._generator = self._make_generator(aiter, factory)
+
+    def _make_generator(
+        self, first: AsyncIterable[T], factory: Callable[[], AsyncIterable[T]]
+    ) -> Iterator[AsyncIterable[T]]:
+        """Generate asynchronous iterables when required.
+
+        The first iterable is created beforehand for extra checking.
+        """
+        yield first
+        del first
+        while True:
+            yield factory()
+
+    def __await__(self) -> Generator[Any, None, T]:
+        """Await protocol.
+
+        Safely iterate and return the last element.
+        """
+        return wait_stream(self).__await__()
+
+    def __or__(self, func: Callable[[BaseStream[T]], BaseStream[X]]) -> BaseStream[X]:
+        """Pipe protocol.
+
+        Allow to pipe stream operators.
+        """
+        return func(self)
+
+    def __add__(self, value: BaseStream[X]) -> BaseStream[Union[X, T]]:
+        """Addition protocol.
+
+        Concatenate with a given asynchronous sequence.
+        """
+        from .stream import chain
+
+        return chain(self, value)  # type: ignore
+
+    def __getitem__(self, value: Union[int, slice]) -> BaseStream[T]:
+        """Get item protocol.
+
+        Accept index or slice to extract the corresponding item(s)
+        """
+        from .stream import getitem
+
+        return getitem(self, value)  # type: ignore
+
+    # Disable sync iteration
+    # This is necessary because __getitem__ is defined
+    # which is a valid fallback for for-loops in python
+    __iter__: None = None
+
+
+class Stream(BaseStream[T], Generic[P, T]):
     """Enhanced asynchronous iterable.
 
     It provides the following features:
@@ -73,71 +172,22 @@ class Stream(AsyncIterable, Awaitable):
         print(result)      # Prints 14
     """
 
-    def __init__(self, factory):
-        """Initialize the stream with an asynchronous iterable factory.
+    def __init__(self, *args: P.args, **kwargs: P.kwargs):
+        pass
 
-        The factory is a callable and takes no argument.
-        The factory return value is an asynchronous iterable.
-        """
-        aiter = factory()
-        assert_async_iterable(aiter)
-        self._generator = self._make_generator(aiter, factory)
+    @classmethod
+    def raw(cls, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
+        raise NotImplementedError
 
-    def _make_generator(self, first, factory):
-        """Generate asynchronous iterables when required.
+    @classmethod
+    def pipe(
+        cls,
+        *args: Q.args,
+        **kwargs: Q.kwargs,
+    ) -> Callable[[AsyncIterable[T]], Stream[Concatenate[AsyncIterable[T], P], T]]:
+        raise NotImplementedError
 
-        The first iterable is created beforehand for extra checking.
-        """
-        yield first
-        del first
-        while True:
-            yield factory()
-
-    def __aiter__(self):
-        """Asynchronous iteration protocol.
-
-        Return a streamer context for safe iteration.
-        """
-        return streamcontext(next(self._generator))
-
-    def __await__(self):
-        """Await protocol.
-
-        Safely iterate and return the last element.
-        """
-        return wait_stream(self).__await__()
-
-    def __or__(self, func):
-        """Pipe protocol.
-
-        Allow to pipe stream operators.
-        """
-        return func(self)
-
-    def __add__(self, value):
-        """Addition protocol.
-
-        Concatenate with a given asynchronous sequence.
-        """
-        from .stream import chain
-
-        return chain(self, value)
-
-    def __getitem__(self, value):
-        """Get item protocol.
-
-        Accept index or slice to extract the corresponding item(s)
-        """
-        from .stream import getitem
-
-        return getitem(self, value)
-
-    # Disable sync iteration
-    # This is necessary because __getitem__ is defined
-    # which is a valid fallback for for-loops in python
-    __iter__ = None
-
-    def stream(self):
+    def stream(self) -> Streamer[T]:
         """Return a streamer context for safe iteration.
 
         Example::
@@ -150,11 +200,18 @@ class Stream(AsyncIterable, Awaitable):
         """
         return self.__aiter__()
 
+    def __aiter__(self) -> Streamer[T]:
+        """Asynchronous iteration protocol.
+
+        Return a streamer context for safe iteration.
+        """
+        return streamcontext(next(self._generator))
+
     # Advertise the proper synthax for entering a stream context
 
-    __aexit__ = None
+    __aexit__: None = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> None:
         raise TypeError(
             "A stream object cannot be used as a context manager. "
             "Use the `stream` method instead: "
@@ -162,7 +219,7 @@ class Stream(AsyncIterable, Awaitable):
         )
 
 
-class Streamer(AsyncIteratorContext, Stream):
+class Streamer(AsyncIteratorContext[T], BaseStream[T]):
     """Enhanced asynchronous iterator context.
 
     It is similar to AsyncIteratorContext but provides the stream
@@ -181,7 +238,7 @@ class Streamer(AsyncIteratorContext, Stream):
     pass
 
 
-def streamcontext(aiterable):
+def streamcontext(aiterable: AsyncIterable[T]) -> Streamer[T]:
     """Return a stream context manager from an asynchronous iterable.
 
     The context management makes sure the aclose asynchronous method
@@ -205,13 +262,32 @@ def streamcontext(aiterable):
             async for item in streamer:
                 <block>
     """
-    return aitercontext(aiterable, cls=Streamer)
+    aiterator = aiter(aiterable)
+    if isinstance(aiterator, Streamer):
+        return aiterator
+    return Streamer(aiterator)
 
 
 # Operator decorator
 
 
-def operator(func=None, *, pipable=False):
+@overload
+def operator(
+    func: None = None, *, pipable: bool = False
+) -> Callable[[Callable[P, AsyncIterator[T]]], Type[Stream[P, T]]]:
+    ...
+
+
+@overload
+def operator(
+    func: Callable[P, AsyncIterator[T]], *, pipable: bool = False
+) -> Type[Stream[P, T]]:
+    ...
+
+
+def operator(
+    func: Callable[P, AsyncIterator[T]] | None = None, *, pipable: bool = False
+) -> Callable[[Callable[P, AsyncIterator[T]]], Type[Stream[P, T]]] | Type[Stream[P, T]]:
     """Create a stream operator from an asynchronous generator
     (or any function returning an asynchronous iterable).
 
@@ -265,7 +341,7 @@ def operator(func=None, *, pipable=False):
             return multiply.raw(source, 2)
     """
 
-    def decorator(func):
+    def decorator(func: Callable[P, AsyncIterator[T]]) -> Type[Stream[P, T]]:
         """Inner decorator for stream operator."""
 
         # First check for classmethod instance, to avoid more confusing errors later on
@@ -316,18 +392,18 @@ def operator(func=None, *, pipable=False):
         raw.__qualname__ = name + ".raw"
 
         # Init method
-        def init(self, *args, **kwargs):
+        def init(self: BaseStream[T], *args: P.args, **kwargs: P.kwargs) -> None:
             if pipable and args:
                 assert_async_iterable(args[0])
             if more_sources_index is not None:
                 for source in args[more_sources_index:]:
                     assert_async_iterable(source)
-            factory = functools.partial(self.raw, *args, **kwargs)
-            return Stream.__init__(self, factory)
+            factory = functools.partial(raw, *args, **kwargs)
+            return BaseStream.__init__(self, factory)
 
         # Customize init signature
         new_parameters = [self_parameter] + parameters
-        init.__signature__ = signature.replace(parameters=new_parameters)
+        init.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore
 
         # Customize init method
         init.__qualname__ = name + ".__init__"
@@ -336,9 +412,8 @@ def operator(func=None, *, pipable=False):
         init.__doc__ = f"Initialize the {name} stream."
 
         if pipable:
-
             # Raw static method
-            def raw(*args, **kwargs):
+            def raw(*args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
                 if args:
                     assert_async_iterable(args[0])
                 if more_sources_index is not None:
@@ -347,13 +422,20 @@ def operator(func=None, *, pipable=False):
                 return func(*args, **kwargs)
 
             # Custonize raw method
-            raw.__signature__ = signature
+            raw.__signature__ = signature  # type: ignore
             raw.__qualname__ = name + ".raw"
             raw.__module__ = module
             raw.__doc__ = doc
 
             # Pipe class method
-            def pipe(cls, *args, **kwargs):
+            def pipe(
+                cls: Type[Stream[Concatenate[AsyncIterable[T], Q], T]],
+                /,
+                *args: Q.args,
+                **kwargs: Q.kwargs,
+            ) -> Callable[
+                [AsyncIterable[T]], Stream[Concatenate[AsyncIterable[T], Q], T]
+            ]:
                 return lambda source: cls(source, *args, **kwargs)
 
             # Customize pipe signature
@@ -364,7 +446,7 @@ def operator(func=None, *, pipable=False):
                 new_parameters = [cls_parameter] + parameters[1:]
             else:
                 new_parameters = [cls_parameter] + parameters
-            pipe.__signature__ = signature.replace(parameters=new_parameters)
+            pipe.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore
 
             # Customize pipe method
             pipe.__qualname__ = name + ".pipe"

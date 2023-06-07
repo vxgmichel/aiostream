@@ -1,6 +1,10 @@
 """Extra operators."""
+from __future__ import annotations
+
 import asyncio
 import builtins
+
+from typing import TypeVar, Awaitable, Callable, AsyncIterable, AsyncIterator, Any
 
 from .transform import map
 from ..core import operator
@@ -8,8 +12,13 @@ from ..core import operator
 __all__ = ["action", "print"]
 
 
+T = TypeVar("T")
+
+
 @operator(pipable=True)
-def action(source, func):
+def action(
+    source: AsyncIterable[T], func: Callable[[T], Awaitable[Any] | Any]
+) -> AsyncIterator[T]:
     """Perform an action for each element of an asynchronous sequence
     without modifying it.
 
@@ -17,30 +26,35 @@ def action(source, func):
     """
     if asyncio.iscoroutinefunction(func):
 
-        async def innerfunc(arg):
-            await func(arg)
+        async def ainnerfunc(arg: T) -> T:
+            awaitable = func(arg)
+            assert isinstance(awaitable, Awaitable)
+            await awaitable
             return arg
+
+        return map.raw(source, ainnerfunc)
 
     else:
 
-        def innerfunc(arg):
+        def innerfunc(arg: T) -> T:
             func(arg)
             return arg
 
-    return map.raw(source, innerfunc)
+        return map.raw(source, innerfunc)
 
 
 @operator(pipable=True)
-def print(source, template=None, **kwargs):
+def print(
+    source: AsyncIterable[T], template: str = "{}", **kwargs: Any
+) -> AsyncIterator[T]:
     """Print each element of an asynchronous sequence without modifying it.
 
     An optional template can be provided to be formatted with the elements.
     All the keyword arguments are forwarded to the builtin function print.
     """
 
-    def func(value):
-        if template:
-            value = template.format(value)
-        builtins.print(value, **kwargs)
+    def func(value: T) -> None:
+        string = template.format(value)
+        builtins.print(string, **kwargs)
 
     return action.raw(source, func)

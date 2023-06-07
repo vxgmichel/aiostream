@@ -3,7 +3,6 @@ from aiostream import stream, pipe
 
 
 async def main():
-
     # Create a counting stream with a 0.2 seconds interval
     xs = stream.count(interval=0.2)
 
@@ -15,10 +14,8 @@ async def main():
 
     # Use a stream context for proper resource management
     async with zs.stream() as streamer:
-
         # Asynchronous iteration
         async for z in streamer:
-
             # Print 1, 9, 25, 49 and 81
             print("->", z)
 

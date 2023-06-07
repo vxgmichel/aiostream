@@ -1,7 +1,10 @@
 """Transformation operators."""
 
+from __future__ import annotations
+
 import asyncio
 import itertools
+from typing import TypeVar, AsyncIterable, AsyncIterator, Awaitable, Callable
 
 from ..core import operator, streamcontext
 
@@ -15,9 +18,14 @@ __all__ = ["map", "enumerate", "starmap", "cycle", "chunks"]
 # map, amap and smap are also transform operators
 map, amap, smap
 
+T = TypeVar("T")
+U = TypeVar("U")
+
 
 @operator(pipable=True)
-async def enumerate(source, start=0, step=1):
+async def enumerate(
+    source: AsyncIterable[T], start: int = 0, step: int = 1
+) -> AsyncIterator[tuple[int, T]]:
     """Generate ``(index, value)`` tuples from an asynchronous sequence.
 
     This index is computed using a starting point and an increment,
@@ -30,7 +38,12 @@ async def enumerate(source, start=0, step=1):
 
 
 @operator(pipable=True)
-def starmap(source, func, ordered=True, task_limit=None):
+def starmap(
+    source: AsyncIterable[tuple[T, ...]],
+    func: Callable[..., Awaitable[U] | U],
+    ordered: bool = True,
+    task_limit: int | None = None,
+) -> AsyncIterator[U]:
     """Apply a given function to the unpacked elements of
     an asynchronous sequence.
 
@@ -48,19 +61,23 @@ def starmap(source, func, ordered=True, task_limit=None):
     """
     if asyncio.iscoroutinefunction(func):
 
-        async def starfunc(args):
-            return await func(*args)
+        async def astarfunc(args: tuple[T, ...]) -> U:
+            awaitable = func(*args)
+            assert isinstance(awaitable, Awaitable)
+            return await awaitable
+
+        return amap.raw(source, astarfunc, ordered=ordered, task_limit=task_limit)
 
     else:
 
-        def starfunc(args):
-            return func(*args)
+        def starfunc(args: tuple[T, ...]) -> U:
+            return func(*args)  # type: ignore
 
-    return map.raw(source, starfunc, ordered=ordered, task_limit=task_limit)
+        return smap.raw(source, starfunc)
 
 
 @operator(pipable=True)
-async def cycle(source):
+async def cycle(source: AsyncIterable[T]) -> AsyncIterator[T]:
     """Iterate indefinitely over an asynchronous sequence.
 
     Note: it does not perform any buffering, but re-iterate over
@@ -77,7 +94,7 @@ async def cycle(source):
 
 
 @operator(pipable=True)
-async def chunks(source, n):
+async def chunks(source: AsyncIterable[T], n: int) -> AsyncIterator[list[T]]:
     """Generate chunks of size ``n`` from an asynchronous sequence.
 
     The chunks are lists, and the last chunk might contain less than ``n``

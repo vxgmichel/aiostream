@@ -86,7 +86,6 @@ async def test_flatmap(assert_run, event_loop):
 
 @pytest.mark.asyncio
 async def test_switchmap(assert_run, event_loop):
-
     with event_loop.assert_cleanup():
         xs = stream.range(0, 30, 10, interval=3)
         ys = xs | pipe.switchmap(lambda x: stream.range(x, x + 5, interval=1))

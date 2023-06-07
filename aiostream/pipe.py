@@ -1,11 +1,12 @@
 """Gather the pipe operators."""
+from __future__ import annotations
 
 from . import stream
 
-__all__ = []
+__all__: list[str] = []
 
 
-def update_pipe_module():
+def update_pipe_module() -> None:
     """Populate the pipe module dynamically."""
     module_dir = __all__
     operators = stream.__dict__

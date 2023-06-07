@@ -1,15 +1,23 @@
 """Non-pipable creation operators."""
+from __future__ import annotations
 
 import asyncio
 import inspect
 import builtins
 import itertools
 
-from collections.abc import Iterable
+from typing import (
+    AsyncIterable,
+    Awaitable,
+    Iterable,
+    TypeVar,
+    AsyncIterator,
+    Callable,
+)
+from typing_extensions import ParamSpec
 
 from ..stream import time
 from ..core import operator, streamcontext
-from ..aiter_utils import is_async_iterable
 
 __all__ = [
     "iterate",
@@ -24,12 +32,14 @@ __all__ = [
     "count",
 ]
 
+T = TypeVar("T")
+P = ParamSpec("P")
 
 # Convert regular iterables
 
 
 @operator
-async def from_iterable(it):
+async def from_iterable(it: Iterable[T]) -> AsyncIterator[T]:
     """Generate values from a regular iterable."""
     for item in it:
         await asyncio.sleep(0)
@@ -37,7 +47,7 @@ async def from_iterable(it):
 
 
 @operator
-def from_async_iterable(ait):
+def from_async_iterable(ait: AsyncIterable[T]) -> AsyncIterator[T]:
     """Generate values from an asynchronous iterable.
 
     Note: the corresponding iterator will be explicitely closed
@@ -46,9 +56,9 @@ def from_async_iterable(ait):
 
 
 @operator
-def iterate(it):
+def iterate(it: AsyncIterable[T] | Iterable[T]) -> AsyncIterator[T]:
     """Generate values from a sychronous or asynchronous iterable."""
-    if is_async_iterable(it):
+    if isinstance(it, AsyncIterable):
         return from_async_iterable.raw(it)
     if isinstance(it, Iterable):
         return from_iterable.raw(it)
@@ -56,7 +66,7 @@ def iterate(it):
 
 
 @operator
-async def preserve(ait):
+async def preserve(ait: AsyncIterable[T]) -> AsyncIterator[T]:
     """Generate values from an asynchronous iterable without
     explicitly closing the corresponding iterator."""
     async for item in ait:
@@ -67,7 +77,7 @@ async def preserve(ait):
 
 
 @operator
-async def just(value):
+async def just(value: T) -> AsyncIterator[T]:
     """Await if possible, and generate a single value."""
     if inspect.isawaitable(value):
         yield await value
@@ -76,7 +86,9 @@ async def just(value):
 
 
 @operator
-async def call(func, *args, **kwargs):
+async def call(
+    func: Callable[P, Awaitable[T] | T], *args: P.args, **kwargs: P.kwargs
+) -> AsyncIterator[T]:
     """Call the given function and generate a single value.
 
     Await if the provided function is asynchronous.
@@ -84,11 +96,11 @@ async def call(func, *args, **kwargs):
     if asyncio.iscoroutinefunction(func):
         yield await func(*args, **kwargs)
     else:
-        yield func(*args, **kwargs)
+        yield func(*args, **kwargs)  # type: ignore
 
 
 @operator
-async def throw(exc):
+async def throw(exc: Exception) -> AsyncIterator[None]:
     """Throw an exception without generating any value."""
     if False:
         yield
@@ -96,18 +108,18 @@ async def throw(exc):
 
 
 @operator
-async def empty():
+async def empty() -> AsyncIterator[None]:
     """Terminate without generating any value."""
     if False:
         yield
 
 
 @operator
-async def never():
+async def never() -> AsyncIterator[None]:
     """Hang forever without generating any value."""
     if False:
         yield
-    future = asyncio.Future()
+    future: asyncio.Future[None] = asyncio.Future()
     try:
         await future
     finally:
@@ -115,7 +127,9 @@ async def never():
 
 
 @operator
-def repeat(value, times=None, *, interval=0):
+def repeat(
+    value: T, times: int | None = None, *, interval: float = 0.0
+) -> AsyncIterator[T]:
     """Generate the same value a given number of times.
 
     If ``times`` is ``None``, the value is repeated indefinitely.
@@ -131,7 +145,7 @@ def repeat(value, times=None, *, interval=0):
 
 
 @operator
-def range(*args, interval=0):
+def range(*args: int, interval: float = 0.0) -> AsyncIterator[int]:
     """Generate a given range of numbers.
 
     It supports the same arguments as the builtin function.
@@ -142,7 +156,9 @@ def range(*args, interval=0):
 
 
 @operator
-def count(start=0, step=1, *, interval=0):
+def count(
+    start: int = 0, step: int = 1, *, interval: float = 0.0
+) -> AsyncIterator[int]:
     """Generate consecutive numbers indefinitely.
 
     Optional starting point and increment can be defined,

@@ -4,8 +4,8 @@ from setuptools import setup
 TESTING = any(x in sys.argv for x in ["test", "pytest"])
 UPLOAD = "upload_sphinx" in sys.argv
 
-if not UPLOAD and sys.version_info < (3, 6):
-    raise RuntimeError("aiostream requires Python 3.6")
+if not UPLOAD and sys.version_info < (3, 7):
+    raise RuntimeError("aiostream requires Python 3.7")
 
 with open("README.rst", encoding="utf-8") as f:
     long_description = f.read()
@@ -14,8 +14,8 @@ setup(
     name="aiostream",
     version="0.4.6.dev0",
     packages=["aiostream", "aiostream.stream"],
+    install_requires=["typing-extensions"],
     setup_requires=["pytest-runner" if TESTING else ""],
-    install_requires=['async_exit_stack;python_version<"3.7"'],
     tests_require=["pytest", "pytest-asyncio", "pytest-cov"],
     description="Generator-based operators for asynchronous iteration",
     long_description=long_description,
@@ -24,7 +24,6 @@ setup(
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

@@ -1,18 +1,33 @@
 """Advanced operators (to deal with streams of higher order) ."""
+from __future__ import annotations
+
+from typing import AsyncIterator, AsyncIterable, TypeVar, Union, Callable
+from typing_extensions import ParamSpec
 
 from . import combine
 
-from ..core import operator
+from ..core import operator, Streamer
 from ..manager import StreamerManager
 
+
 __all__ = ["concat", "flatten", "switch", "concatmap", "flatmap", "switchmap"]
+
+
+T = TypeVar("T")
+U = TypeVar("U")
+P = ParamSpec("P")
 
 
 # Helper to manage stream of higher order
 
 
 @operator(pipable=True)
-async def base_combine(source, switch=False, ordered=False, task_limit=None):
+async def base_combine(
+    source: AsyncIterable[AsyncIterable[T]],
+    switch: bool = False,
+    ordered: bool = False,
+    task_limit: int | None = None,
+) -> AsyncIterator[T]:
     """Base operator for managing an asynchronous sequence of sequences.
 
     The sequences are awaited concurrently, although it's possible to limit
@@ -30,13 +45,13 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
         raise ValueError("The task limit must be None or greater than 0")
 
     # Safe context
-    async with StreamerManager() as manager:
-
-        main_streamer = await manager.enter_and_create_task(source)
+    async with StreamerManager[Union[AsyncIterable[T], T]]() as manager:
+        main_streamer: Streamer[
+            AsyncIterable[T] | T
+        ] | None = await manager.enter_and_create_task(source)
 
         # Loop over events
         while manager.tasks:
-
             # Extract streamer groups
             substreamers = manager.streamers[1:]
             mainstreamers = [main_streamer] if main_streamer in manager.tasks else []
@@ -60,7 +75,6 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
 
             # End of stream
             except StopAsyncIteration:
-
                 # Main streamer is finished
                 if streamer is main_streamer:
                     main_streamer = None
@@ -75,13 +89,13 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
 
             # Process result
             else:
-
                 # Switch mecanism
                 if switch and streamer is main_streamer:
                     await manager.clean_streamers(substreamers)
 
                 # Setup a new source
                 if streamer is main_streamer:
+                    assert isinstance(result, AsyncIterable)
                     await manager.enter_and_create_task(result)
 
                     # Re-schedule the main streamer if task limit allows it
@@ -90,7 +104,7 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
 
                 # Yield the result
                 else:
-                    yield result
+                    yield result  # type: ignore
 
                     # Re-schedule the streamer
                     manager.create_task(streamer)
@@ -100,7 +114,9 @@ async def base_combine(source, switch=False, ordered=False, task_limit=None):
 
 
 @operator(pipable=True)
-def concat(source, task_limit=None):
+def concat(
+    source: AsyncIterable[AsyncIterable[T]], task_limit: int | None = None
+) -> AsyncIterator[T]:
     """Given an asynchronous sequence of sequences, generate the elements
     of the sequences in order.
 
@@ -113,7 +129,9 @@ def concat(source, task_limit=None):
 
 
 @operator(pipable=True)
-def flatten(source, task_limit=None):
+def flatten(
+    source: AsyncIterable[AsyncIterable[T]], task_limit: int | None = None
+) -> AsyncIterator[T]:
     """Given an asynchronous sequence of sequences, generate the elements
     of the sequences as soon as they're received.
 
@@ -126,7 +144,7 @@ def flatten(source, task_limit=None):
 
 
 @operator(pipable=True)
-def switch(source):
+def switch(source: AsyncIterable[AsyncIterable[T]]) -> AsyncIterator[T]:
     """Given an asynchronous sequence of sequences, generate the elements of
     the most recent sequence.
 
@@ -144,7 +162,12 @@ def switch(source):
 
 
 @operator(pipable=True)
-def concatmap(source, func, *more_sources, task_limit=None):
+def concatmap(
+    source: AsyncIterable[T],
+    func: Callable[P, AsyncIterable[U]],
+    *more_sources: AsyncIterable[T],
+    task_limit: int | None = None,
+) -> AsyncIterator[U]:
     """Apply a given function that creates a sequence from the elements of one
     or several asynchronous sequences, and generate the elements of the created
     sequences in order.
@@ -160,7 +183,12 @@ def concatmap(source, func, *more_sources, task_limit=None):
 
 
 @operator(pipable=True)
-def flatmap(source, func, *more_sources, task_limit=None):
+def flatmap(
+    source: AsyncIterable[T],
+    func: Callable[P, AsyncIterable[U]],
+    *more_sources: AsyncIterable[T],
+    task_limit: int | None = None,
+) -> AsyncIterator[U]:
     """Apply a given function that creates a sequence from the elements of one
     or several asynchronous sequences, and generate the elements of the created
     sequences as soon as they arrive.
@@ -178,7 +206,11 @@ def flatmap(source, func, *more_sources, task_limit=None):
 
 
 @operator(pipable=True)
-def switchmap(source, func, *more_sources):
+def switchmap(
+    source: AsyncIterable[T],
+    func: Callable[P, AsyncIterable[U]],
+    *more_sources: AsyncIterable[T],
+) -> AsyncIterator[U]:
     """Apply a given function that creates a sequence from the elements of one
     or several asynchronous sequences and generate the elements of the most
     recently created sequence.
