@@ -17,6 +17,9 @@ setup(
     install_requires=["typing-extensions"],
     setup_requires=["pytest-runner" if TESTING else ""],
     tests_require=["pytest", "pytest-asyncio", "pytest-cov"],
+    package_data={
+        "aiostream": ["py.typed"],
+    },
     description="Generator-based operators for asynchronous iteration",
     long_description=long_description,
     url="https://github.com/vxgmichel/aiostream",
