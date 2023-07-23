@@ -9,14 +9,14 @@ from typing import AsyncIterator, Awaitable, Callable, TypeVar, AsyncIterable
 
 from . import select
 from ..aiter_utils import anext
-from ..core import operator, streamcontext
+from ..core import pipable_operator, streamcontext
 
 __all__ = ["accumulate", "reduce", "list"]
 
 T = TypeVar("T")
 
 
-@operator(pipable=True)
+@pipable_operator
 async def accumulate(
     source: AsyncIterable[T],
     func: Callable[[T, T], Awaitable[T] | T] = op.add,
@@ -52,7 +52,7 @@ async def accumulate(
             yield value
 
 
-@operator(pipable=True)
+@pipable_operator
 def reduce(
     source: AsyncIterable[T],
     func: Callable[[T, T], Awaitable[T] | T],
@@ -69,7 +69,7 @@ def reduce(
     return select.item.raw(acc, -1)
 
 
-@operator(pipable=True)
+@pipable_operator
 async def list(source: AsyncIterable[T]) -> AsyncIterator[builtins.list[T]]:
     """Build a list from an asynchronous sequence.
 

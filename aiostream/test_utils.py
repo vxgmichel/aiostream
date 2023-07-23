@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 import pytest
 
-from .core import StreamEmpty, operator, streamcontext
+from .core import StreamEmpty, streamcontext, pipable_operator
 from typing import TYPE_CHECKING, Any, Callable, List
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 __all__ = ["add_resource", "assert_run", "event_loop"]
 
 
-@operator(pipable=True)
+@pipable_operator
 async def add_resource(source, cleanup_time):
     """Simulate an open resource in a stream operator."""
     try:

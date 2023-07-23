@@ -1,7 +1,7 @@
 import asyncio
 import random as random_module
 
-from aiostream import operator, pipe, streamcontext
+from aiostream import operator, pipable_operator, pipe, streamcontext
 
 
 @operator
@@ -12,7 +12,7 @@ async def random(offset=0.0, width=1.0, interval=0.1):
         yield offset + width * random_module.random()
 
 
-@operator(pipable=True)
+@pipable_operator
 async def power(source, exponent):
     """Raise the elements of an asynchronous sequence to the given power."""
     async with streamcontext(source) as streamer:
@@ -20,7 +20,7 @@ async def power(source, exponent):
             yield item**exponent
 
 
-@operator(pipable=True)
+@pipable_operator
 def square(source):
     """Square the elements of an asynchronous sequence."""
     return power.raw(source, 2)

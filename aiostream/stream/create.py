@@ -10,9 +10,10 @@ from typing import (
     AsyncIterable,
     Awaitable,
     Iterable,
+    Protocol,
     TypeVar,
     AsyncIterator,
-    Callable,
+    cast,
 )
 from typing_extensions import ParamSpec
 
@@ -85,18 +86,33 @@ async def just(value: T) -> AsyncIterator[T]:
         yield value
 
 
+Y = TypeVar("Y", covariant=True)
+
+
+class SyncCallable(Protocol[P, Y]):
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Y:
+        ...
+
+
+class AsyncCallable(Protocol[P, Y]):
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[Y]:
+        ...
+
+
 @operator
 async def call(
-    func: Callable[P, Awaitable[T] | T], *args: P.args, **kwargs: P.kwargs
+    func: SyncCallable[P, T] | AsyncCallable[P, T], *args: P.args, **kwargs: P.kwargs
 ) -> AsyncIterator[T]:
     """Call the given function and generate a single value.
 
     Await if the provided function is asynchronous.
     """
     if asyncio.iscoroutinefunction(func):
-        yield await func(*args, **kwargs)
+        async_func = cast("AsyncCallable[P, T]", func)
+        yield await async_func(*args, **kwargs)
     else:
-        yield func(*args, **kwargs)  # type: ignore
+        sync_func = cast("SyncCallable[P, T]", func)
+        yield sync_func(*args, **kwargs)
 
 
 @operator

@@ -9,7 +9,7 @@ from typing import Awaitable, Callable, TypeVar, AsyncIterable, AsyncIterator
 
 from . import transform
 from ..aiter_utils import aiter, anext
-from ..core import operator, streamcontext
+from ..core import streamcontext, pipable_operator
 
 __all__ = [
     "take",
@@ -26,7 +26,7 @@ __all__ = [
 T = TypeVar("T")
 
 
-@operator(pipable=True)
+@pipable_operator
 async def take(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
     """Forward the first ``n`` elements from an asynchronous sequence.
 
@@ -42,7 +42,7 @@ async def take(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
                 return
 
 
-@operator(pipable=True)
+@pipable_operator
 async def takelast(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
     """Forward the last ``n`` elements from an asynchronous sequence.
 
@@ -59,7 +59,7 @@ async def takelast(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
             yield item
 
 
-@operator(pipable=True)
+@pipable_operator
 async def skip(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
     """Forward an asynchronous sequence, skipping the first ``n`` elements.
 
@@ -72,7 +72,7 @@ async def skip(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
                 yield item
 
 
-@operator(pipable=True)
+@pipable_operator
 async def skiplast(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
     """Forward an asynchronous sequence, skipping the last ``n`` elements.
 
@@ -92,7 +92,7 @@ async def skiplast(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
             queue.append(item)
 
 
-@operator(pipable=True)
+@pipable_operator
 async def filterindex(
     source: AsyncIterable[T], func: Callable[[int], bool]
 ) -> AsyncIterator[T]:
@@ -109,7 +109,7 @@ async def filterindex(
                 yield item
 
 
-@operator(pipable=True)
+@pipable_operator
 def slice(source: AsyncIterable[T], *args: int) -> AsyncIterator[T]:
     """Slice an asynchronous sequence.
 
@@ -145,7 +145,7 @@ def slice(source: AsyncIterable[T], *args: int) -> AsyncIterator[T]:
     return aiterator
 
 
-@operator(pipable=True)
+@pipable_operator
 async def item(source: AsyncIterable[T], index: int) -> AsyncIterator[T]:
     """Forward the ``n``th element of an asynchronous sequence.
 
@@ -174,7 +174,7 @@ async def item(source: AsyncIterable[T], index: int) -> AsyncIterator[T]:
         yield result
 
 
-@operator(pipable=True)
+@pipable_operator
 def getitem(source: AsyncIterable[T], index: int | builtins.slice) -> AsyncIterator[T]:
     """Forward one or several items from an asynchronous sequence.
 
@@ -188,7 +188,7 @@ def getitem(source: AsyncIterable[T], index: int | builtins.slice) -> AsyncItera
     raise TypeError("Not a valid index (int or slice)")
 
 
-@operator(pipable=True)
+@pipable_operator
 async def filter(
     source: AsyncIterable[T], func: Callable[[T], bool | Awaitable[bool]]
 ) -> AsyncIterator[T]:
@@ -209,7 +209,7 @@ async def filter(
                 yield item
 
 
-@operator(pipable=True)
+@pipable_operator
 async def until(
     source: AsyncIterable[T], func: Callable[[T], bool | Awaitable[bool]]
 ) -> AsyncIterator[T]:
@@ -234,7 +234,7 @@ async def until(
                 return
 
 
-@operator(pipable=True)
+@pipable_operator
 async def takewhile(
     source: AsyncIterable[T], func: Callable[[T], bool | Awaitable[bool]]
 ) -> AsyncIterator[T]:
@@ -259,7 +259,7 @@ async def takewhile(
             yield item
 
 
-@operator(pipable=True)
+@pipable_operator
 async def dropwhile(
     source: AsyncIterable[T], func: Callable[[T], bool | Awaitable[bool]]
 ) -> AsyncIterator[T]:

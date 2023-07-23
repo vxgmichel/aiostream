@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from ..aiter_utils import anext
-from ..core import operator, streamcontext
+from ..core import streamcontext, pipable_operator
 
 from typing import TypeVar, AsyncIterable, AsyncIterator
 
@@ -13,7 +13,7 @@ __all__ = ["spaceout", "delay", "timeout"]
 T = TypeVar("T")
 
 
-@operator(pipable=True)
+@pipable_operator
 async def spaceout(source: AsyncIterable[T], interval: float) -> AsyncIterator[T]:
     """Make sure the elements of an asynchronous sequence are separated
     in time by the given interval.
@@ -29,7 +29,7 @@ async def spaceout(source: AsyncIterable[T], interval: float) -> AsyncIterator[T
             timeout = loop.time() + interval
 
 
-@operator(pipable=True)
+@pipable_operator
 async def timeout(source: AsyncIterable[T], timeout: float) -> AsyncIterator[T]:
     """Raise a time-out if an element of the asynchronous sequence
     takes too long to arrive.
@@ -47,7 +47,7 @@ async def timeout(source: AsyncIterable[T], timeout: float) -> AsyncIterator[T]:
                 yield item
 
 
-@operator(pipable=True)
+@pipable_operator
 async def delay(source: AsyncIterable[T], delay: float) -> AsyncIterator[T]:
     """Delay the iteration of an asynchronous sequence."""
     await asyncio.sleep(delay)

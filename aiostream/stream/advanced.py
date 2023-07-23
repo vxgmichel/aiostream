@@ -1,12 +1,12 @@
 """Advanced operators (to deal with streams of higher order) ."""
 from __future__ import annotations
 
-from typing import AsyncIterator, AsyncIterable, TypeVar, Union, Callable
+from typing import AsyncIterator, AsyncIterable, TypeVar, Union
 from typing_extensions import ParamSpec
 
 from . import combine
 
-from ..core import operator, Streamer
+from ..core import Streamer, pipable_operator
 from ..manager import StreamerManager
 
 
@@ -21,7 +21,7 @@ P = ParamSpec("P")
 # Helper to manage stream of higher order
 
 
-@operator(pipable=True)
+@pipable_operator
 async def base_combine(
     source: AsyncIterable[AsyncIterable[T]],
     switch: bool = False,
@@ -113,7 +113,7 @@ async def base_combine(
 # Advanced operators (for streams of higher order)
 
 
-@operator(pipable=True)
+@pipable_operator
 def concat(
     source: AsyncIterable[AsyncIterable[T]], task_limit: int | None = None
 ) -> AsyncIterator[T]:
@@ -128,7 +128,7 @@ def concat(
     return base_combine.raw(source, task_limit=task_limit, switch=False, ordered=True)
 
 
-@operator(pipable=True)
+@pipable_operator
 def flatten(
     source: AsyncIterable[AsyncIterable[T]], task_limit: int | None = None
 ) -> AsyncIterator[T]:
@@ -143,7 +143,7 @@ def flatten(
     return base_combine.raw(source, task_limit=task_limit, switch=False, ordered=False)
 
 
-@operator(pipable=True)
+@pipable_operator
 def switch(source: AsyncIterable[AsyncIterable[T]]) -> AsyncIterator[T]:
     """Given an asynchronous sequence of sequences, generate the elements of
     the most recent sequence.
@@ -161,10 +161,10 @@ def switch(source: AsyncIterable[AsyncIterable[T]]) -> AsyncIterator[T]:
 # Advanced *-map operators
 
 
-@operator(pipable=True)
+@pipable_operator
 def concatmap(
     source: AsyncIterable[T],
-    func: Callable[P, AsyncIterable[U]],
+    func: combine.SmapCallable[T, AsyncIterable[U]],
     *more_sources: AsyncIterable[T],
     task_limit: int | None = None,
 ) -> AsyncIterator[U]:
@@ -177,15 +177,14 @@ def concatmap(
     although it's possible to limit the amount of running sequences using
     the `task_limit` argument.
     """
-    return concat.raw(
-        combine.smap.raw(source, func, *more_sources), task_limit=task_limit
-    )
+    mapped = combine.smap.raw(source, func, *more_sources)
+    return concat.raw(mapped, task_limit=task_limit)
 
 
-@operator(pipable=True)
+@pipable_operator
 def flatmap(
     source: AsyncIterable[T],
-    func: Callable[P, AsyncIterable[U]],
+    func: combine.SmapCallable[T, AsyncIterable[U]],
     *more_sources: AsyncIterable[T],
     task_limit: int | None = None,
 ) -> AsyncIterator[U]:
@@ -200,15 +199,14 @@ def flatmap(
 
     Errors raised in a source or output sequence are propagated.
     """
-    return flatten.raw(
-        combine.smap.raw(source, func, *more_sources), task_limit=task_limit
-    )
+    mapped = combine.smap.raw(source, func, *more_sources)
+    return flatten.raw(mapped, task_limit=task_limit)
 
 
-@operator(pipable=True)
+@pipable_operator
 def switchmap(
     source: AsyncIterable[T],
-    func: Callable[P, AsyncIterable[U]],
+    func: combine.SmapCallable[T, AsyncIterable[U]],
     *more_sources: AsyncIterable[T],
 ) -> AsyncIterator[U]:
     """Apply a given function that creates a sequence from the elements of one
@@ -219,4 +217,5 @@ def switchmap(
     asynchronous sequence. Errors raised in a source or output sequence (that
     was not already closed) are propagated.
     """
-    return switch.raw(combine.smap.raw(source, func, *more_sources))
+    mapped = combine.smap.raw(source, func, *more_sources)
+    return switch.raw(mapped)

@@ -12,11 +12,10 @@ from typing import (
     Callable,
     Generator,
     Iterator,
-    Type,
+    Protocol,
     Union,
     TypeVar,
-    Generic,
-    overload,
+    cast,
     AsyncIterable,
     Awaitable,
 )
@@ -122,7 +121,7 @@ class BaseStream(AsyncIterable[T], Awaitable[T]):
         """
         from .stream import chain
 
-        return chain(self, value)  # type: ignore
+        return chain(self, value)
 
     def __getitem__(self, value: Union[int, slice]) -> BaseStream[T]:
         """Get item protocol.
@@ -131,7 +130,7 @@ class BaseStream(AsyncIterable[T], Awaitable[T]):
         """
         from .stream import getitem
 
-        return getitem(self, value)  # type: ignore
+        return getitem(self, value)
 
     # Disable sync iteration
     # This is necessary because __getitem__ is defined
@@ -139,7 +138,7 @@ class BaseStream(AsyncIterable[T], Awaitable[T]):
     __iter__: None = None
 
 
-class Stream(BaseStream[T], Generic[P, T]):
+class Stream(BaseStream[T]):
     """Enhanced asynchronous iterable.
 
     It provides the following features:
@@ -171,21 +170,6 @@ class Stream(BaseStream[T], Generic[P, T]):
         result = await zs  # zs can be used several times
         print(result)      # Prints 14
     """
-
-    def __init__(self, *args: P.args, **kwargs: P.kwargs):
-        pass
-
-    @classmethod
-    def raw(cls, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
-        raise NotImplementedError
-
-    @classmethod
-    def pipe(
-        cls,
-        *args: Q.args,
-        **kwargs: Q.kwargs,
-    ) -> Callable[[AsyncIterable[T]], Stream[Concatenate[AsyncIterable[T], P], T]]:
-        raise NotImplementedError
 
     def stream(self) -> Streamer[T]:
         """Return a streamer context for safe iteration.
@@ -268,26 +252,26 @@ def streamcontext(aiterable: AsyncIterable[T]) -> Streamer[T]:
     return Streamer(aiterator)
 
 
+# Operator type protocol
+
+
+class OperatorType(Protocol[P, T]):
+    __call__: Callable[P, Stream[T]]
+    raw: Callable[P, AsyncIterator[T]]
+
+
+class PipableOperatorType(Protocol[P, T]):
+    __call__: Callable[P, Stream[T]]
+    raw: Callable[P, AsyncIterator[T]]
+    pipe: Callable[[AsyncIterable[T]], Stream[T]]
+
+
 # Operator decorator
 
 
-@overload
 def operator(
-    func: None = None, *, pipable: bool = False
-) -> Callable[[Callable[P, AsyncIterator[T]]], Type[Stream[P, T]]]:
-    ...
-
-
-@overload
-def operator(
-    func: Callable[P, AsyncIterator[T]], *, pipable: bool = False
-) -> Type[Stream[P, T]]:
-    ...
-
-
-def operator(
-    func: Callable[P, AsyncIterator[T]] | None = None, *, pipable: bool = False
-) -> Callable[[Callable[P, AsyncIterator[T]]], Type[Stream[P, T]]] | Type[Stream[P, T]]:
+    func: Callable[P, AsyncIterator[T]],
+) -> OperatorType[P, T]:
     """Create a stream operator from an asynchronous generator
     (or any function returning an asynchronous iterable).
 
@@ -298,16 +282,110 @@ def operator(
             while True:
                 yield offset + width * random.random()
 
-    Decorator usage for pipable operators::
+    The return value is a dynamically created class.
+    It has the same name, module and doc as the original function.
 
-        @operator(pipable=True)
+    A new stream is created by simply instanciating the operator::
+
+        xs = random()
+
+    The original function is called at instanciation to check that
+    signature match. Other methods are available:
+
+      - `original`: the original function as a static method
+      - `raw`: same as original but add extra checking
+    """
+
+    # First check for classmethod instance, to avoid more confusing errors later on
+    if isinstance(func, classmethod):
+        raise ValueError(
+            "An operator cannot be created from a class method, "
+            "since the decorated function becomes an operator class"
+        )
+
+    # Gather data
+    bases = (Stream,)
+    name = func.__name__
+    module = func.__module__
+    extra_doc = func.__doc__
+    doc = extra_doc or f"Regular {name} stream operator."
+
+    # Extract signature
+    signature = inspect.signature(func)
+    parameters = list(signature.parameters.values())
+    if parameters and parameters[0].name in ("self", "cls"):
+        raise ValueError(
+            "An operator cannot be created from a method, "
+            "since the decorated function becomes an operator class"
+        )
+
+    # Look for "more_sources"
+    for i, p in enumerate(parameters):
+        if p.name == "more_sources" and p.kind == inspect.Parameter.VAR_POSITIONAL:
+            more_sources_index = i
+            break
+    else:
+        more_sources_index = None
+
+    # Injected parameters
+    self_parameter = inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    inspect.Parameter("cls", inspect.Parameter.POSITIONAL_OR_KEYWORD)
+
+    # Wrapped static method
+    original = func
+    original.__qualname__ = name + ".original"
+
+    # Raw static method
+    raw = func
+    raw.__qualname__ = name + ".raw"
+
+    # Init method
+    def init(self: BaseStream[T], *args: P.args, **kwargs: P.kwargs) -> None:
+        if more_sources_index is not None:
+            for source in args[more_sources_index:]:
+                assert_async_iterable(source)
+        factory = functools.partial(raw, *args, **kwargs)
+        return BaseStream.__init__(self, factory)
+
+    # Customize init signature
+    new_parameters = [self_parameter] + parameters
+    init.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore
+
+    # Customize init method
+    init.__qualname__ = name + ".__init__"
+    init.__name__ = "__init__"
+    init.__module__ = module
+    init.__doc__ = f"Initialize the {name} stream."
+
+    # Gather attributes
+    attrs = {
+        "__init__": init,
+        "__module__": module,
+        "__doc__": doc,
+        "raw": staticmethod(raw),
+        "original": staticmethod(original),
+    }
+
+    # Create operator class
+    return cast("OperatorType[P, T]", type(name, bases, attrs))
+
+
+def pipable_operator(
+    func: Callable[Concatenate[AsyncIterable[X], P], AsyncIterator[T]],
+) -> PipableOperatorType[Concatenate[AsyncIterable[X], P], T]:
+    """Create a pipable stream operator from an asynchronous generator
+    (or any function returning an asynchronous iterable).
+
+    Decorator usage::
+
+        @pipable_operator
         async def multiply(source, factor):
             async with streamcontext(source) as streamer:
                  async for item in streamer:
                      yield factor * item
 
-    In the case of pipable operators, the first argument is expected
-    to be the asynchronous iteratable used for piping.
+    The first argument is expected to be the asynchronous iteratable used
+    for piping.
 
     The return value is a dynamically created class.
     It has the same name, module and doc as the original function.
@@ -318,8 +396,7 @@ def operator(
         ys = multiply(xs, 2)
 
     The original function is called at instanciation to check that
-    signature match. In the case of pipable operators, the source is
-    also checked for asynchronous iteration.
+    signature match. The source is also checked for asynchronous iteration.
 
     The operator also have a pipe class method that can be used along
     with the piping synthax::
@@ -336,136 +413,125 @@ def operator(
 
     The raw method is useful to create new operators from existing ones::
 
-        @operator(pipable=True)
+        @pipable_operator
         def double(source):
             return multiply.raw(source, 2)
     """
 
-    def decorator(func: Callable[P, AsyncIterator[T]]) -> Type[Stream[P, T]]:
-        """Inner decorator for stream operator."""
-
-        # First check for classmethod instance, to avoid more confusing errors later on
-        if isinstance(func, classmethod):
-            raise ValueError(
-                "An operator cannot be created from a class method, "
-                "since the decorated function becomes an operator class"
-            )
-
-        # Gather data
-        bases = (Stream,)
-        name = func.__name__
-        module = func.__module__
-        extra_doc = func.__doc__
-        doc = extra_doc or f"Regular {name} stream operator."
-
-        # Extract signature
-        signature = inspect.signature(func)
-        parameters = list(signature.parameters.values())
-        if parameters and parameters[0].name in ("self", "cls"):
-            raise ValueError(
-                "An operator cannot be created from a method, "
-                "since the decorated function becomes an operator class"
-            )
-
-        # Look for "more_sources"
-        for i, p in enumerate(parameters):
-            if p.name == "more_sources" and p.kind == inspect.Parameter.VAR_POSITIONAL:
-                more_sources_index = i
-                break
-        else:
-            more_sources_index = None
-
-        # Injected parameters
-        self_parameter = inspect.Parameter(
-            "self", inspect.Parameter.POSITIONAL_OR_KEYWORD
-        )
-        cls_parameter = inspect.Parameter(
-            "cls", inspect.Parameter.POSITIONAL_OR_KEYWORD
+    # First check for classmethod instance, to avoid more confusing errors later on
+    if isinstance(func, classmethod):
+        raise ValueError(
+            "An operator cannot be created from a class method, "
+            "since the decorated function becomes an operator class"
         )
 
-        # Wrapped static method
-        original = func
-        original.__qualname__ = name + ".original"
+    # Gather data
+    bases = (Stream,)
+    name = func.__name__
+    module = func.__module__
+    extra_doc = func.__doc__
+    doc = extra_doc or f"Regular {name} stream operator."
 
-        # Raw static method
-        raw = func
-        raw.__qualname__ = name + ".raw"
+    # Extract signature
+    signature = inspect.signature(func)
+    parameters = list(signature.parameters.values())
+    if parameters and parameters[0].name in ("self", "cls"):
+        raise ValueError(
+            "An operator cannot be created from a method, "
+            "since the decorated function becomes an operator class"
+        )
 
-        # Init method
-        def init(self: BaseStream[T], *args: P.args, **kwargs: P.kwargs) -> None:
-            if pipable and args:
-                assert_async_iterable(args[0])
-            if more_sources_index is not None:
-                for source in args[more_sources_index:]:
-                    assert_async_iterable(source)
-            factory = functools.partial(raw, *args, **kwargs)
-            return BaseStream.__init__(self, factory)
+    # Look for "more_sources"
+    for i, p in enumerate(parameters):
+        if p.name == "more_sources" and p.kind == inspect.Parameter.VAR_POSITIONAL:
+            more_sources_index = i
+            break
+    else:
+        more_sources_index = None
 
-        # Customize init signature
-        new_parameters = [self_parameter] + parameters
-        init.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore
+    # Injected parameters
+    self_parameter = inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    cls_parameter = inspect.Parameter("cls", inspect.Parameter.POSITIONAL_OR_KEYWORD)
 
-        # Customize init method
-        init.__qualname__ = name + ".__init__"
-        init.__name__ = "__init__"
-        init.__module__ = module
-        init.__doc__ = f"Initialize the {name} stream."
+    # Wrapped static method
+    original = func
+    original.__qualname__ = name + ".original"
 
-        if pipable:
-            # Raw static method
-            def raw(*args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
-                if args:
-                    assert_async_iterable(args[0])
-                if more_sources_index is not None:
-                    for source in args[more_sources_index:]:
-                        assert_async_iterable(source)
-                return func(*args, **kwargs)
+    # Raw static method
+    def raw(
+        arg: AsyncIterable[X], *args: P.args, **kwargs: P.kwargs
+    ) -> AsyncIterator[T]:
+        assert_async_iterable(arg)
+        if more_sources_index is not None:
+            for source in args[more_sources_index - 1 :]:
+                assert_async_iterable(source)
+        return func(arg, *args, **kwargs)
 
-            # Custonize raw method
-            raw.__signature__ = signature  # type: ignore
-            raw.__qualname__ = name + ".raw"
-            raw.__module__ = module
-            raw.__doc__ = doc
+    # Custonize raw method
+    raw.__signature__ = signature  # type: ignore
+    raw.__qualname__ = name + ".raw"
+    raw.__module__ = module
+    raw.__doc__ = doc
 
-            # Pipe class method
-            def pipe(
-                cls: Type[Stream[Concatenate[AsyncIterable[T], Q], T]],
-                /,
-                *args: Q.args,
-                **kwargs: Q.kwargs,
-            ) -> Callable[
-                [AsyncIterable[T]], Stream[Concatenate[AsyncIterable[T], Q], T]
-            ]:
-                return lambda source: cls(source, *args, **kwargs)
+    # Init method
+    def init(
+        self: BaseStream[T], arg: AsyncIterable[X], *args: P.args, **kwargs: P.kwargs
+    ) -> None:
+        assert_async_iterable(arg)
+        if more_sources_index is not None:
+            for source in args[more_sources_index - 1 :]:
+                assert_async_iterable(source)
+        factory = functools.partial(raw, arg, *args, **kwargs)
+        return BaseStream.__init__(self, factory)
 
-            # Customize pipe signature
-            if parameters and parameters[0].kind in (
-                inspect.Parameter.POSITIONAL_ONLY,
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            ):
-                new_parameters = [cls_parameter] + parameters[1:]
-            else:
-                new_parameters = [cls_parameter] + parameters
-            pipe.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore
+    # Customize init signature
+    new_parameters = [self_parameter] + parameters
+    init.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore
 
-            # Customize pipe method
-            pipe.__qualname__ = name + ".pipe"
-            pipe.__module__ = module
-            pipe.__doc__ = f'Pipable "{name}" stream operator.'
-            if extra_doc:
-                pipe.__doc__ += "\n\n    " + extra_doc
+    # Customize init method
+    init.__qualname__ = name + ".__init__"
+    init.__name__ = "__init__"
+    init.__module__ = module
+    init.__doc__ = f"Initialize the {name} stream."
 
-        # Gather attributes
-        attrs = {
-            "__init__": init,
-            "__module__": module,
-            "__doc__": doc,
-            "raw": staticmethod(raw),
-            "original": staticmethod(original),
-            "pipe": classmethod(pipe) if pipable else None,
-        }
+    # Pipe class method
+    def pipe(
+        cls: PipableOperatorType[Concatenate[AsyncIterable[X], P], T],
+        /,
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Callable[[AsyncIterable[X]], Stream[T]]:
+        return lambda source: cls(source, *args, **kwargs)
 
-        # Create operator class
-        return type(name, bases, attrs)
+    # Customize pipe signature
+    if parameters and parameters[0].kind in (
+        inspect.Parameter.POSITIONAL_ONLY,
+        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+    ):
+        new_parameters = [cls_parameter] + parameters[1:]
+    else:
+        new_parameters = [cls_parameter] + parameters
+    pipe.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore
 
-    return decorator if func is None else decorator(func)
+    # Customize pipe method
+    pipe.__qualname__ = name + ".pipe"
+    pipe.__module__ = module
+    pipe.__doc__ = f'Pipable "{name}" stream operator.'
+    if extra_doc:
+        pipe.__doc__ += "\n\n    " + extra_doc
+
+    # Gather attributes
+    attrs = {
+        "__init__": init,
+        "__module__": module,
+        "__doc__": doc,
+        "raw": staticmethod(raw),
+        "original": staticmethod(original),
+        "pipe": classmethod(pipe),
+    }
+
+    # Create operator class
+    return cast(
+        "PipableOperatorType[Concatenate[AsyncIterable[X], P], T]",
+        type(name, bases, attrs),
+    )

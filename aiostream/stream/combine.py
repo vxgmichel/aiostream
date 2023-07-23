@@ -4,11 +4,19 @@ from __future__ import annotations
 import asyncio
 import builtins
 
-from typing import Awaitable, TypeVar, AsyncIterable, AsyncIterator, Callable
+from typing import (
+    Awaitable,
+    Protocol,
+    TypeVar,
+    AsyncIterable,
+    AsyncIterator,
+    Callable,
+    cast,
+)
 from typing_extensions import ParamSpec
 
 from ..aiter_utils import AsyncExitStack, anext
-from ..core import operator, streamcontext
+from ..core import streamcontext, pipable_operator
 
 from . import create
 from . import select
@@ -23,22 +31,27 @@ K = TypeVar("K")
 P = ParamSpec("P")
 
 
-@operator(pipable=True)
-async def chain(*sources: AsyncIterable[T]) -> AsyncIterator[T]:
+@pipable_operator
+async def chain(
+    source: AsyncIterable[T], *more_sources: AsyncIterable[T]
+) -> AsyncIterator[T]:
     """Chain asynchronous sequences together, in the order they are given.
 
     Note: the sequences are not iterated until it is required,
     so if the operation is interrupted, the remaining sequences
     will be left untouched.
     """
+    sources = source, *more_sources
     for source in sources:
         async with streamcontext(source) as streamer:
             async for item in streamer:
                 yield item
 
 
-@operator(pipable=True)
-async def zip(*sources: AsyncIterable[T]) -> AsyncIterator[tuple[T, ...]]:
+@pipable_operator
+async def zip(
+    source: AsyncIterable[T], *more_sources: AsyncIterable[T]
+) -> AsyncIterator[tuple[T, ...]]:
     """Combine and forward the elements of several asynchronous sequences.
 
     Each generated value is a tuple of elements, using the same order as
@@ -48,9 +61,7 @@ async def zip(*sources: AsyncIterable[T]) -> AsyncIterator[tuple[T, ...]]:
     Note: the different sequences are awaited in parrallel, so that their
     waiting times don't add up.
     """
-    # Zero sources
-    if len(sources) == 0:
-        return
+    sources = source, *more_sources
 
     # One sources
     if len(sources) == 1:
@@ -77,9 +88,30 @@ async def zip(*sources: AsyncIterable[T]) -> AsyncIterator[tuple[T, ...]]:
                 yield tuple(items)
 
 
-@operator(pipable=True)
+X = TypeVar("X", contravariant=True)
+Y = TypeVar("Y", covariant=True)
+
+
+class SmapCallable(Protocol[X, Y]):
+    def __call__(self, arg: X, /, *args: X) -> Y:
+        ...
+
+
+class AmapCallable(Protocol[X, Y]):
+    def __call__(self, arg: X, /, *args: X) -> Awaitable[Y]:
+        ...
+
+
+class MapCallable(Protocol[X, Y]):
+    def __call__(self, arg: X, /, *args: X) -> Awaitable[Y] | Y:
+        ...
+
+
+@pipable_operator
 async def smap(
-    source: AsyncIterable[T], func: Callable[..., U], *more_sources: AsyncIterable[T]
+    source: AsyncIterable[T],
+    func: SmapCallable[T, U],
+    *more_sources: AsyncIterable[T],
 ) -> AsyncIterator[U]:
     """Apply a given function to the elements of one or several
     asynchronous sequences.
@@ -97,10 +129,10 @@ async def smap(
             yield func(*item)
 
 
-@operator(pipable=True)
+@pipable_operator
 def amap(
     source: AsyncIterable[T],
-    corofn: Callable[P, Awaitable[U]],
+    corofn: AmapCallable[T, U],
     *more_sources: AsyncIterable[T],
     ordered: bool = True,
     task_limit: int | None = None,
@@ -123,8 +155,8 @@ def amap(
     so that their waiting times don't add up.
     """
 
-    def func(*args: P.args, **kwargs: P.kwargs) -> AsyncIterable[U]:
-        return create.call(corofn, *args, **kwargs)  # type: ignore
+    def func(arg: T, *args: T) -> AsyncIterable[U]:
+        return create.call(corofn, arg, *args)  # type: ignore
 
     if ordered:
         return advanced.concatmap.raw(
@@ -133,10 +165,10 @@ def amap(
     return advanced.flatmap.raw(source, func, *more_sources, task_limit=task_limit)
 
 
-@operator(pipable=True)
+@pipable_operator
 def map(
     source: AsyncIterable[T],
-    func: Callable[P, Awaitable[U] | U],
+    func: MapCallable[T, U],
     *more_sources: AsyncIterable[T],
     ordered: bool = True,
     task_limit: int | None = None,
@@ -175,23 +207,31 @@ def map(
         return amap.raw(
             source, func, *more_sources, ordered=ordered, task_limit=task_limit
         )
-    return smap.raw(source, func, *more_sources)  # type: ignore
+    sync_func = cast("SmapCallable[T, U]", func)
+    return smap.raw(source, sync_func, *more_sources)
 
 
-@operator(pipable=True)
-def merge(*sources: AsyncIterable[T]) -> AsyncIterator[T]:
+@pipable_operator
+def merge(
+    source: AsyncIterable[T], *more_sources: AsyncIterable[T]
+) -> AsyncIterator[T]:
     """Merge several asynchronous sequences together.
 
     All the sequences are iterated simultaneously and their elements
     are forwarded as soon as they're available. The generation continues
     until all the sequences are exhausted.
     """
-    return advanced.flatten.raw(create.iterate.raw(sources))
+    sources = [source, *more_sources]
+    source_stream: AsyncIterable[AsyncIterable[T]] = create.iterate.raw(sources)
+    return advanced.flatten.raw(source_stream)
 
 
-@operator(pipable=True)
+@pipable_operator
 def ziplatest(
-    *sources: AsyncIterable[T], partial: bool = True, default: T | None = None
+    source: AsyncIterable[T],
+    *more_sources: AsyncIterable[T],
+    partial: bool = True,
+    default: T | None = None,
 ) -> AsyncIterator[tuple[T | None, ...]]:
     """Combine several asynchronous sequences together, producing a tuple with
     the lastest element of each sequence whenever a new element is received.
@@ -206,6 +246,7 @@ def ziplatest(
     are forwarded as soon as they're available. The generation continues
     until all the sequences are exhausted.
     """
+    sources = source, *more_sources
     n = len(sources)
 
     # Custom getter
@@ -213,9 +254,13 @@ def ziplatest(
         return lambda key: dct.get(key, default)
 
     # Add source index to the items
-    new_sources = [
-        smap.raw(source, lambda x, i=i: {i: x}) for i, source in enumerate(sources)
-    ]
+    def make_func(i: int) -> SmapCallable[T, dict[int, T]]:
+        def func(x: T, *_: object) -> dict[int, T]:
+            return {i: x}
+
+        return func
+
+    new_sources = [smap.raw(source, make_func(i)) for i, source in enumerate(sources)]
 
     # Merge the sources
     merged = merge.raw(*new_sources)
@@ -231,4 +276,7 @@ def ziplatest(
     )
 
     # Convert the state dict to a tuple
-    return smap.raw(filtered, lambda x: tuple(builtins.map(getter(x), range(n))))
+    def dict_to_tuple(x: dict[int, T], *_: object) -> tuple[T | None, ...]:
+        return tuple(builtins.map(getter(x), range(n)))
+
+    return smap.raw(filtered, dict_to_tuple)

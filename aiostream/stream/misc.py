@@ -7,7 +7,7 @@ import builtins
 from typing import TypeVar, Awaitable, Callable, AsyncIterable, AsyncIterator, Any
 
 from .transform import map
-from ..core import operator
+from ..core import pipable_operator
 
 __all__ = ["action", "print"]
 
@@ -15,7 +15,7 @@ __all__ = ["action", "print"]
 T = TypeVar("T")
 
 
-@operator(pipable=True)
+@pipable_operator
 def action(
     source: AsyncIterable[T], func: Callable[[T], Awaitable[Any] | Any]
 ) -> AsyncIterator[T]:
@@ -26,7 +26,7 @@ def action(
     """
     if asyncio.iscoroutinefunction(func):
 
-        async def ainnerfunc(arg: T) -> T:
+        async def ainnerfunc(arg: T, *_: object) -> T:
             awaitable = func(arg)
             assert isinstance(awaitable, Awaitable)
             await awaitable
@@ -36,16 +36,21 @@ def action(
 
     else:
 
-        def innerfunc(arg: T) -> T:
+        def innerfunc(arg: T, *_: object) -> T:
             func(arg)
             return arg
 
         return map.raw(source, innerfunc)
 
 
-@operator(pipable=True)
+@pipable_operator
 def print(
-    source: AsyncIterable[T], template: str = "{}", **kwargs: Any
+    source: AsyncIterable[T],
+    template: str = "{}",
+    sep: str = " ",
+    end: str = "\n",
+    file: Any | None = None,
+    flush: bool = False,
 ) -> AsyncIterator[T]:
     """Print each element of an asynchronous sequence without modifying it.
 
@@ -55,6 +60,12 @@ def print(
 
     def func(value: T) -> None:
         string = template.format(value)
-        builtins.print(string, **kwargs)
+        builtins.print(
+            string,
+            sep=sep,
+            end=end,
+            file=file,
+            flush=flush,
+        )
 
     return action.raw(source, func)
