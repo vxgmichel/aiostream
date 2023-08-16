@@ -4,6 +4,7 @@ from __future__ import annotations
 import inspect
 import functools
 import sys
+import warnings
 
 from .aiter_utils import AsyncIteratorContext, aiter, assert_async_iterable
 from typing import (
@@ -283,7 +284,8 @@ class PipableOperatorType(Protocol[A, P, T]):
 
 
 def operator(
-    func: Callable[P, AsyncIterator[T]],
+    func: Callable[P, AsyncIterator[T]] | None = None,
+    pipable: bool | None = None,
 ) -> OperatorType[P, T]:
     """Create a stream operator from an asynchronous generator
     (or any function returning an asynchronous iterable).
@@ -307,7 +309,20 @@ def operator(
 
       - `original`: the original function as a static method
       - `raw`: same as original but add extra checking
+
+    The `pipable` argument is deprecated, use `pipable_operator` instead.
     """
+
+    # Handle compatibility with legacy (aiostream <= 0.4)
+    if pipable is not None or func is None:
+        warnings.warn(
+            "The `pipable` argument is deprecated. Use either `@operator` or `@pipable_operator` directly.",
+            DeprecationWarning,
+        )
+    if func is None:
+        return pipable_operator if pipable else operator  # type: ignore
+    if pipable is True:
+        return pipable_operator(func)  # type: ignore
 
     # First check for classmethod instance, to avoid more confusing errors later on
     if isinstance(func, classmethod):

@@ -76,3 +76,39 @@ async def test_error_on_entering_a_stream(event_loop):
             assert False
 
     assert "Use the `stream` method" in str(ctx.value)
+
+
+def test_compatibility():
+    @operator
+    async def test1():
+        yield 1
+
+    with pytest.raises(AttributeError):
+        test1.pipe
+
+    match = "The `pipable` argument is deprecated."
+    with pytest.warns(DeprecationWarning, match=match):
+
+        @operator()
+        async def test2():
+            yield 1
+
+    with pytest.raises(AttributeError):
+        test2.pipe
+
+    with pytest.warns(DeprecationWarning, match=match):
+
+        @operator(pipable=False)
+        async def test3():
+            yield 1
+
+    with pytest.raises(AttributeError):
+        test3.pipe
+
+    with pytest.warns(DeprecationWarning, match=match):
+
+        @operator(pipable=True)
+        async def test4(source):
+            yield 1
+
+    test4.pipe
