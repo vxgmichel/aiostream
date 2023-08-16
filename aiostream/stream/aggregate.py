@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import builtins
 import operator as op
-from typing import AsyncIterator, Awaitable, Callable, TypeVar, AsyncIterable
+from typing import AsyncIterator, Awaitable, Callable, TypeVar, AsyncIterable, cast
 
 
 from . import select
@@ -45,10 +45,10 @@ async def accumulate(
         async for item in streamer:
             returned = func(value, item)
             if iscorofunc:
-                assert isinstance(returned, Awaitable)
-                value = await returned
+                awaitable_value = cast("Awaitable[T]", returned)
+                value = await awaitable_value
             else:
-                value = returned  # type: ignore
+                value = cast("T", returned)
             yield value
 
 

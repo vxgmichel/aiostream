@@ -1,7 +1,7 @@
 """Advanced operators (to deal with streams of higher order) ."""
 from __future__ import annotations
 
-from typing import AsyncIterator, AsyncIterable, TypeVar, Union
+from typing import AsyncIterator, AsyncIterable, TypeVar, Union, cast
 from typing_extensions import ParamSpec
 
 from . import combine
@@ -104,7 +104,8 @@ async def base_combine(
 
                 # Yield the result
                 else:
-                    yield result  # type: ignore
+                    item = cast("T", result)
+                    yield item
 
                     # Re-schedule the streamer
                     manager.create_task(streamer)

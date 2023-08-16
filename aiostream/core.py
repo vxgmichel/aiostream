@@ -362,7 +362,7 @@ def operator(
 
     # Customize init signature
     new_parameters = [self_parameter] + parameters
-    init.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore
+    init.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore[attr-defined]
 
     # Customize init method
     init.__qualname__ = name + ".__init__"
@@ -481,7 +481,7 @@ def pipable_operator(
         return func(arg, *args, **kwargs)
 
     # Custonize raw method
-    raw.__signature__ = signature  # type: ignore
+    raw.__signature__ = signature  # type: ignore[attr-defined]
     raw.__qualname__ = name + ".raw"
     raw.__module__ = module
     raw.__doc__ = doc
@@ -499,7 +499,7 @@ def pipable_operator(
 
     # Customize init signature
     new_parameters = [self_parameter] + parameters
-    init.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore
+    init.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore[attr-defined]
 
     # Customize init method
     init.__qualname__ = name + ".__init__"
@@ -524,7 +524,7 @@ def pipable_operator(
         new_parameters = [cls_parameter] + parameters[1:]
     else:
         new_parameters = [cls_parameter] + parameters
-    pipe.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore
+    pipe.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore[attr-defined]
 
     # Customize pipe method
     pipe.__qualname__ = name + ".pipe"

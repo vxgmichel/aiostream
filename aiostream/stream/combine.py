@@ -98,7 +98,7 @@ class SmapCallable(Protocol[X, Y]):
 
 
 class AmapCallable(Protocol[X, Y]):
-    def __call__(self, arg: X, /, *args: X) -> Awaitable[Y]:
+    async def __call__(self, arg: X, /, *args: X) -> Y:
         ...
 
 
@@ -155,8 +155,8 @@ def amap(
     so that their waiting times don't add up.
     """
 
-    def func(arg: T, *args: T) -> AsyncIterable[U]:
-        return create.call(corofn, arg, *args)  # type: ignore
+    async def func(arg: T, *args: T) -> AsyncIterable[U]:
+        yield await corofn(arg, *args)
 
     if ordered:
         return advanced.concatmap.raw(
