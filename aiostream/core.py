@@ -39,6 +39,7 @@ class StreamEmpty(Exception):
 
 T = TypeVar("T")
 X = TypeVar("X")
+A = TypeVar("A", contravariant=True)
 P = ParamSpec("P")
 Q = ParamSpec("Q")
 
@@ -256,14 +257,26 @@ def streamcontext(aiterable: AsyncIterable[T]) -> Streamer[T]:
 
 
 class OperatorType(Protocol[P, T]):
-    __call__: Callable[P, Stream[T]]
-    raw: Callable[P, AsyncIterator[T]]
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Stream[T]:
+        ...
+
+    def raw(self, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
+        ...
 
 
-class PipableOperatorType(Protocol[P, T]):
-    __call__: Callable[P, Stream[T]]
-    raw: Callable[P, AsyncIterator[T]]
-    pipe: Callable[[AsyncIterable[T]], Stream[T]]
+class PipableOperatorType(Protocol[A, P, T]):
+    def __call__(
+        self, source: AsyncIterable[A], /, *args: P.args, **kwargs: P.kwargs
+    ) -> Stream[T]:
+        ...
+
+    def raw(
+        self, source: AsyncIterable[A], /, *args: P.args, **kwargs: P.kwargs
+    ) -> AsyncIterator[T]:
+        ...
+
+    def pipe(self, source: AsyncIterable[A]) -> Stream[T]:
+        ...
 
 
 # Operator decorator
@@ -372,7 +385,7 @@ def operator(
 
 def pipable_operator(
     func: Callable[Concatenate[AsyncIterable[X], P], AsyncIterator[T]],
-) -> PipableOperatorType[Concatenate[AsyncIterable[X], P], T]:
+) -> PipableOperatorType[X, P, T]:
     """Create a pipable stream operator from an asynchronous generator
     (or any function returning an asynchronous iterable).
 
@@ -496,7 +509,7 @@ def pipable_operator(
 
     # Pipe class method
     def pipe(
-        cls: PipableOperatorType[Concatenate[AsyncIterable[X], P], T],
+        cls: PipableOperatorType[X, P, T],
         /,
         *args: P.args,
         **kwargs: P.kwargs,
@@ -532,6 +545,6 @@ def pipable_operator(
 
     # Create operator class
     return cast(
-        "PipableOperatorType[Concatenate[AsyncIterable[X], P], T]",
+        "PipableOperatorType[X, P, T]",
         type(name, bases, attrs),
     )
