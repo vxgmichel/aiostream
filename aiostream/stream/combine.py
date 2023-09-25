@@ -23,7 +23,7 @@ from . import select
 from . import advanced
 from . import aggregate
 
-__all__ = ["chain", "zip", "map", "merge", "ziplatest"]
+__all__ = ["chain", "zip", "map", "merge", "ziplatest", "amap", "smap"]
 
 T = TypeVar("T")
 U = TypeVar("U")
