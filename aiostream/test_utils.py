@@ -1,4 +1,5 @@
 """Utilities for testing stream operators."""
+from __future__ import annotations
 
 import asyncio
 from unittest.mock import Mock
@@ -6,12 +7,17 @@ from contextlib import contextmanager
 
 import pytest
 
-from .core import StreamEmpty, operator, streamcontext
+from .core import StreamEmpty, streamcontext, pipable_operator
+from typing import TYPE_CHECKING, Any, Callable, List
+
+if TYPE_CHECKING:
+    from _pytest.fixtures import SubRequest
+    from aiostream.core import Stream
 
 __all__ = ["add_resource", "assert_run", "event_loop"]
 
 
-@operator(pipable=True)
+@pipable_operator
 async def add_resource(source, cleanup_time):
     """Simulate an open resource in a stream operator."""
     try:
@@ -28,35 +34,48 @@ async def add_resource(source, cleanup_time):
             loop.open_resources -= 1
 
 
-def compare_exceptions(exc1, exc2):
+def compare_exceptions(
+    exc1: Exception,
+    exc2: Exception,
+) -> bool:
     """Compare two exceptions together."""
     return exc1 == exc2 or exc1.__class__ == exc2.__class__ and exc1.args == exc2.args
 
 
-async def assert_aiter(source, values, exception=None):
+async def assert_aiter(
+    source: Stream,
+    values: List[Any],
+    exception: Exception | None = None,
+) -> None:
     """Check the results of a stream using a streamcontext."""
     results = []
-    exception_type = type(exception) if exception else ()
+    exception_type = (type(exception),) if exception else ()
     try:
         async with streamcontext(source) as streamer:
             async for item in streamer:
                 results.append(item)
     except exception_type as exc:
+        assert exception is not None
         assert compare_exceptions(exc, exception)
     else:
         assert exception is None
     assert results == values
 
 
-async def assert_await(source, values, exception=None):
+async def assert_await(
+    source: Stream,
+    values: List[Any],
+    exception: Exception | None = None,
+) -> None:
     """Check the results of a stream using by awaiting it."""
-    exception_type = type(exception) if exception else ()
+    exception_type = (type(exception),) if exception else ()
     try:
         result = await source
     except StreamEmpty:
         assert values == []
         assert exception is None
     except exception_type as exc:
+        assert exception is not None
         assert compare_exceptions(exc, exception)
     else:
         assert result == values[-1]
@@ -64,7 +83,7 @@ async def assert_await(source, values, exception=None):
 
 
 @pytest.fixture(params=[assert_aiter, assert_await], ids=["aiter", "await"])
-def assert_run(request):
+def assert_run(request: SubRequest) -> Callable:
     """Parametrized fixture returning a stream runner."""
     return request.param
 
@@ -81,7 +100,6 @@ def event_loop():
     """
 
     class TimeTrackingTestLoop(asyncio.BaseEventLoop):
-
         stuck_threshold = 100
 
         def __init__(self):

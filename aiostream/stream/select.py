@@ -1,12 +1,15 @@
 """Selection operators."""
+from __future__ import annotations
 
 import asyncio
 import builtins
 import collections
 
+from typing import Awaitable, Callable, TypeVar, AsyncIterable, AsyncIterator
+
 from . import transform
-from ..aiter_utils import anext
-from ..core import operator, streamcontext
+from ..aiter_utils import aiter, anext
+from ..core import streamcontext, pipable_operator
 
 __all__ = [
     "take",
@@ -20,15 +23,17 @@ __all__ = [
     "takewhile",
 ]
 
+T = TypeVar("T")
 
-@operator(pipable=True)
-async def take(source, n):
+
+@pipable_operator
+async def take(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
     """Forward the first ``n`` elements from an asynchronous sequence.
 
     If ``n`` is negative, it simply terminates before iterating the source.
     """
-    source = transform.enumerate.raw(source)
-    async with streamcontext(source) as streamer:
+    enumerated = transform.enumerate.raw(source)
+    async with streamcontext(enumerated) as streamer:
         if n <= 0:
             return
         async for i, item in streamer:
@@ -37,8 +42,8 @@ async def take(source, n):
                 return
 
 
-@operator(pipable=True)
-async def takelast(source, n):
+@pipable_operator
+async def takelast(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
     """Forward the last ``n`` elements from an asynchronous sequence.
 
     If ``n`` is negative, it simply terminates after iterating the source.
@@ -46,7 +51,7 @@ async def takelast(source, n):
     Note: it is required to reach the end of the source before the first
     element is generated.
     """
-    queue = collections.deque(maxlen=n if n > 0 else 0)
+    queue: collections.deque[T] = collections.deque(maxlen=n if n > 0 else 0)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             queue.append(item)
@@ -54,21 +59,21 @@ async def takelast(source, n):
             yield item
 
 
-@operator(pipable=True)
-async def skip(source, n):
+@pipable_operator
+async def skip(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
     """Forward an asynchronous sequence, skipping the first ``n`` elements.
 
     If ``n`` is negative, no elements are skipped.
     """
-    source = transform.enumerate.raw(source)
-    async with streamcontext(source) as streamer:
+    enumerated = transform.enumerate.raw(source)
+    async with streamcontext(enumerated) as streamer:
         async for i, item in streamer:
             if i >= n:
                 yield item
 
 
-@operator(pipable=True)
-async def skiplast(source, n):
+@pipable_operator
+async def skiplast(source: AsyncIterable[T], n: int) -> AsyncIterator[T]:
     """Forward an asynchronous sequence, skipping the last ``n`` elements.
 
     If ``n`` is negative, no elements are skipped.
@@ -76,7 +81,7 @@ async def skiplast(source, n):
     Note: it is required to reach the ``n+1`` th element of the source
     before the first element is generated.
     """
-    queue = collections.deque(maxlen=n if n > 0 else 0)
+    queue: collections.deque[T] = collections.deque(maxlen=n if n > 0 else 0)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             if n <= 0:
@@ -87,23 +92,25 @@ async def skiplast(source, n):
             queue.append(item)
 
 
-@operator(pipable=True)
-async def filterindex(source, func):
+@pipable_operator
+async def filterindex(
+    source: AsyncIterable[T], func: Callable[[int], bool]
+) -> AsyncIterator[T]:
     """Filter an asynchronous sequence using the index of the elements.
 
     The given function is synchronous, takes the index as an argument,
     and returns ``True`` if the corresponding should be forwarded,
     ``False`` otherwise.
     """
-    source = transform.enumerate.raw(source)
-    async with streamcontext(source) as streamer:
+    enumerated = transform.enumerate.raw(source)
+    async with streamcontext(enumerated) as streamer:
         async for i, item in streamer:
             if func(i):
                 yield item
 
 
-@operator(pipable=True)
-def slice(source, *args):
+@pipable_operator
+def slice(source: AsyncIterable[T], *args: int) -> AsyncIterator[T]:
     """Slice an asynchronous sequence.
 
     The arguments are the same as the builtin type slice.
@@ -114,31 +121,32 @@ def slice(source, *args):
     """
     s = builtins.slice(*args)
     start, stop, step = s.start or 0, s.stop, s.step or 1
+    aiterator = aiter(source)
     # Filter the first items
     if start < 0:
-        source = takelast.raw(source, abs(start))
+        aiterator = takelast.raw(aiterator, abs(start))
     elif start > 0:
-        source = skip.raw(source, start)
+        aiterator = skip.raw(aiterator, start)
     # Filter the last items
     if stop is not None:
         if stop >= 0 and start < 0:
             raise ValueError("Positive stop with negative start is not supported")
         elif stop >= 0:
-            source = take.raw(source, stop - start)
+            aiterator = take.raw(aiterator, stop - start)
         else:
-            source = skiplast.raw(source, abs(stop))
+            aiterator = skiplast.raw(aiterator, abs(stop))
     # Filter step items
     if step is not None:
         if step > 1:
-            source = filterindex.raw(source, lambda i: i % step == 0)
+            aiterator = filterindex.raw(aiterator, lambda i: i % step == 0)
         elif step < 0:
             raise ValueError("Negative step not supported")
     # Return
-    return source
+    return aiterator
 
 
-@operator(pipable=True)
-async def item(source, index):
+@pipable_operator
+async def item(source: AsyncIterable[T], index: int) -> AsyncIterator[T]:
     """Forward the ``n``th element of an asynchronous sequence.
 
     The index can be negative and works like regular indexing.
@@ -166,8 +174,8 @@ async def item(source, index):
         yield result
 
 
-@operator(pipable=True)
-def getitem(source, index):
+@pipable_operator
+def getitem(source: AsyncIterable[T], index: int | builtins.slice) -> AsyncIterator[T]:
     """Forward one or several items from an asynchronous sequence.
 
     The argument can either be a slice or an integer.
@@ -180,8 +188,10 @@ def getitem(source, index):
     raise TypeError("Not a valid index (int or slice)")
 
 
-@operator(pipable=True)
-async def filter(source, func):
+@pipable_operator
+async def filter(
+    source: AsyncIterable[T], func: Callable[[T], bool | Awaitable[bool]]
+) -> AsyncIterator[T]:
     """Filter an asynchronous sequence using an arbitrary function.
 
     The function takes the item as an argument and returns ``True``
@@ -193,13 +203,16 @@ async def filter(source, func):
         async for item in streamer:
             result = func(item)
             if iscorofunc:
+                assert isinstance(result, Awaitable)
                 result = await result
             if result:
                 yield item
 
 
-@operator(pipable=True)
-async def until(source, func):
+@pipable_operator
+async def until(
+    source: AsyncIterable[T], func: Callable[[T], bool | Awaitable[bool]]
+) -> AsyncIterator[T]:
     """Forward an asynchronous sequence until a condition is met.
 
     Contrary to the ``takewhile`` operator, the last tested element is included
@@ -214,14 +227,17 @@ async def until(source, func):
         async for item in streamer:
             result = func(item)
             if iscorofunc:
+                assert isinstance(result, Awaitable)
                 result = await result
             yield item
             if result:
                 return
 
 
-@operator(pipable=True)
-async def takewhile(source, func):
+@pipable_operator
+async def takewhile(
+    source: AsyncIterable[T], func: Callable[[T], bool | Awaitable[bool]]
+) -> AsyncIterator[T]:
     """Forward an asynchronous sequence while a condition is met.
 
     Contrary to the ``until`` operator, the last tested element is not included
@@ -236,14 +252,17 @@ async def takewhile(source, func):
         async for item in streamer:
             result = func(item)
             if iscorofunc:
+                assert isinstance(result, Awaitable)
                 result = await result
             if not result:
                 return
             yield item
 
 
-@operator(pipable=True)
-async def dropwhile(source, func):
+@pipable_operator
+async def dropwhile(
+    source: AsyncIterable[T], func: Callable[[T], bool | Awaitable[bool]]
+) -> AsyncIterator[T]:
     """Discard the elements from an asynchronous sequence
     while a condition is met.
 
@@ -256,6 +275,7 @@ async def dropwhile(source, func):
         async for item in streamer:
             result = func(item)
             if iscorofunc:
+                assert isinstance(result, Awaitable)
                 result = await result
             if not result:
                 yield item

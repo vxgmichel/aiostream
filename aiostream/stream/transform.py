@@ -1,9 +1,19 @@
 """Transformation operators."""
 
+from __future__ import annotations
+
 import asyncio
 import itertools
+from typing import (
+    Protocol,
+    TypeVar,
+    AsyncIterable,
+    AsyncIterator,
+    Awaitable,
+    cast,
+)
 
-from ..core import operator, streamcontext
+from ..core import streamcontext, pipable_operator
 
 from . import select
 from . import create
@@ -15,9 +25,14 @@ __all__ = ["map", "enumerate", "starmap", "cycle", "chunks"]
 # map, amap and smap are also transform operators
 map, amap, smap
 
+T = TypeVar("T")
+U = TypeVar("U")
 
-@operator(pipable=True)
-async def enumerate(source, start=0, step=1):
+
+@pipable_operator
+async def enumerate(
+    source: AsyncIterable[T], start: int = 0, step: int = 1
+) -> AsyncIterator[tuple[int, T]]:
     """Generate ``(index, value)`` tuples from an asynchronous sequence.
 
     This index is computed using a starting point and an increment,
@@ -29,8 +44,27 @@ async def enumerate(source, start=0, step=1):
             yield next(count), item
 
 
-@operator(pipable=True)
-def starmap(source, func, ordered=True, task_limit=None):
+X = TypeVar("X", contravariant=True)
+Y = TypeVar("Y", covariant=True)
+
+
+class AsyncStarmapCallable(Protocol[X, Y]):
+    def __call__(self, arg: X, /, *args: X) -> Awaitable[Y]:
+        ...
+
+
+class SyncStarmapCallable(Protocol[X, Y]):
+    def __call__(self, arg: X, /, *args: X) -> Y:
+        ...
+
+
+@pipable_operator
+def starmap(
+    source: AsyncIterable[tuple[T, ...]],
+    func: SyncStarmapCallable[T, U] | AsyncStarmapCallable[T, U],
+    ordered: bool = True,
+    task_limit: int | None = None,
+) -> AsyncIterator[U]:
     """Apply a given function to the unpacked elements of
     an asynchronous sequence.
 
@@ -47,20 +81,25 @@ def starmap(source, func, ordered=True, task_limit=None):
     is synchronous.
     """
     if asyncio.iscoroutinefunction(func):
+        async_func = cast("AsyncStarmapCallable[T, U]", func)
 
-        async def starfunc(args):
-            return await func(*args)
+        async def astarfunc(args: tuple[T, ...], *_: object) -> U:
+            awaitable = async_func(*args)
+            return await awaitable
+
+        return amap.raw(source, astarfunc, ordered=ordered, task_limit=task_limit)
 
     else:
+        sync_func = cast("SyncStarmapCallable[T, U]", func)
 
-        def starfunc(args):
-            return func(*args)
+        def starfunc(args: tuple[T, ...], *_: object) -> U:
+            return sync_func(*args)
 
-    return map.raw(source, starfunc, ordered=ordered, task_limit=task_limit)
+        return smap.raw(source, starfunc)
 
 
-@operator(pipable=True)
-async def cycle(source):
+@pipable_operator
+async def cycle(source: AsyncIterable[T]) -> AsyncIterator[T]:
     """Iterate indefinitely over an asynchronous sequence.
 
     Note: it does not perform any buffering, but re-iterate over
@@ -76,8 +115,8 @@ async def cycle(source):
             await asyncio.sleep(0)
 
 
-@operator(pipable=True)
-async def chunks(source, n):
+@pipable_operator
+async def chunks(source: AsyncIterable[T], n: int) -> AsyncIterator[list[T]]:
     """Generate chunks of size ``n`` from an asynchronous sequence.
 
     The chunks are lists, and the last chunk might contain less than ``n``
