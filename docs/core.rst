@@ -16,7 +16,9 @@ Stream context manager
 .. autofunction:: streamcontext
 
 
-Operator decorator
-------------------
+Operator decorators
+-------------------
 
 .. autofunction:: operator
+
+.. autofunction:: pipable_operator
