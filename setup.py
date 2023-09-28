@@ -1,4 +1,5 @@
 import sys
+
 from setuptools import setup
 
 TESTING = any(x in sys.argv for x in ["test", "pytest"])
@@ -9,7 +10,7 @@ with open("README.rst", encoding="utf-8") as f:
 
 setup(
     name="aiostream",
-    version="0.5.1.dev0",
+    version="0.5.1",
     packages=["aiostream", "aiostream.stream"],
     python_requires=">=3.8",
     install_requires=["typing-extensions"],
