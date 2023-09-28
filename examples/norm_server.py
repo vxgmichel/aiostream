@@ -15,7 +15,8 @@ Test using netcat client:
 """
 
 import asyncio
-from aiostream import stream, pipe
+
+from aiostream import pipe, stream
 
 # Constants
 
@@ -85,26 +86,18 @@ async def euclidean_norm_handler(reader, writer):
 # Main function
 
 
-def run_server(bind="127.0.0.1", port=8888):
+async def main(bind="127.0.0.1", port=8888):
     # Start the server
-    loop = asyncio.get_event_loop()
-    coro = asyncio.start_server(euclidean_norm_handler, bind, port)
-    server = loop.run_until_complete(coro)
+    server = await asyncio.start_server(euclidean_norm_handler, bind, port)
 
     # Serve requests until Ctrl+C is pressed
     print("Serving on {}".format(server.sockets[0].getsockname()))
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
 
-    # Close the server
-    server.close()
-    loop.run_until_complete(server.wait_closed())
-    loop.close()
+    async with server:
+        await server.serve_forever()
 
 
 # Main execution
 
 if __name__ == "__main__":
-    run_server()
+    asyncio.run(main())

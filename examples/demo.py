@@ -1,5 +1,6 @@
 import asyncio
-from aiostream import stream, pipe
+
+from aiostream import pipe, stream
 
 
 async def main():
@@ -33,6 +34,4 @@ async def main():
 
 
 # Run main coroutine
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+asyncio.run(main())
