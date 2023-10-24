@@ -109,14 +109,14 @@ class BaseStream(AsyncIterable[T], Awaitable[T]):
         """
         return wait_stream(self).__await__()
 
-    def __or__(self, func: Callable[[BaseStream[T]], BaseStream[X]]) -> BaseStream[X]:
+    def __or__(self, func: Callable[[BaseStream[T]], X]) -> X:
         """Pipe protocol.
 
         Allow to pipe stream operators.
         """
         return func(self)
 
-    def __add__(self, value: BaseStream[X]) -> BaseStream[Union[X, T]]:
+    def __add__(self, value: AsyncIterable[X]) -> Stream[Union[X, T]]:
         """Addition protocol.
 
         Concatenate with a given asynchronous sequence.
@@ -125,7 +125,7 @@ class BaseStream(AsyncIterable[T], Awaitable[T]):
 
         return chain(self, value)
 
-    def __getitem__(self, value: Union[int, slice]) -> BaseStream[T]:
+    def __getitem__(self, value: Union[int, slice]) -> Stream[T]:
         """Get item protocol.
 
         Accept index or slice to extract the corresponding item(s)
@@ -276,7 +276,9 @@ class PipableOperatorType(Protocol[A, P, T]):
     ) -> AsyncIterator[T]:
         ...
 
-    def pipe(self, source: AsyncIterable[A]) -> Stream[T]:
+    def pipe(
+        self, *args: P.args, **kwargs: P.kwargs
+    ) -> Callable[[AsyncIterable[A]], Stream[T]]:
         ...
 
 
@@ -555,7 +557,7 @@ def pipable_operator(
         "__doc__": doc,
         "raw": staticmethod(raw),
         "original": staticmethod(original),
-        "pipe": classmethod(pipe),
+        "pipe": classmethod(pipe),  # type: ignore[arg-type]
     }
 
     # Create operator class

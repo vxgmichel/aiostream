@@ -1,11 +1,14 @@
 import asyncio
 import random as random_module
+from typing import AsyncIterable, AsyncIterator
 
 from aiostream import operator, pipable_operator, pipe, streamcontext
 
 
 @operator
-async def random(offset=0.0, width=1.0, interval=0.1):
+async def random(
+    offset: float = 0.0, width: float = 1.0, interval: float = 0.1
+) -> AsyncIterator[float]:
     """Generate a stream of random numbers."""
     while True:
         await asyncio.sleep(interval)
@@ -13,7 +16,9 @@ async def random(offset=0.0, width=1.0, interval=0.1):
 
 
 @pipable_operator
-async def power(source, exponent):
+async def power(
+    source: AsyncIterable[float], exponent: float | int
+) -> AsyncIterator[float]:
     """Raise the elements of an asynchronous sequence to the given power."""
     async with streamcontext(source) as streamer:
         async for item in streamer:
@@ -21,12 +26,12 @@ async def power(source, exponent):
 
 
 @pipable_operator
-def square(source):
+def square(source: AsyncIterable[float]) -> AsyncIterator[float]:
     """Square the elements of an asynchronous sequence."""
     return power.raw(source, 2)
 
 
-async def main():
+async def main() -> None:
     xs = (
         random()  # Stream random numbers
         | square.pipe()  # Square the values

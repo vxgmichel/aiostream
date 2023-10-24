@@ -1,10 +1,11 @@
 import asyncio
+from typing import AsyncIterator
 
 from aiostream import operator, stream
 
 
-async def main():
-    async def agen():
+async def main() -> None:
+    async def agen() -> AsyncIterator[int]:
         yield 1
         yield 2
         yield 3
