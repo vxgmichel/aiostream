@@ -1,5 +1,3 @@
-import sphinx_rtd_theme
-
 VERSION = open("../setup.py").read().split('version="')[1].split('"')[0]
 
 project = "aiostream"
@@ -12,7 +10,6 @@ highlight_language = "python"
 extensions = ["sphinx.ext.autodoc"]
 
 html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_context = {
     "display_github": True,
     "github_user": "vxgmichel",
