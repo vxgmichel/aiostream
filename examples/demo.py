@@ -3,12 +3,16 @@ import asyncio
 from aiostream import pipe, stream
 
 
-async def main():
+def square(x: int, *_: int) -> int:
+    return x**2
+
+
+async def main() -> None:
     # Create a counting stream with a 0.2 seconds interval
     xs = stream.count(interval=0.2)
 
     # Operators can be piped using '|'
-    ys = xs | pipe.map(lambda x: x**2)
+    ys = xs | pipe.map(square)
 
     # Streams can be sliced
     zs = ys[1:10:2]
