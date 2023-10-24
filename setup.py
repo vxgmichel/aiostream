@@ -10,7 +10,7 @@ with open("README.rst", encoding="utf-8") as f:
 
 setup(
     name="aiostream",
-    version="0.5.2.dev0",
+    version="0.5.2",
     packages=["aiostream", "aiostream.stream"],
     python_requires=">=3.8",
     install_requires=["typing-extensions"],
