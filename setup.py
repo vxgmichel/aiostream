@@ -14,7 +14,10 @@ setup(
     packages=["aiostream", "aiostream.stream"],
     python_requires=">=3.8",
     install_requires=["typing-extensions"],
-    setup_requires=["pytest-runner" if TESTING else ""],
+    setup_requires=[
+        "pytest-runner" if TESTING else "",
+        "setuptools; python_version == '3.12'",
+    ],
     tests_require=["pytest", "pytest-asyncio", "pytest-cov"],
     package_data={
         "aiostream": ["py.typed"],
@@ -29,6 +32,8 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     author="Vincent Michel",
     author_email="vxgmichel@gmail.com",
