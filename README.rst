@@ -25,14 +25,6 @@ A stream is an enhanced asynchronous iterable providing the following features:
 - **Concatenation** - using addition symbol ``+``
 
 
-Requirements
-------------
-
-The stream operators rely heavily on asynchronous generators (`PEP 525`_):
-
-- python >= 3.6
-
-
 Stream operators
 ----------------
 
