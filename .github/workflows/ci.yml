@@ -36,9 +36,10 @@ jobs:
       - name: Run tests
         run: python setup.py test --addopts "--cov-report xml"
       - name: Upload coverage
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v4
         with:
           env_vars: OS,PYTHON
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   Release:
     runs-on: ubuntu-latest

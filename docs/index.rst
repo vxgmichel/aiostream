@@ -6,12 +6,12 @@ aiostream
    :target: http://aiostream.readthedocs.io/en/latest/?badge=latest
    :alt:
 
-.. image:: https://coveralls.io/repos/github/vxgmichel/aiostream/badge.svg?branch=master
-   :target: https://coveralls.io/github/vxgmichel/aiostream?branch=master
+.. image:: https://codecov.io/gh/vxgmichel/aiostream/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/vxgmichel/aiostream
    :alt:
 
-.. image:: https://travis-ci.org/vxgmichel/aiostream.svg?branch=master
-   :target: https://travis-ci.org/vxgmichel/aiostream
+.. image:: https://github.com/vxgmichel/aiostream/workflows/CI/badge.svg
+   :target: https://github.com/vxgmichel/aiostream/actions/workflows/ci.yml?query=branch%3Amain
    :alt:
 
 .. image:: https://img.shields.io/pypi/v/aiostream.svg
