@@ -34,7 +34,7 @@ jobs:
       - name: Install test requirements
         run: pip install -r test-requirements.txt
       - name: Run tests
-        run: python setup.py test --addopts "--cov-report xml"
+        run: python setup.py test
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
