@@ -2,25 +2,7 @@ aiostream
 =========
 
 
-.. image:: https://readthedocs.org/projects/aiostream/badge/?version=latest
-   :target: http://aiostream.readthedocs.io/en/latest/?badge=latest
-   :alt:
-
-.. image:: https://codecov.io/gh/vxgmichel/aiostream/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/vxgmichel/aiostream
-   :alt:
-
-.. image:: https://github.com/vxgmichel/aiostream/workflows/CI/badge.svg
-   :target: https://github.com/vxgmichel/aiostream/actions/workflows/ci.yml?query=branch%3Amain
-   :alt:
-
-.. image:: https://img.shields.io/pypi/v/aiostream.svg
-   :target: https://pypi.python.org/pypi/aiostream
-   :alt:
-
-.. image:: https://img.shields.io/pypi/pyversions/aiostream.svg
-   :target: https://pypi.python.org/pypi/aiostream/
-   :alt:
+|docs-badge| |cov-badge| |ci-badge| |version-badge| |pyversion-badge|
 
 Generator-based operators for asynchronous iteration
 
@@ -191,3 +173,19 @@ Vincent Michel: vxgmichel@gmail.com
 
 .. _action: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.action
 .. _print: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.print
+
+.. |docs-badge| image:: https://readthedocs.org/projects/aiostream/badge/?version=latest
+   :target: http://aiostream.readthedocs.io/en/latest/?badge=latest
+   :alt:
+..  |cov-badge| image:: https://codecov.io/gh/vxgmichel/aiostream/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/vxgmichel/aiostream
+   :alt:
+.. |ci-badge| image:: https://github.com/vxgmichel/aiostream/workflows/CI/badge.svg
+   :target: https://github.com/vxgmichel/aiostream/actions/workflows/ci.yml?query=branch%3Amain
+   :alt:
+.. |version-badge| image:: https://img.shields.io/pypi/v/aiostream.svg
+   :target: https://pypi.python.org/pypi/aiostream
+   :alt:
+.. |pyversion-badge| image:: https://img.shields.io/pypi/pyversions/aiostream.svg
+   :target: https://pypi.python.org/pypi/aiostream/
+   :alt:
