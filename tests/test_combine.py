@@ -27,6 +27,12 @@ async def test_zip(assert_run, event_loop):
     expected = [(x,) * 3 for x in range(5)]
     await assert_run(ys, expected)
 
+    # Empty zip (issue #95)
+
+    with event_loop.assert_cleanup():
+        xs = stream.zip()
+        await assert_run(xs, [])
+
 
 @pytest.mark.asyncio
 async def test_map(assert_run, event_loop):
@@ -160,6 +166,12 @@ async def test_merge(assert_run, event_loop):
         xs = stream.merge(agen1(), agen2()) | pipe.delay(1) | pipe.take(1)
         await assert_run(xs, [1])
 
+    # Empty merge (issue #95)
+
+    with event_loop.assert_cleanup():
+        xs = stream.merge()
+        await assert_run(xs, [])
+
 
 @pytest.mark.asyncio
 async def test_ziplatest(assert_run, event_loop):
@@ -176,3 +188,11 @@ async def test_ziplatest(assert_run, event_loop):
         zs = stream.ziplatest(xs, ys, partial=False)
         await assert_run(zs, [(0, 1), (2, 1), (2, 3), (4, 3)])
         assert event_loop.steps == [1, 1, 1, 1]
+
+    # Empty ziplatest (issue #95)
+    # This not supported yet due to the `sources_operator` decorator
+    # not supporting keyword arguments.
+    #
+    # with event_loop.assert_cleanup():
+    #     xs = stream.ziplatest()
+    #     await assert_run(xs, [])

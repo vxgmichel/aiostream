@@ -282,6 +282,31 @@ class PipableOperatorType(Protocol[A, P, T]):
         ...
 
 
+B = TypeVar("B", contravariant=True)
+U = TypeVar("U", covariant=True)
+
+
+class SourcesCallable(Protocol[B, U]):
+    def __call__(
+        self,
+        *sources: AsyncIterable[B],
+    ) -> AsyncIterator[U]:
+        ...
+
+
+class SourcesOperatorType(Protocol[A, T]):
+    def __call__(self, *sources: AsyncIterable[A]) -> Stream[T]:
+        ...
+
+    def raw(self, *sources: AsyncIterable[A]) -> AsyncIterator[T]:
+        ...
+
+    def pipe(
+        self, *sources: AsyncIterable[A]
+    ) -> Callable[[AsyncIterable[A]], Stream[T]]:
+        ...
+
+
 # Operator decorator
 
 
@@ -552,5 +577,165 @@ def pipable_operator(
     # Create operator class
     return cast(
         "PipableOperatorType[X, P, T]",
+        type(name, bases, attrs),
+    )
+
+
+def sources_operator(
+    func: SourcesCallable[X, T],
+) -> SourcesOperatorType[X, T]:
+    """Create a pipable stream operator from an asynchronous generator
+    (or any function returning an asynchronous iterable).
+
+    Decorator usage::
+
+        @sources_operator
+        async def chain(*sources):
+            for source in sources:
+                async with streamcontext(source) as streamer:
+                    async for item in streamer:
+                        yield item
+
+    Positional arguments are expected to be the asynchronous iteratables.
+
+    Keyword arguments are not supported at the moment.
+
+    When used in a pipable context, the asynchronous iterable injected by
+    the pipe operator is used as the first argument.
+
+    The return value is a dynamically created class.
+    It has the same name, module and doc as the original function.
+
+    A new stream is created by simply instanciating the operator::
+
+        empty_chained = chain()
+        single_chained = chain(random())
+        multiple_chained = chain(stream.just(0.0), stream.just(1.0), random())
+
+    The original function is called at instanciation to check that
+    signature match. The source is also checked for asynchronous iteration.
+
+    The operator also have a pipe class method that can be used along
+    with the piping synthax::
+
+        just_zero = stream.just(0.0)
+        multiple_chained = just_zero | chain.pipe(stream.just(1.0, random())
+
+    This is strictly equivalent to the previous example.
+
+    Other methods are available:
+
+      - `original`: the original function as a static method
+      - `raw`: same as original but add extra checking
+
+    The raw method is useful to create new operators from existing ones::
+
+        @chain_operator
+        def chain_twice(*sources):
+            return chain.raw(*sources, *sources)
+    """
+
+    # First check for classmethod instance, to avoid more confusing errors later on
+    if isinstance(func, classmethod):
+        raise ValueError(
+            "An operator cannot be created from a class method, "
+            "since the decorated function becomes an operator class"
+        )
+
+    # Gather data
+    bases = (Stream,)
+    name = func.__name__  # type: ignore
+    module = func.__module__
+    extra_doc = func.__doc__
+    doc = extra_doc or f"Regular {name} stream operator."
+
+    # Extract signature
+    signature = inspect.signature(func)
+    parameters = list(signature.parameters.values())
+    if parameters and parameters[0].name in ("self", "cls"):
+        raise ValueError(
+            "An operator cannot be created from a method, "
+            "since the decorated function becomes an operator class"
+        )
+    if not parameters or parameters[0].kind not in (inspect.Parameter.VAR_POSITIONAL,):
+        raise ValueError(
+            "The first argument of a sources operator must be a variadic positional argument."
+        )
+
+    # Injected parameters
+    self_parameter = inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    cls_parameter = inspect.Parameter("cls", inspect.Parameter.POSITIONAL_OR_KEYWORD)
+
+    # Wrapped static method
+    original = func
+    original.__qualname__ = name + ".original"  # type: ignore
+
+    # Raw static method
+    def raw(*sources: AsyncIterable[X]) -> AsyncIterator[T]:
+        for source in sources:
+            assert_async_iterable(source)
+        return func(*sources)
+
+    # Custonize raw method
+    raw.__signature__ = signature  # type: ignore[attr-defined]
+    raw.__qualname__ = name + ".raw"
+    raw.__module__ = module
+    raw.__doc__ = doc
+
+    # Init method
+    def init(self: BaseStream[T], *sources: AsyncIterable[X]) -> None:
+        for source in sources:
+            assert_async_iterable(source)
+        factory = functools.partial(raw, *sources)
+        return BaseStream.__init__(self, factory)
+
+    # Customize init signature
+    new_parameters = [self_parameter] + parameters
+    init.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore[attr-defined]
+
+    # Customize init method
+    init.__qualname__ = name + ".__init__"
+    init.__name__ = "__init__"
+    init.__module__ = module
+    init.__doc__ = f"Initialize the {name} stream."
+
+    # Pipe class method
+    def pipe(
+        cls: SourcesOperatorType[X, T],
+        /,
+        *sources: AsyncIterable[X],
+    ) -> Callable[[AsyncIterable[X]], Stream[T]]:
+        return lambda source: cls(source, *sources)
+
+    # Customize pipe signature
+    if parameters and parameters[0].kind in (
+        inspect.Parameter.POSITIONAL_ONLY,
+        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+    ):
+        new_parameters = [cls_parameter] + parameters[1:]
+    else:
+        new_parameters = [cls_parameter] + parameters
+    pipe.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore[attr-defined]
+
+    # Customize pipe method
+    pipe.__qualname__ = name + ".pipe"
+    pipe.__module__ = module
+    pipe.__doc__ = f'Pipable "{name}" stream operator.'
+    if extra_doc:
+        pipe.__doc__ += "\n\n    " + extra_doc
+
+    # Gather attributes
+    attrs = {
+        "__init__": init,
+        "__module__": module,
+        "__doc__": doc,
+        "raw": staticmethod(raw),
+        "original": staticmethod(original),
+        "pipe": classmethod(pipe),  # type: ignore[arg-type]
+    }
+
+    # Create operator class
+    return cast(
+        "SourcesOperatorType[X, T]",
         type(name, bases, attrs),
     )

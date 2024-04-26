@@ -16,7 +16,7 @@ from typing import (
 from typing_extensions import ParamSpec
 
 from ..aiter_utils import AsyncExitStack, anext
-from ..core import streamcontext, pipable_operator
+from ..core import streamcontext, pipable_operator, sources_operator
 
 from . import create
 from . import select
@@ -48,9 +48,9 @@ async def chain(
                 yield item
 
 
-@pipable_operator
+@sources_operator
 async def zip(
-    source: AsyncIterable[T], *more_sources: AsyncIterable[T]
+    *sources: AsyncIterable[T],
 ) -> AsyncIterator[tuple[T, ...]]:
     """Combine and forward the elements of several asynchronous sequences.
 
@@ -61,7 +61,9 @@ async def zip(
     Note: the different sequences are awaited in parrallel, so that their
     waiting times don't add up.
     """
-    sources = source, *more_sources
+    # No sources
+    if not sources:
+        return
 
     # One sources
     if len(sources) == 1:
@@ -211,18 +213,15 @@ def map(
     return smap.raw(source, sync_func, *more_sources)
 
 
-@pipable_operator
-def merge(
-    source: AsyncIterable[T], *more_sources: AsyncIterable[T]
-) -> AsyncIterator[T]:
+@sources_operator
+def merge(*sources: AsyncIterable[T]) -> AsyncIterator[T]:
     """Merge several asynchronous sequences together.
 
     All the sequences are iterated simultaneously and their elements
     are forwarded as soon as they're available. The generation continues
     until all the sequences are exhausted.
     """
-    sources = [source, *more_sources]
-    source_stream: AsyncIterable[AsyncIterable[T]] = create.iterate.raw(sources)
+    source_stream: AsyncIterator[AsyncIterable[T]] = create.iterate.raw(sources)
     return advanced.flatten.raw(source_stream)
 
 
@@ -263,7 +262,8 @@ def ziplatest(
     new_sources = [smap.raw(source, make_func(i)) for i, source in enumerate(sources)]
 
     # Merge the sources
-    merged = merge.raw(*new_sources)
+    # TODO: sources_operator causes type inference to fail here:
+    merged: AsyncIterator[dict[int, T]] = merge.raw(*new_sources)  # type: ignore[assignment, arg-type]
 
     # Accumulate the current state in a dict
     accumulated = aggregate.accumulate.raw(merged, lambda x, e: {**x, **e})
