@@ -8,7 +8,15 @@ from contextlib import contextmanager
 import pytest
 
 from .core import StreamEmpty, streamcontext, pipable_operator
-from typing import TYPE_CHECKING, Any, Callable, List
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    List,
+    TypeVar,
+    AsyncIterable,
+    AsyncIterator,
+)
 
 if TYPE_CHECKING:
     from _pytest.fixtures import SubRequest
@@ -17,8 +25,13 @@ if TYPE_CHECKING:
 __all__ = ["add_resource", "assert_run", "event_loop"]
 
 
+T = TypeVar("T")
+
+
 @pipable_operator
-async def add_resource(source, cleanup_time):
+async def add_resource(
+    source: AsyncIterable[T], cleanup_time: float
+) -> AsyncIterator[T]:
     """Simulate an open resource in a stream operator."""
     try:
         loop = asyncio.get_event_loop()
