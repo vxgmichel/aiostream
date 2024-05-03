@@ -174,10 +174,11 @@ async def test_until(assert_run, assert_cleanup):
 
 @pytest.mark.asyncio
 async def test_takewhile(assert_run, assert_cleanup):
+    def less_than_4(x: int) -> bool:
+        return x < 4
+
     with assert_cleanup():
-        xs = (
-            stream.range(1, 10) | add_resource.pipe(1) | pipe.takewhile(lambda x: x < 4)
-        )
+        xs = stream.range(1, 10) | add_resource.pipe(1) | pipe.takewhile(less_than_4)
         await assert_run(xs, [1, 2, 3])
 
     async def afunc(x):
@@ -192,10 +193,11 @@ async def test_takewhile(assert_run, assert_cleanup):
 
 @pytest.mark.asyncio
 async def test_dropwhile(assert_run, assert_cleanup):
+    def less_than_7(x: int) -> bool:
+        return x < 7
+
     with assert_cleanup():
-        xs = (
-            stream.range(1, 10) | add_resource.pipe(1) | pipe.dropwhile(lambda x: x < 7)
-        )
+        xs = stream.range(1, 10) | add_resource.pipe(1) | pipe.dropwhile(less_than_7)
         await assert_run(xs, [7, 8, 9])
 
     async def afunc(x):

@@ -15,6 +15,7 @@ from typing import (
     TypeVar,
     AsyncIterator,
     cast,
+    Type,
 )
 from typing_extensions import ParamSpec, Never
 
@@ -121,7 +122,7 @@ async def call(
 
 
 @operator
-async def throw(exc: Exception) -> AsyncIterator[Never]:
+async def throw(exc: Exception | Type[Exception]) -> AsyncIterator[Never]:
     """Throw an exception without generating any value."""
     if False:
         yield

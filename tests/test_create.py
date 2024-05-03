@@ -18,13 +18,13 @@ async def test_just(assert_run):
 
 @pytest.mark.asyncio
 async def test_call(assert_run):
-    def myfunc(a, b, c=0, d=4):
+    def myfunc(a: int, b: int, c: int = 0, d: int = 4):
         return a, b, c, d
 
     xs = stream.call(myfunc, 1, 2, c=3)
     await assert_run(xs, [(1, 2, 3, 4)])
 
-    async def myasyncfunc(a, b, c=0, d=4):
+    async def myasyncfunc(a: int, b: int, c: int = 0, d: int = 4):
         return a, b, c, d
 
     xs = stream.call(myasyncfunc, 1, 2, c=3)
@@ -106,10 +106,10 @@ async def test_async_iterable(assert_run, assert_cleanup):
 @pytest.mark.asyncio
 async def test_non_iterable():
     with pytest.raises(TypeError):
-        stream.iterate(None)
+        stream.iterate(None)  # type: ignore
 
     with pytest.raises(TypeError):
-        stream.create.from_async_iterable(None)
+        stream.create.from_async_iterable(None)  # type: ignore
 
 
 @pytest.mark.asyncio

@@ -69,7 +69,7 @@ async def test_error_on_entering_a_stream():
 
     # Stream raises a TypeError
     with pytest.raises(TypeError) as ctx:
-        async with xs:
+        async with xs:  # type: ignore
             assert False
 
     assert "Use the `stream` method" in str(ctx.value)
@@ -81,7 +81,7 @@ def test_compatibility():
         yield 1
 
     with pytest.raises(AttributeError):
-        test1.pipe
+        test1.pipe  # type: ignore
 
     match = "The `pipable` argument is deprecated."
     with pytest.warns(DeprecationWarning, match=match):
@@ -91,7 +91,7 @@ def test_compatibility():
             yield 1
 
     with pytest.raises(AttributeError):
-        test2.pipe
+        test2.pipe  # type: ignore
 
     with pytest.warns(DeprecationWarning, match=match):
 
@@ -100,7 +100,7 @@ def test_compatibility():
             yield 1
 
     with pytest.raises(AttributeError):
-        test3.pipe
+        test3.pipe  # type: ignore
 
     with pytest.warns(DeprecationWarning, match=match):
 
@@ -108,4 +108,4 @@ def test_compatibility():
         async def test4(source):
             yield 1
 
-    test4.pipe
+    test4.pipe  # type: ignore
