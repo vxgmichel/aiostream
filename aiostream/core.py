@@ -38,7 +38,7 @@ class StreamEmpty(Exception):
 
 # Helpers
 
-T = TypeVar("T")
+T = TypeVar("T", covariant=True)
 X = TypeVar("X")
 A = TypeVar("A", contravariant=True)
 P = ParamSpec("P")

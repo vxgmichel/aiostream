@@ -105,7 +105,7 @@ def assert_async_iterator(obj: object) -> None:
 
 # Async iterator context
 
-T = TypeVar("T")
+T = TypeVar("T", covariant=True)
 Self = TypeVar("Self", bound="AsyncIteratorContext[Any]")
 
 

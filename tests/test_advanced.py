@@ -13,10 +13,7 @@ async def test_concatmap(assert_run, assert_cleanup):
         return stream.range(x, x + 4, interval=1)
 
     def target3(x: int, *_) -> Stream[int]:
-        # TODO: fix covariance issue
-        return (
-            stream.range(0, 3, interval=1) if x else stream.throw(ZeroDivisionError)
-        )  # type: ignore
+        return stream.range(0, 3, interval=1) if x else stream.throw(ZeroDivisionError)
 
     # Concurrent run
     with assert_cleanup() as loop:
