@@ -16,7 +16,7 @@ from typing import (
     AsyncIterator,
     cast,
 )
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, Never
 
 from ..stream import time
 from ..core import operator, streamcontext
@@ -121,7 +121,7 @@ async def call(
 
 
 @operator
-async def throw(exc: Exception) -> AsyncIterator[None]:
+async def throw(exc: Exception) -> AsyncIterator[Never]:
     """Throw an exception without generating any value."""
     if False:
         yield
@@ -129,14 +129,14 @@ async def throw(exc: Exception) -> AsyncIterator[None]:
 
 
 @operator
-async def empty() -> AsyncIterator[None]:
+async def empty() -> AsyncIterator[Never]:
     """Terminate without generating any value."""
     if False:
         yield
 
 
 @operator
-async def never() -> AsyncIterator[None]:
+async def never() -> AsyncIterator[Never]:
     """Hang forever without generating any value."""
     if False:
         yield
