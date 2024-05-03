@@ -1,11 +1,7 @@
 import pytest
 import asyncio
 
-from aiostream.test_utils import event_loop
 from aiostream.aiter_utils import AsyncIteratorContext, aitercontext, anext
-
-# Pytest fixtures
-event_loop
 
 
 # Some async iterators for testing
@@ -55,17 +51,18 @@ class not_an_agen(list):
 
 
 @pytest.mark.asyncio
-async def test_simple_aitercontext(event_loop):
-    async with aitercontext(agen()) as safe_gen:
-        # Cannot enter twice
-        with pytest.raises(RuntimeError):
-            async with safe_gen:
-                pass
+async def test_simple_aitercontext(assert_cleanup):
+    with assert_cleanup() as loop:
+        async with aitercontext(agen()) as safe_gen:
+            # Cannot enter twice
+            with pytest.raises(RuntimeError):
+                async with safe_gen:
+                    pass
 
-        it = iter(range(5))
-        async for item in safe_gen:
-            assert item == next(it)
-    assert event_loop.steps == [1] * 5
+            it = iter(range(5))
+            async for item in safe_gen:
+                assert item == next(it)
+        assert loop.steps == [1] * 5
 
     # Exiting is idempotent
     await safe_gen.__aexit__(None, None, None)
@@ -83,7 +80,7 @@ async def test_simple_aitercontext(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_athrow_in_aitercontext(event_loop):
+async def test_athrow_in_aitercontext():
     async with aitercontext(agen()) as safe_gen:
         assert await safe_gen.__anext__() == 0
         with pytest.raises(ZeroDivisionError):
@@ -93,7 +90,7 @@ async def test_athrow_in_aitercontext(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_aitercontext_wrong_usage(event_loop):
+async def test_aitercontext_wrong_usage():
     safe_gen = aitercontext(agen())
     with pytest.warns(UserWarning):
         await anext(safe_gen)
@@ -106,7 +103,7 @@ async def test_aitercontext_wrong_usage(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_raise_in_aitercontext(event_loop):
+async def test_raise_in_aitercontext():
     with pytest.raises(ZeroDivisionError):
         async with aitercontext(agen()) as safe_gen:
             async for _ in safe_gen:
@@ -131,7 +128,7 @@ async def test_raise_in_aitercontext(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_silence_exception_in_aitercontext(event_loop):
+async def test_silence_exception_in_aitercontext():
     async with aitercontext(silence_agen()) as safe_gen:
         async for item in safe_gen:
             assert item == 1
@@ -145,7 +142,7 @@ async def test_silence_exception_in_aitercontext(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_reraise_exception_in_aitercontext(event_loop):
+async def test_reraise_exception_in_aitercontext():
     with pytest.raises(RuntimeError) as info:
         async with aitercontext(reraise_agen()) as safe_gen:
             async for item in safe_gen:
@@ -162,7 +159,7 @@ async def test_reraise_exception_in_aitercontext(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_stuck_in_aitercontext(event_loop):
+async def test_stuck_in_aitercontext():
     with pytest.raises(RuntimeError) as info:
         async with aitercontext(stuck_agen()) as safe_gen:
             async for item in safe_gen:
@@ -181,7 +178,7 @@ async def test_stuck_in_aitercontext(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_not_an_agen_in_aitercontext(event_loop):
+async def test_not_an_agen_in_aitercontext():
     async with aitercontext(not_an_agen([1])) as safe_gen:
         async for item in safe_gen:
             assert item == 1

@@ -2,12 +2,8 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import Mock
 from contextlib import contextmanager
-
-import pytest
-
-from .core import StreamEmpty, streamcontext, pipable_operator
+from unittest.mock import Mock
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -16,13 +12,19 @@ from typing import (
     TypeVar,
     AsyncIterable,
     AsyncIterator,
+    ContextManager,
+    Iterator,
 )
+
+import pytest
+
+from .core import StreamEmpty, streamcontext, pipable_operator
 
 if TYPE_CHECKING:
     from _pytest.fixtures import SubRequest
     from aiostream.core import Stream
 
-__all__ = ["add_resource", "assert_run", "event_loop"]
+__all__ = ["add_resource", "assert_run", "event_loop_policy", "assert_cleanup"]
 
 
 T = TypeVar("T")
@@ -34,7 +36,7 @@ async def add_resource(
 ) -> AsyncIterator[T]:
     """Simulate an open resource in a stream operator."""
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         loop.open_resources += 1
         loop.resources += 1
         async with streamcontext(source) as streamer:
@@ -102,7 +104,7 @@ def assert_run(request: SubRequest) -> Callable:
 
 
 @pytest.fixture
-def event_loop():
+def event_loop_policy() -> TimeTrackingTestLoopPolicy:
     """Fixture providing a test event loop.
 
     The event loop simulate and records the sleep operation,
@@ -111,76 +113,84 @@ def event_loop():
     It also tracks simulated resources and make sure they are
     all released before the loop is closed.
     """
+    return TimeTrackingTestLoopPolicy()
 
-    class TimeTrackingTestLoop(asyncio.BaseEventLoop):
-        stuck_threshold = 100
 
-        def __init__(self):
-            super().__init__()
-            self._time = 0
-            self._timers = []
-            self._selector = Mock()
-            self.clear()
+@pytest.fixture
+def assert_cleanup(
+    event_loop: TimeTrackingTestLoop,
+) -> Callable[[], ContextManager[TimeTrackingTestLoop]]:
+    """Fixture to assert cleanup of resources."""
+    return event_loop.assert_cleanup
 
-        # Loop internals
 
-        def _run_once(self):
-            super()._run_once()
-            # Update internals
-            self.busy_count += 1
-            self._timers = sorted(when for when in self._timers if when > loop.time())
-            # Time advance
-            if self.time_to_go:
-                when = self._timers.pop(0)
-                step = when - loop.time()
-                self.steps.append(step)
-                self.advance_time(step)
-                self.busy_count = 0
+class TimeTrackingTestLoop(asyncio.BaseEventLoop):
+    stuck_threshold: int = 100
 
-        def _process_events(self, event_list):
-            return
+    def __init__(self):
+        super().__init__()
+        self._time: float = 0.0
+        self._timers: list[float] = []
+        self._selector = Mock()
+        self.clear()
 
-        def _write_to_self(self):
-            return
+    # Loop internals
 
-        # Time management
-
-        def time(self):
-            return self._time
-
-        def advance_time(self, advance):
-            if advance:
-                self._time += advance
-
-        def call_at(self, when, callback, *args, **kwargs):
-            self._timers.append(when)
-            return super().call_at(when, callback, *args, **kwargs)
-
-        @property
-        def stuck(self):
-            return self.busy_count > self.stuck_threshold
-
-        @property
-        def time_to_go(self):
-            return self._timers and (self.stuck or not self._ready)
-
-        # Resource management
-
-        def clear(self):
-            self.steps = []
-            self.open_resources = 0
-            self.resources = 0
+    def _run_once(self) -> None:
+        super()._run_once()
+        # Update internals
+        self.busy_count += 1
+        self._timers = sorted(when for when in self._timers if when > self.time())
+        # Time advance
+        if self.time_to_go:
+            when = self._timers.pop(0)
+            step = when - self.time()
+            self.steps.append(step)
+            self.advance_time(step)
             self.busy_count = 0
 
-        @contextmanager
-        def assert_cleanup(self):
-            self.clear()
-            yield self
-            assert self.open_resources == 0
-            self.clear()
+    def _process_events(self, event_list) -> None:
+        return
 
-    loop = TimeTrackingTestLoop()
-    asyncio.set_event_loop(loop)
-    with loop.assert_cleanup():
-        yield loop
-    loop.close()
+    def _write_to_self(self) -> None:
+        return
+
+    # Time management
+
+    def time(self) -> float:
+        return self._time
+
+    def advance_time(self, advance: float) -> None:
+        if advance:
+            self._time += advance
+
+    def call_at(self, when, callback, *args, **kwargs):
+        self._timers.append(when)
+        return super().call_at(when, callback, *args, **kwargs)
+
+    @property
+    def stuck(self) -> bool:
+        return self.busy_count > self.stuck_threshold
+
+    @property
+    def time_to_go(self) -> bool:
+        return self._timers and (self.stuck or not self._ready)
+
+    # Resource management
+
+    def clear(self) -> None:
+        self.steps = []
+        self.open_resources = 0
+        self.resources = 0
+        self.busy_count = 0
+
+    @contextmanager
+    def assert_cleanup(self) -> Iterator[TimeTrackingTestLoop]:
+        self.clear()
+        yield self
+        assert self.open_resources == 0
+        self.clear()
+
+
+class TimeTrackingTestLoopPolicy(asyncio.DefaultEventLoopPolicy):
+    _loop_factory = TimeTrackingTestLoop

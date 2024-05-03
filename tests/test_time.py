@@ -2,21 +2,17 @@ import pytest
 import asyncio
 
 from aiostream import stream, pipe
-from aiostream.test_utils import assert_run, event_loop
-
-# Pytest fixtures
-assert_run, event_loop
 
 
 @pytest.mark.asyncio
-async def test_timeout(assert_run, event_loop):
-    with event_loop.assert_cleanup():
+async def test_timeout(assert_run, assert_cleanup):
+    with assert_cleanup() as loop:
         xs = stream.range(3) | pipe.timeout(5)
         await assert_run(xs, [0, 1, 2])
-        assert event_loop.steps == []
+        assert loop.steps == []
 
-    with event_loop.assert_cleanup():
+    with assert_cleanup():
         xs = stream.range(3) + stream.never()
         ys = xs | pipe.timeout(1)
         await assert_run(ys, [0, 1, 2], asyncio.TimeoutError())
-        assert event_loop.steps == [1]
+        assert loop.steps == [1]
