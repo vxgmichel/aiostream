@@ -51,6 +51,9 @@ async def euclidean_norm_handler(
     def nonempty(x: str) -> bool:
         return x != ""
 
+    def to_float(x: str, *_: object) -> float:
+        return float(x)
+
     def square(x: float, *_: object) -> float:
         return x**2
 
@@ -66,7 +69,7 @@ async def euclidean_norm_handler(
         | pipe.print("string: {}")
         | pipe.map(strip)
         | pipe.takewhile(nonempty)
-        | pipe.map(float)
+        | pipe.map(to_float)
         | pipe.map(square)
         | pipe.print("square: {:.2f}")
         | pipe.action(write_cursor)

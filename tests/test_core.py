@@ -1,29 +1,26 @@
 import pytest
 
-from aiostream.test_utils import event_loop, add_resource
+from aiostream.test_utils import add_resource
 from aiostream import stream, streamcontext, operator
-
-# Pytest fixtures
-event_loop
 
 
 @pytest.mark.asyncio
-async def test_streamcontext(event_loop):
-    with event_loop.assert_cleanup():
+async def test_streamcontext(assert_cleanup):
+    with assert_cleanup() as loop:
         xs = stream.range(3) | add_resource.pipe(1)
         async with streamcontext(xs) as streamer:
             it = iter(range(3))
             async for item in streamer:
                 assert item == next(it)
-        assert event_loop.steps == [1]
+        assert loop.steps == [1]
 
-    with event_loop.assert_cleanup():
+    with assert_cleanup() as loop:
         xs = stream.range(5) | add_resource.pipe(1)
         async with xs.stream() as streamer:
             it = iter(range(5))
             async for item in streamer:
                 assert item == next(it)
-        assert event_loop.steps == [1]
+        assert loop.steps == [1]
 
 
 def test_operator_from_method():
@@ -51,7 +48,7 @@ def test_operator_from_method():
 
 
 @pytest.mark.asyncio
-async def test_error_on_sync_iteration(event_loop):
+async def test_error_on_sync_iteration():
     xs = stream.range(3)
 
     # Stream raises a TypeError
@@ -67,12 +64,12 @@ async def test_error_on_sync_iteration(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_error_on_entering_a_stream(event_loop):
+async def test_error_on_entering_a_stream():
     xs = stream.range(3)
 
     # Stream raises a TypeError
     with pytest.raises(TypeError) as ctx:
-        async with xs:
+        async with xs:  # type: ignore
             assert False
 
     assert "Use the `stream` method" in str(ctx.value)
@@ -84,7 +81,7 @@ def test_compatibility():
         yield 1
 
     with pytest.raises(AttributeError):
-        test1.pipe
+        test1.pipe  # type: ignore
 
     match = "The `pipable` argument is deprecated."
     with pytest.warns(DeprecationWarning, match=match):
@@ -94,7 +91,7 @@ def test_compatibility():
             yield 1
 
     with pytest.raises(AttributeError):
-        test2.pipe
+        test2.pipe  # type: ignore
 
     with pytest.warns(DeprecationWarning, match=match):
 
@@ -103,7 +100,7 @@ def test_compatibility():
             yield 1
 
     with pytest.raises(AttributeError):
-        test3.pipe
+        test3.pipe  # type: ignore
 
     with pytest.warns(DeprecationWarning, match=match):
 
@@ -111,4 +108,4 @@ def test_compatibility():
         async def test4(source):
             yield 1
 
-    test4.pipe
+    test4.pipe  # type: ignore

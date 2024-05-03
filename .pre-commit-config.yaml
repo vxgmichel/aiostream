@@ -15,11 +15,19 @@ repos:
     hooks:
     - id: flake8
 -   repo: https://github.com/pre-commit/mirrors-mypy
+    # We can't use the latest version due to a regression in mypy 1.7.0
+    # See https://github.com/python/mypy/issues/17191 for more information
     rev: v1.6.1
     hooks:
-    -   id: mypy
-        files: ^(?!tests)
-        types: [python]
+    - id: mypy
+      files: ^(?!tests)
+      types: [python]
+-   repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.361
+    hooks:
+    - id: pyright
+      additional_dependencies: [pytest, typing-extensions]
+      types: [python]
 - repo: https://github.com/astral-sh/ruff-pre-commit
   # Ruff version.
   rev: v0.0.272
