@@ -111,7 +111,7 @@ async def filterindex(
 
 
 @pipable_operator
-def slice(source: AsyncIterable[T], *args: int) -> AsyncIterator[T]:
+def slice(source: AsyncIterable[T], *args: int | None) -> AsyncIterator[T]:
     """Slice an asynchronous sequence.
 
     The arguments are the same as the builtin type slice.

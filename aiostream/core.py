@@ -39,7 +39,7 @@ class StreamEmpty(Exception):
 
 # Helpers
 
-T = TypeVar("T")
+T = TypeVar("T", covariant=True)
 X = TypeVar("X")
 A = TypeVar("A", contravariant=True)
 P = ParamSpec("P")
@@ -345,17 +345,6 @@ def operator(
             "since the decorated function becomes an operator class"
         )
 
-    # Look for "more_sources"
-    for i, p in enumerate(parameters):
-        if (
-            p.name == "more_sources"
-            and p.kind == inspect.Parameter.VAR_POSITIONAL
-        ):
-            more_sources_index = i
-            break
-    else:
-        more_sources_index = None
-
     # Injected parameters
     self_parameter = inspect.Parameter(
         "self", inspect.Parameter.POSITIONAL_OR_KEYWORD
@@ -372,9 +361,6 @@ def operator(
 
     # Init method
     def init(self: BaseStream[T], *args: P.args, **kwargs: P.kwargs) -> None:
-        if more_sources_index is not None:
-            for source in args[more_sources_index:]:
-                assert_async_iterable(source)
         factory = functools.partial(raw, *args, **kwargs)
         return BaseStream.__init__(self, factory)
 

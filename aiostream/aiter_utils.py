@@ -1,6 +1,8 @@
 """Utilities for asynchronous iteration."""
 
 from __future__ import annotations
+
+import sys
 from types import TracebackType
 
 import warnings
@@ -106,7 +108,7 @@ def assert_async_iterator(obj: object) -> None:
 
 # Async iterator context
 
-T = TypeVar("T")
+T = TypeVar("T", covariant=True)
 Self = TypeVar("Self", bound="AsyncIteratorContext[Any]")
 
 
@@ -200,10 +202,12 @@ class AsyncIteratorContext(AsyncIterator[T], AsyncContextManager[Any]):
                 # Throw
                 try:
                     assert isinstance(self._aiterator, AsyncGenerator)
-                    await self._aiterator.athrow(typ, value, traceback)
-                    raise RuntimeError(
-                        "Async iterator didn't stop after athrow()"
-                    )
+                    if sys.version_info >= (3, 12):
+                        assert value is not None
+                        await self._aiterator.athrow(value)
+                    else:
+                        await self._aiterator.athrow(typ, value, traceback)
+                    raise RuntimeError("Async iterator didn't stop after athrow()")
 
                 # Exception has been (most probably) silenced
                 except StopAsyncIteration as exc:

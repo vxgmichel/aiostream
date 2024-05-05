@@ -32,7 +32,7 @@ async def task5():
 
 
 @pytest.mark.asyncio
-async def test_task_group_cleanup(event_loop):
+async def test_task_group_cleanup():
     async with TaskGroup() as group:
         t1 = group.create_task(task1())
         t2 = group.create_task(task2())

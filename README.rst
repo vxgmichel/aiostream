@@ -2,25 +2,7 @@ aiostream
 =========
 
 
-.. image:: https://readthedocs.org/projects/aiostream/badge/?version=latest
-   :target: http://aiostream.readthedocs.io/en/latest/?badge=latest
-   :alt:
-
-.. image:: https://codecov.io/gh/vxgmichel/aiostream/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/vxgmichel/aiostream
-   :alt:
-
-.. image:: https://travis-ci.org/vxgmichel/aiostream.svg?branch=master
-   :target: https://travis-ci.org/vxgmichel/aiostream
-   :alt:
-
-.. image:: https://img.shields.io/pypi/v/aiostream.svg
-   :target: https://pypi.python.org/pypi/aiostream
-   :alt:
-
-.. image:: https://img.shields.io/pypi/pyversions/aiostream.svg
-   :target: https://pypi.python.org/pypi/aiostream/
-   :alt:
+|docs-badge| |cov-badge| |ci-badge| |version-badge| |pyversion-badge|
 
 Generator-based operators for asynchronous iteration
 
@@ -41,14 +23,6 @@ A stream is an enhanced asynchronous iterable providing the following features:
 - **Simplified execution** - get the last element from a stream using ``await``
 - **Slicing and indexing** - using square brackets ``[]``
 - **Concatenation** - using addition symbol ``+``
-
-
-Requirements
-------------
-
-The stream operators rely heavily on asynchronous generators (`PEP 525`_):
-
-- python >= 3.6
 
 
 Stream operators
@@ -80,7 +54,7 @@ Demonstration
 
 The following example demonstrates most of the streams capabilities:
 
-.. sourcecode:: python
+.. code:: python
 
     import asyncio
     from aiostream import stream, pipe
@@ -191,3 +165,19 @@ Vincent Michel: vxgmichel@gmail.com
 
 .. _action: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.action
 .. _print: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.print
+
+.. |docs-badge| image:: https://readthedocs.org/projects/aiostream/badge/?version=latest
+   :target: http://aiostream.readthedocs.io/en/latest/?badge=latest
+   :alt:
+..  |cov-badge| image:: https://codecov.io/gh/vxgmichel/aiostream/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/vxgmichel/aiostream
+   :alt:
+.. |ci-badge| image:: https://github.com/vxgmichel/aiostream/workflows/CI/badge.svg
+   :target: https://github.com/vxgmichel/aiostream/actions/workflows/ci.yml?query=branch%3Amain
+   :alt:
+.. |version-badge| image:: https://img.shields.io/pypi/v/aiostream.svg
+   :target: https://pypi.python.org/pypi/aiostream
+   :alt:
+.. |pyversion-badge| image:: https://img.shields.io/pypi/pyversions/aiostream.svg
+   :target: https://pypi.python.org/pypi/aiostream/
+   :alt:
