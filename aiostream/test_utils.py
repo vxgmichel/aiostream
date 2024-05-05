@@ -145,7 +145,9 @@ class TimeTrackingTestLoop(asyncio.BaseEventLoop):
         super()._run_once()
         # Update internals
         self.busy_count += 1
-        self._timers = sorted(when for when in self._timers if when > self.time())
+        self._timers = sorted(
+            when for when in self._timers if when > self.time()
+        )
         # Time advance
         if self.time_to_go:
             when = self._timers.pop(0)

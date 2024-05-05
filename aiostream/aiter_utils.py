@@ -207,7 +207,9 @@ class AsyncIteratorContext(AsyncIterator[T], AsyncContextManager[Any]):
                         await self._aiterator.athrow(value)
                     else:
                         await self._aiterator.athrow(typ, value, traceback)
-                    raise RuntimeError("Async iterator didn't stop after athrow()")
+                    raise RuntimeError(
+                        "Async iterator didn't stop after athrow()"
+                    )
 
                 # Exception has been (most probably) silenced
                 except StopAsyncIteration as exc:
