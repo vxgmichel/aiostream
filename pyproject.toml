@@ -1,2 +1,5 @@
+[tool.pytest.ini_options]
+addopts = "--strict-markers --cov aiostream"
+
 [tool.pyright]
 ignore = ["aiostream/test_utils.py"]
