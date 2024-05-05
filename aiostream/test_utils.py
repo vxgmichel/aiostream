@@ -1,4 +1,6 @@
+# type: ignore
 """Utilities for testing stream operators."""
+
 from __future__ import annotations
 
 import asyncio

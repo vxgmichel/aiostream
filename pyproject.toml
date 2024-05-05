@@ -1,2 +1,6 @@
 [tool.pyright]
 ignore = ["aiostream/test_utils.py"]
+
+[tool.mypy]
+strict = true
+packages = ["aiostream", "examples"]
