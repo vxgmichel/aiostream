@@ -1,4 +1,5 @@
 """Utilities for asynchronous iteration."""
+
 from __future__ import annotations
 from types import TracebackType
 
@@ -98,7 +99,9 @@ def assert_async_iterator(obj: object) -> None:
     asynchronous iterator.
     """
     if not is_async_iterator(obj):
-        raise TypeError(f"{type(obj).__name__!r} object is not an async iterator")
+        raise TypeError(
+            f"{type(obj).__name__!r} object is not an async iterator"
+        )
 
 
 # Async iterator context
@@ -154,7 +157,9 @@ class AsyncIteratorContext(AsyncIterator[T], AsyncContextManager[Any]):
 
     async def __aenter__(self: Self) -> Self:
         if self._state == self._RUNNING:
-            raise RuntimeError(f"{type(self).__name__} has already been entered")
+            raise RuntimeError(
+                f"{type(self).__name__} has already been entered"
+            )
         if self._state == self._FINISHED:
             raise RuntimeError(
                 f"{type(self).__name__} is closed and cannot be iterated"
@@ -196,7 +201,9 @@ class AsyncIteratorContext(AsyncIterator[T], AsyncContextManager[Any]):
                 try:
                     assert isinstance(self._aiterator, AsyncGenerator)
                     await self._aiterator.athrow(typ, value, traceback)
-                    raise RuntimeError("Async iterator didn't stop after athrow()")
+                    raise RuntimeError(
+                        "Async iterator didn't stop after athrow()"
+                    )
 
                 # Exception has been (most probably) silenced
                 except StopAsyncIteration as exc:
@@ -231,7 +238,9 @@ class AsyncIteratorContext(AsyncIterator[T], AsyncContextManager[Any]):
 
     async def athrow(self, exc: Exception) -> T:
         if self._state == self._FINISHED:
-            raise RuntimeError(f"{type(self).__name__} is closed and cannot be used")
+            raise RuntimeError(
+                f"{type(self).__name__} is closed and cannot be used"
+            )
         assert isinstance(self._aiterator, AsyncGenerator)
         item: T = await self._aiterator.athrow(exc)
         return item

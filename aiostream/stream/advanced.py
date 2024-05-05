@@ -1,4 +1,5 @@
 """Advanced operators (to deal with streams of higher order) ."""
+
 from __future__ import annotations
 
 from typing import AsyncIterator, AsyncIterable, TypeVar, Union, cast
@@ -46,15 +47,17 @@ async def base_combine(
 
     # Safe context
     async with StreamerManager[Union[AsyncIterable[T], T]]() as manager:
-        main_streamer: Streamer[
-            AsyncIterable[T] | T
-        ] | None = await manager.enter_and_create_task(source)
+        main_streamer: Streamer[AsyncIterable[T] | T] | None = (
+            await manager.enter_and_create_task(source)
+        )
 
         # Loop over events
         while manager.tasks:
             # Extract streamer groups
             substreamers = manager.streamers[1:]
-            mainstreamers = [main_streamer] if main_streamer in manager.tasks else []
+            mainstreamers = (
+                [main_streamer] if main_streamer in manager.tasks else []
+            )
 
             # Switch - use the main streamer then the substreamer
             if switch:
@@ -84,7 +87,10 @@ async def base_combine(
                     await manager.clean_streamer(streamer)
 
                     # Re-schedule the main streamer if necessary
-                    if main_streamer is not None and main_streamer not in manager.tasks:
+                    if (
+                        main_streamer is not None
+                        and main_streamer not in manager.tasks
+                    ):
                         manager.create_task(main_streamer)
 
             # Process result
@@ -126,7 +132,9 @@ def concat(
 
     Errors raised in the source or an element sequence are propagated.
     """
-    return base_combine.raw(source, task_limit=task_limit, switch=False, ordered=True)
+    return base_combine.raw(
+        source, task_limit=task_limit, switch=False, ordered=True
+    )
 
 
 @pipable_operator
@@ -141,7 +149,9 @@ def flatten(
 
     Errors raised in the source or an element sequence are propagated.
     """
-    return base_combine.raw(source, task_limit=task_limit, switch=False, ordered=False)
+    return base_combine.raw(
+        source, task_limit=task_limit, switch=False, ordered=False
+    )
 
 
 @pipable_operator

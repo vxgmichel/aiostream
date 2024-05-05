@@ -47,9 +47,11 @@ async def test_concatmap(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = stream.iterate([True, False])
         ys = xs | pipe.concatmap(
-            lambda x: stream.range(0, 3, interval=1)
-            if x
-            else stream.throw(ZeroDivisionError)
+            lambda x: (
+                stream.range(0, 3, interval=1)
+                if x
+                else stream.throw(ZeroDivisionError)
+            )
         )
         zs = ys | pipe.take(3)
         await assert_run(zs, [0, 1, 2])

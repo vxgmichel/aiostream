@@ -6,14 +6,17 @@ repos:
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
 -   repo: https://github.com/ambv/black
-    rev: 23.3.0
+    rev: 24.3.0
     hooks:
     - id: black
       language_version: python3
 -   repo: https://github.com/pycqa/flake8
-    rev: 5.0.4
+    rev: 7.0.0
     hooks:
     - id: flake8
+      args:
+        - --extend-ignore=E704
+      # https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.6.1
     hooks:

@@ -162,7 +162,11 @@ async def test_filter(assert_run, event_loop):
 @pytest.mark.asyncio
 async def test_until(assert_run, event_loop):
     with event_loop.assert_cleanup():
-        xs = stream.range(1, 10) | add_resource.pipe(1) | pipe.until(lambda x: x == 3)
+        xs = (
+            stream.range(1, 10)
+            | add_resource.pipe(1)
+            | pipe.until(lambda x: x == 3)
+        )
         await assert_run(xs, [1, 2, 3])
 
     async def afunc(x):
@@ -179,7 +183,9 @@ async def test_until(assert_run, event_loop):
 async def test_takewhile(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = (
-            stream.range(1, 10) | add_resource.pipe(1) | pipe.takewhile(lambda x: x < 4)
+            stream.range(1, 10)
+            | add_resource.pipe(1)
+            | pipe.takewhile(lambda x: x < 4)
         )
         await assert_run(xs, [1, 2, 3])
 
@@ -197,7 +203,9 @@ async def test_takewhile(assert_run, event_loop):
 async def test_dropwhile(assert_run, event_loop):
     with event_loop.assert_cleanup():
         xs = (
-            stream.range(1, 10) | add_resource.pipe(1) | pipe.dropwhile(lambda x: x < 7)
+            stream.range(1, 10)
+            | add_resource.pipe(1)
+            | pipe.dropwhile(lambda x: x < 7)
         )
         await assert_run(xs, [7, 8, 9])
 

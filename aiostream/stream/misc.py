@@ -1,10 +1,18 @@
 """Extra operators."""
+
 from __future__ import annotations
 
 import asyncio
 import builtins
 
-from typing import TypeVar, Awaitable, Callable, AsyncIterable, AsyncIterator, Any
+from typing import (
+    TypeVar,
+    Awaitable,
+    Callable,
+    AsyncIterable,
+    AsyncIterator,
+    Any,
+)
 
 from .combine import amap, smap
 from ..core import pipable_operator
@@ -44,7 +52,9 @@ def action(
             await awaitable
             return arg
 
-        return amap.raw(source, ainnerfunc, ordered=ordered, task_limit=task_limit)
+        return amap.raw(
+            source, ainnerfunc, ordered=ordered, task_limit=task_limit
+        )
 
     else:
 

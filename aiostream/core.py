@@ -1,4 +1,5 @@
 """Core objects for stream operators."""
+
 from __future__ import annotations
 
 import inspect
@@ -258,28 +259,23 @@ def streamcontext(aiterable: AsyncIterable[T]) -> Streamer[T]:
 
 
 class OperatorType(Protocol[P, T]):
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Stream[T]:
-        ...
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Stream[T]: ...
 
-    def raw(self, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
-        ...
+    def raw(self, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]: ...
 
 
 class PipableOperatorType(Protocol[A, P, T]):
     def __call__(
         self, source: AsyncIterable[A], /, *args: P.args, **kwargs: P.kwargs
-    ) -> Stream[T]:
-        ...
+    ) -> Stream[T]: ...
 
     def raw(
         self, source: AsyncIterable[A], /, *args: P.args, **kwargs: P.kwargs
-    ) -> AsyncIterator[T]:
-        ...
+    ) -> AsyncIterator[T]: ...
 
     def pipe(
         self, *args: P.args, **kwargs: P.kwargs
-    ) -> Callable[[AsyncIterable[A]], Stream[T]]:
-        ...
+    ) -> Callable[[AsyncIterable[A]], Stream[T]]: ...
 
 
 # Operator decorator
@@ -351,14 +347,19 @@ def operator(
 
     # Look for "more_sources"
     for i, p in enumerate(parameters):
-        if p.name == "more_sources" and p.kind == inspect.Parameter.VAR_POSITIONAL:
+        if (
+            p.name == "more_sources"
+            and p.kind == inspect.Parameter.VAR_POSITIONAL
+        ):
             more_sources_index = i
             break
     else:
         more_sources_index = None
 
     # Injected parameters
-    self_parameter = inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    self_parameter = inspect.Parameter(
+        "self", inspect.Parameter.POSITIONAL_OR_KEYWORD
+    )
     inspect.Parameter("cls", inspect.Parameter.POSITIONAL_OR_KEYWORD)
 
     # Wrapped static method
@@ -473,15 +474,22 @@ def pipable_operator(
 
     # Look for "more_sources"
     for i, p in enumerate(parameters):
-        if p.name == "more_sources" and p.kind == inspect.Parameter.VAR_POSITIONAL:
+        if (
+            p.name == "more_sources"
+            and p.kind == inspect.Parameter.VAR_POSITIONAL
+        ):
             more_sources_index = i
             break
     else:
         more_sources_index = None
 
     # Injected parameters
-    self_parameter = inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD)
-    cls_parameter = inspect.Parameter("cls", inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    self_parameter = inspect.Parameter(
+        "self", inspect.Parameter.POSITIONAL_OR_KEYWORD
+    )
+    cls_parameter = inspect.Parameter(
+        "cls", inspect.Parameter.POSITIONAL_OR_KEYWORD
+    )
 
     # Wrapped static method
     original = func
@@ -505,7 +513,10 @@ def pipable_operator(
 
     # Init method
     def init(
-        self: BaseStream[T], arg: AsyncIterable[X], *args: P.args, **kwargs: P.kwargs
+        self: BaseStream[T],
+        arg: AsyncIterable[X],
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> None:
         assert_async_iterable(arg)
         if more_sources_index is not None:

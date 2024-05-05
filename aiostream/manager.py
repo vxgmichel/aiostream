@@ -1,6 +1,7 @@
 """Provide a context to easily manage several streamers running
 concurrently.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -119,7 +120,9 @@ class StreamerManager(Generic[T]):
         self.streamers.clear()
         return await self.stack.__aexit__(typ, value, traceback)
 
-    async def enter_and_create_task(self, aiter: AsyncIterable[T]) -> Streamer[T]:
+    async def enter_and_create_task(
+        self, aiter: AsyncIterable[T]
+    ) -> Streamer[T]:
         streamer = streamcontext(aiter)
         await streamer.__aenter__()
         self.streamers.append(streamer)

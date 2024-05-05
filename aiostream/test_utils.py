@@ -1,4 +1,5 @@
 """Utilities for testing stream operators."""
+
 from __future__ import annotations
 
 import asyncio
@@ -39,7 +40,11 @@ def compare_exceptions(
     exc2: Exception,
 ) -> bool:
     """Compare two exceptions together."""
-    return exc1 == exc2 or exc1.__class__ == exc2.__class__ and exc1.args == exc2.args
+    return (
+        exc1 == exc2
+        or exc1.__class__ == exc2.__class__
+        and exc1.args == exc2.args
+    )
 
 
 async def assert_aiter(
@@ -115,7 +120,9 @@ def event_loop():
             super()._run_once()
             # Update internals
             self.busy_count += 1
-            self._timers = sorted(when for when in self._timers if when > loop.time())
+            self._timers = sorted(
+                when for when in self._timers if when > loop.time()
+            )
             # Time advance
             if self.time_to_go:
                 when = self._timers.pop(0)

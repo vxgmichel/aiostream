@@ -1,4 +1,5 @@
 """Non-pipable creation operators."""
+
 from __future__ import annotations
 
 import sys
@@ -95,18 +96,18 @@ Y = TypeVar("Y", covariant=True)
 
 
 class SyncCallable(Protocol[P, Y]):
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Y:
-        ...
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Y: ...
 
 
 class AsyncCallable(Protocol[P, Y]):
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[Y]:
-        ...
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[Y]: ...
 
 
 @operator
 async def call(
-    func: SyncCallable[P, T] | AsyncCallable[P, T], *args: P.args, **kwargs: P.kwargs
+    func: SyncCallable[P, T] | AsyncCallable[P, T],
+    *args: P.args,
+    **kwargs: P.kwargs,
 ) -> AsyncIterator[T]:
     """Call the given function and generate a single value.
 

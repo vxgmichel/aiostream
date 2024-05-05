@@ -39,7 +39,12 @@ async def test_cycle(assert_run, event_loop):
         await assert_run(xs, [], asyncio.TimeoutError())
 
     with event_loop.assert_cleanup():
-        xs = stream.empty() | add_resource.pipe(1) | pipe.cycle() | pipe.timeout(1)
+        xs = (
+            stream.empty()
+            | add_resource.pipe(1)
+            | pipe.cycle()
+            | pipe.timeout(1)
+        )
         await assert_run(xs, [], asyncio.TimeoutError())
 
     with event_loop.assert_cleanup():

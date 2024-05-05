@@ -1,10 +1,18 @@
 """Aggregation operators."""
+
 from __future__ import annotations
 
 import asyncio
 import builtins
 import operator as op
-from typing import AsyncIterator, Awaitable, Callable, TypeVar, AsyncIterable, cast
+from typing import (
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    TypeVar,
+    AsyncIterable,
+    cast,
+)
 
 
 from . import select
