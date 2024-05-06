@@ -2,18 +2,28 @@
 addopts = "--strict-markers --cov aiostream"
 
 [tool.pyright]
-ignore = ["aiostream/test_utils.py"]
+strict = [
+    "aiostream/aiter_utils.py",
+    "aiostream/manager.py",
+    "aiostream/pipe.py",
+    "aiostream/test_utils.py",
+]
 
 [tool.mypy]
-strict = true
 packages = ["aiostream", "examples"]
+
+[tool.mypy-aiostream]
+strict = true
+
+[tool.mypy-examples]
+strict = true
 
 [tool.black]
 line-length = 88
 target_version = ["py38", "py39", "py310", "py311", "py312"]
 
 [tool.coverage.report]
-exclude_also = ["if TYPE_CHECKING:"]
+exclude_also = ["if TYPE_CHECKING:", "assert False"]
 
 [tool.ruff]
 ignore = ["E501", "F403"]

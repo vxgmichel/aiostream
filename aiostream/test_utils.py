@@ -1,21 +1,24 @@
-# type: ignore
 """Utilities for testing stream operators."""
 
 from __future__ import annotations
 
 import asyncio
+from collections import deque
 from contextlib import contextmanager
 from unittest.mock import Mock
 from typing import (
     TYPE_CHECKING,
-    Any,
+    Awaitable,
     Callable,
     List,
+    Protocol,
     TypeVar,
     AsyncIterable,
     AsyncIterator,
     ContextManager,
     Iterator,
+    cast,
+    Any,
 )
 
 import pytest
@@ -37,8 +40,9 @@ async def add_resource(
     source: AsyncIterable[T], cleanup_time: float
 ) -> AsyncIterator[T]:
     """Simulate an open resource in a stream operator."""
+    loop = asyncio.get_running_loop()
+    assert isinstance(loop, TimeTrackingTestLoop)
     try:
-        loop = asyncio.get_running_loop()
         loop.open_resources += 1
         loop.resources += 1
         async with streamcontext(source) as streamer:
@@ -60,12 +64,12 @@ def compare_exceptions(
 
 
 async def assert_aiter(
-    source: Stream,
-    values: List[Any],
+    source: Stream[object],
+    values: List[object],
     exception: Exception | None = None,
 ) -> None:
     """Check the results of a stream using a streamcontext."""
-    results = []
+    results: list[object] = []
     exception_type = (type(exception),) if exception else ()
     try:
         async with streamcontext(source) as streamer:
@@ -80,8 +84,8 @@ async def assert_aiter(
 
 
 async def assert_await(
-    source: Stream,
-    values: List[Any],
+    source: Stream[object],
+    values: List[object],
     exception: Exception | None = None,
 ) -> None:
     """Check the results of a stream using by awaiting it."""
@@ -99,13 +103,19 @@ async def assert_await(
         assert exception is None
 
 
-@pytest.fixture(params=[assert_aiter, assert_await], ids=["aiter", "await"])
-def assert_run(request: SubRequest) -> Callable:
+class AssertRunProtocol(Protocol):
+    def __call__(
+        self, source: Stream[object], values: List[object], exception: Exception | None
+    ) -> Awaitable[None]: ...
+
+
+@pytest.fixture(params=[assert_aiter, assert_await], ids=["aiter", "await"])  # type: ignore[misc]
+def assert_run(request: SubRequest) -> AssertRunProtocol:
     """Parametrized fixture returning a stream runner."""
-    return request.param
+    return cast(AssertRunProtocol, request.param)
 
 
-@pytest.fixture
+@pytest.fixture  # type: ignore[misc]
 def event_loop_policy() -> TimeTrackingTestLoopPolicy:
     """Fixture providing a test event loop.
 
@@ -118,7 +128,7 @@ def event_loop_policy() -> TimeTrackingTestLoopPolicy:
     return TimeTrackingTestLoopPolicy()
 
 
-@pytest.fixture
+@pytest.fixture  # type: ignore[misc]
 def assert_cleanup(
     event_loop: TimeTrackingTestLoop,
 ) -> Callable[[], ContextManager[TimeTrackingTestLoop]]:
@@ -126,19 +136,28 @@ def assert_cleanup(
     return event_loop.assert_cleanup
 
 
-class TimeTrackingTestLoop(asyncio.BaseEventLoop):
+class BaseEventLoopWithInternals(asyncio.BaseEventLoop):
+    _ready: deque[asyncio.Handle]
+    _run_once: Callable[[], None]
+
+
+class TimeTrackingTestLoop(BaseEventLoopWithInternals):
     stuck_threshold: int = 100
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._time: float = 0.0
         self._timers: list[float] = []
         self._selector = Mock()
-        self.clear()
+
+        self.steps: list[float] = []
+        self.open_resources: int = 0
+        self.resources: int = 0
+        self.busy_count: int = 0
 
     # Loop internals
 
-    def _run_once(self) -> None:
+    def _run_once(self) -> None:  # type: ignore
         super()._run_once()
         # Update internals
         self.busy_count += 1
@@ -151,7 +170,7 @@ class TimeTrackingTestLoop(asyncio.BaseEventLoop):
             self.advance_time(step)
             self.busy_count = 0
 
-    def _process_events(self, event_list) -> None:
+    def _process_events(self, event_list: object) -> None:
         return
 
     def _write_to_self(self) -> None:
@@ -166,7 +185,7 @@ class TimeTrackingTestLoop(asyncio.BaseEventLoop):
         if advance:
             self._time += advance
 
-    def call_at(self, when, callback, *args, **kwargs):
+    def call_at(self, when: float, callback: Callable[..., None], *args: Any, **kwargs: Any) -> asyncio.TimerHandle:  # type: ignore
         self._timers.append(when)
         return super().call_at(when, callback, *args, **kwargs)
 
@@ -176,7 +195,7 @@ class TimeTrackingTestLoop(asyncio.BaseEventLoop):
 
     @property
     def time_to_go(self) -> bool:
-        return self._timers and (self.stuck or not self._ready)
+        return bool(self._timers) and (self.stuck or not self._ready)
 
     # Resource management
 

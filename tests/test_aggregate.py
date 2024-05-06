@@ -7,7 +7,7 @@ from aiostream.test_utils import add_resource
 
 
 @pytest.mark.asyncio
-async def test_aggregate(assert_run, assert_cleanup):
+async def test_accumulate(assert_run, assert_cleanup):
     with assert_cleanup():
         xs = stream.range(5) | add_resource.pipe(1) | pipe.accumulate()
         await assert_run(xs, [0, 1, 3, 6, 10])

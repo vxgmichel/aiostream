@@ -32,9 +32,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install test requirements
-        run: pip install -r test-requirements.txt
+        run: pip install -e . -r test-requirements.txt
       - name: Run tests
-        run: python setup.py test
+        run: pytest
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:

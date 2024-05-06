@@ -525,7 +525,7 @@ def pipable_operator(
     ):
         new_parameters = [cls_parameter] + parameters[1:]
     else:
-        new_parameters = [cls_parameter] + parameters
+        raise ValueError("The first parameter of the operator must be positional")
     pipe.__signature__ = signature.replace(parameters=new_parameters)  # type: ignore[attr-defined]
 
     # Customize pipe method
