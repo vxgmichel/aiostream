@@ -2,7 +2,12 @@
 addopts = "--strict-markers --cov aiostream"
 
 [tool.pyright]
-strict = []
+strict = [
+    "aiostream/aiter_utils.py",
+    "aiostream/manager.py",
+    "aiostream/pipe.py",
+    "aiostream/test_utils.py",
+]
 
 [tool.mypy]
 packages = ["aiostream", "examples"]

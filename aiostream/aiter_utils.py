@@ -18,6 +18,7 @@ from typing import (
     TypeVar,
     AsyncIterator,
     Any,
+    cast,
 )
 
 if TYPE_CHECKING:
@@ -110,7 +111,9 @@ T = TypeVar("T", covariant=True)
 Self = TypeVar("Self", bound="AsyncIteratorContext[Any]")
 
 
-class AsyncIteratorContext(AsyncIterator[T], AsyncContextManager[Any]):
+class AsyncIteratorContext(
+    AsyncIterator[T], AsyncContextManager["AsyncIteratorContext[T]"]
+):
     """Asynchronous iterator with context management.
 
     The context management makes sure the aclose asynchronous method
@@ -186,6 +189,7 @@ class AsyncIteratorContext(AsyncIterator[T], AsyncContextManager[Any]):
                 # No method to throw
                 if not hasattr(self._aiterator, "athrow"):
                     return False
+                self._aiterator = cast(AsyncGenerator[T, None], self._aiterator)
 
                 # No frame to throw
                 if not getattr(self._aiterator, "ag_frame", True):
@@ -240,6 +244,7 @@ class AsyncIteratorContext(AsyncIterator[T], AsyncContextManager[Any]):
         if self._state == self._FINISHED:
             raise RuntimeError(f"{type(self).__name__} is closed and cannot be used")
         assert isinstance(self._aiterator, AsyncGenerator)
+        self._aiterator = cast(AsyncGenerator[T, None], self._aiterator)
         item: T = await self._aiterator.athrow(exc)
         return item
 

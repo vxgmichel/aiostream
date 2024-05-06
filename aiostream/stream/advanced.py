@@ -97,6 +97,7 @@ async def base_combine(
                 # Setup a new source
                 if streamer is main_streamer:
                     assert isinstance(result, AsyncIterable)
+                    result = cast(AsyncIterable[T], result)
                     await manager.enter_and_create_task(result)
 
                     # Re-schedule the main streamer if task limit allows it

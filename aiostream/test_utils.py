@@ -18,6 +18,7 @@ from typing import (
     ContextManager,
     Iterator,
     cast,
+    Any,
 )
 
 import pytest
@@ -68,7 +69,7 @@ async def assert_aiter(
     exception: Exception | None = None,
 ) -> None:
     """Check the results of a stream using a streamcontext."""
-    results = []
+    results: list[object] = []
     exception_type = (type(exception),) if exception else ()
     try:
         async with streamcontext(source) as streamer:
@@ -184,7 +185,7 @@ class TimeTrackingTestLoop(BaseEventLoopWithInternals):
         if advance:
             self._time += advance
 
-    def call_at(self, when: float, callback, *args, **kwargs) -> asyncio.TimerHandle:  # type: ignore
+    def call_at(self, when: float, callback: Callable[..., None], *args: Any, **kwargs: Any) -> asyncio.TimerHandle:  # type: ignore
         self._timers.append(when)
         return super().call_at(when, callback, *args, **kwargs)
 
