@@ -1,4 +1,5 @@
 """Core objects for stream operators."""
+
 from __future__ import annotations
 
 import inspect
@@ -258,28 +259,23 @@ def streamcontext(aiterable: AsyncIterable[T]) -> Streamer[T]:
 
 
 class OperatorType(Protocol[P, T]):
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Stream[T]:
-        ...
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Stream[T]: ...
 
-    def raw(self, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]:
-        ...
+    def raw(self, *args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]: ...
 
 
 class PipableOperatorType(Protocol[A, P, T]):
     def __call__(
         self, source: AsyncIterable[A], /, *args: P.args, **kwargs: P.kwargs
-    ) -> Stream[T]:
-        ...
+    ) -> Stream[T]: ...
 
     def raw(
         self, source: AsyncIterable[A], /, *args: P.args, **kwargs: P.kwargs
-    ) -> AsyncIterator[T]:
-        ...
+    ) -> AsyncIterator[T]: ...
 
     def pipe(
         self, *args: P.args, **kwargs: P.kwargs
-    ) -> Callable[[AsyncIterable[A]], Stream[T]]:
-        ...
+    ) -> Callable[[AsyncIterable[A]], Stream[T]]: ...
 
 
 # Operator decorator

@@ -1,6 +1,7 @@
 """Provide a context to easily manage several streamers running
 concurrently.
 """
+
 from __future__ import annotations
 
 import asyncio

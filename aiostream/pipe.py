@@ -1,4 +1,5 @@
 """Gather the pipe operators."""
+
 from __future__ import annotations
 
 from . import stream

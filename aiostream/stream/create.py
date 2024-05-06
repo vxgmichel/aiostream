@@ -1,4 +1,5 @@
 """Non-pipable creation operators."""
+
 from __future__ import annotations
 
 import sys
@@ -96,13 +97,11 @@ Y = TypeVar("Y", covariant=True)
 
 
 class SyncCallable(Protocol[P, Y]):
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Y:
-        ...
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Y: ...
 
 
 class AsyncCallable(Protocol[P, Y]):
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[Y]:
-        ...
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[Y]: ...
 
 
 @operator

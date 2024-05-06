@@ -49,13 +49,11 @@ Y = TypeVar("Y", covariant=True)
 
 
 class AsyncStarmapCallable(Protocol[X, Y]):
-    def __call__(self, arg: X, /, *args: X) -> Awaitable[Y]:
-        ...
+    def __call__(self, arg: X, /, *args: X) -> Awaitable[Y]: ...
 
 
 class SyncStarmapCallable(Protocol[X, Y]):
-    def __call__(self, arg: X, /, *args: X) -> Y:
-        ...
+    def __call__(self, arg: X, /, *args: X) -> Y: ...
 
 
 @pipable_operator
