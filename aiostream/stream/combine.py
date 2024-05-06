@@ -1,4 +1,5 @@
 """Combination operators."""
+
 from __future__ import annotations
 
 import asyncio
@@ -93,18 +94,15 @@ Y = TypeVar("Y", covariant=True)
 
 
 class SmapCallable(Protocol[X, Y]):
-    def __call__(self, arg: X, /, *args: X) -> Y:
-        ...
+    def __call__(self, arg: X, /, *args: X) -> Y: ...
 
 
 class AmapCallable(Protocol[X, Y]):
-    async def __call__(self, arg: X, /, *args: X) -> Y:
-        ...
+    async def __call__(self, arg: X, /, *args: X) -> Y: ...
 
 
 class MapCallable(Protocol[X, Y]):
-    def __call__(self, arg: X, /, *args: X) -> Awaitable[Y] | Y:
-        ...
+    def __call__(self, arg: X, /, *args: X) -> Awaitable[Y] | Y: ...
 
 
 @pipable_operator

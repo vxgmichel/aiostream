@@ -1,4 +1,5 @@
 """Advanced operators (to deal with streams of higher order) ."""
+
 from __future__ import annotations
 
 from typing import AsyncIterator, AsyncIterable, TypeVar, Union, cast
@@ -46,9 +47,9 @@ async def base_combine(
 
     # Safe context
     async with StreamerManager[Union[AsyncIterable[T], T]]() as manager:
-        main_streamer: Streamer[
-            AsyncIterable[T] | T
-        ] | None = await manager.enter_and_create_task(source)
+        main_streamer: Streamer[AsyncIterable[T] | T] | None = (
+            await manager.enter_and_create_task(source)
+        )
 
         # Loop over events
         while manager.tasks:
