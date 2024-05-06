@@ -176,6 +176,11 @@ async def test_stuck_in_aitercontext():
     # The message is a bit different
     assert "async generator ignored GeneratorExit" in str(info.value)
 
+    # Check athrow behavior
+    async with aitercontext(stuck_agen()) as safe_gen:
+        assert await safe_gen.__anext__() == 1
+        assert await safe_gen.athrow(ZeroDivisionError()) == 2
+
 
 @pytest.mark.asyncio
 async def test_not_an_agen_in_aitercontext():
@@ -187,3 +192,11 @@ async def test_not_an_agen_in_aitercontext():
         async with aitercontext(not_an_agen([1])) as safe_gen:
             async for item in safe_gen:
                 raise ZeroDivisionError
+
+
+@pytest.mark.asyncio
+async def test_aitercontext_idempotent():
+    async with aitercontext(aitercontext(agen())) as safe_gen:
+        async for item in safe_gen:
+            assert item == 0
+            break

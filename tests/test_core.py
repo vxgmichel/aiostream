@@ -1,5 +1,6 @@
 import pytest
 
+from aiostream.core import pipable_operator
 from aiostream.test_utils import add_resource
 from aiostream import stream, streamcontext, operator
 
@@ -23,25 +24,26 @@ async def test_streamcontext(assert_cleanup):
         assert loop.steps == [1]
 
 
-def test_operator_from_method():
+@pytest.mark.parametrize("operator_param", [operator, pipable_operator])
+def test_operator_from_method(operator_param):
     with pytest.raises(ValueError):
 
         class A:
-            @operator
+            @operator_param
             async def method(self, arg):
                 yield 1
 
     with pytest.raises(ValueError):
 
         class B:
-            @operator
+            @operator_param
             async def method(cls, arg):
                 yield 1
 
     with pytest.raises(ValueError):
 
         class C:
-            @operator
+            @operator_param
             @classmethod
             async def method(cls, arg):
                 yield 1
@@ -109,3 +111,20 @@ def test_compatibility():
             yield 1
 
     test4.pipe  # type: ignore
+
+    with pytest.warns(DeprecationWarning, match=match):
+
+        async def test5(source):
+            yield 1
+
+        test5_operator = operator(test5, pipable=True)
+        test5_operator.pipe  # type: ignore
+
+
+def test_pipable_operator_with_variadic_args():
+
+    with pytest.raises(ValueError):
+
+        @pipable_operator
+        async def test1(*args):
+            yield 1
