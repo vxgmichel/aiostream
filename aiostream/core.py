@@ -346,9 +346,7 @@ def operator(
         )
 
     # Injected parameters
-    self_parameter = inspect.Parameter(
-        "self", inspect.Parameter.POSITIONAL_OR_KEYWORD
-    )
+    self_parameter = inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD)
     inspect.Parameter("cls", inspect.Parameter.POSITIONAL_OR_KEYWORD)
 
     # Wrapped static method
@@ -460,22 +458,15 @@ def pipable_operator(
 
     # Look for "more_sources"
     for i, p in enumerate(parameters):
-        if (
-            p.name == "more_sources"
-            and p.kind == inspect.Parameter.VAR_POSITIONAL
-        ):
+        if p.name == "more_sources" and p.kind == inspect.Parameter.VAR_POSITIONAL:
             more_sources_index = i
             break
     else:
         more_sources_index = None
 
     # Injected parameters
-    self_parameter = inspect.Parameter(
-        "self", inspect.Parameter.POSITIONAL_OR_KEYWORD
-    )
-    cls_parameter = inspect.Parameter(
-        "cls", inspect.Parameter.POSITIONAL_OR_KEYWORD
-    )
+    self_parameter = inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    cls_parameter = inspect.Parameter("cls", inspect.Parameter.POSITIONAL_OR_KEYWORD)
 
     # Wrapped static method
     original = func

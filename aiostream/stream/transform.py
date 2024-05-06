@@ -85,9 +85,7 @@ def starmap(
             awaitable = async_func(*args)
             return await awaitable
 
-        return amap.raw(
-            source, astarfunc, ordered=ordered, task_limit=task_limit
-        )
+        return amap.raw(source, astarfunc, ordered=ordered, task_limit=task_limit)
 
     else:
         sync_func = cast("SyncStarmapCallable[T, U]", func)

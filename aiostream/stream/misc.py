@@ -52,9 +52,7 @@ def action(
             await awaitable
             return arg
 
-        return amap.raw(
-            source, ainnerfunc, ordered=ordered, task_limit=task_limit
-        )
+        return amap.raw(source, ainnerfunc, ordered=ordered, task_limit=task_limit)
 
     else:
 

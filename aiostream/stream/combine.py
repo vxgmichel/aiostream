@@ -76,8 +76,7 @@ async def zip(
     async with AsyncExitStack() as stack:
         # Handle resources
         streamers = [
-            await stack.enter_async_context(streamcontext(source))
-            for source in sources
+            await stack.enter_async_context(streamcontext(source)) for source in sources
         ]
         # Loop over items
         while True:
@@ -161,9 +160,7 @@ def amap(
         return advanced.concatmap.raw(
             source, func, *more_sources, task_limit=task_limit
         )
-    return advanced.flatmap.raw(
-        source, func, *more_sources, task_limit=task_limit
-    )
+    return advanced.flatmap.raw(source, func, *more_sources, task_limit=task_limit)
 
 
 @pipable_operator
@@ -261,9 +258,7 @@ def ziplatest(
 
         return func
 
-    new_sources = [
-        smap.raw(source, make_func(i)) for i, source in enumerate(sources)
-    ]
+    new_sources = [smap.raw(source, make_func(i)) for i, source in enumerate(sources)]
 
     # Merge the sources
     merged = merge.raw(*new_sources)

@@ -131,9 +131,7 @@ def slice(source: AsyncIterable[T], *args: int | None) -> AsyncIterator[T]:
     # Filter the last items
     if stop is not None:
         if stop >= 0 and start < 0:
-            raise ValueError(
-                "Positive stop with negative start is not supported"
-            )
+            raise ValueError("Positive stop with negative start is not supported")
         elif stop >= 0:
             aiterator = take.raw(aiterator, stop - start)
         else:
@@ -178,9 +176,7 @@ async def item(source: AsyncIterable[T], index: int) -> AsyncIterator[T]:
 
 
 @pipable_operator
-def getitem(
-    source: AsyncIterable[T], index: int | builtins.slice
-) -> AsyncIterator[T]:
+def getitem(source: AsyncIterable[T], index: int | builtins.slice) -> AsyncIterator[T]:
     """Forward one or several items from an asynchronous sequence.
 
     The argument can either be a slice or an integer.

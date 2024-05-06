@@ -15,9 +15,7 @@ T = TypeVar("T")
 
 
 @pipable_operator
-async def spaceout(
-    source: AsyncIterable[T], interval: float
-) -> AsyncIterator[T]:
+async def spaceout(source: AsyncIterable[T], interval: float) -> AsyncIterator[T]:
     """Make sure the elements of an asynchronous sequence are separated
     in time by the given interval.
     """
