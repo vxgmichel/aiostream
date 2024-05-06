@@ -20,7 +20,7 @@ repos:
     rev: v1.6.1
     hooks:
     - id: mypy
-      files: ^(?!tests)
+      additional_dependencies: [pytest, typing-extensions]
       types: [python]
 -   repo: https://github.com/RobertCraigie/pyright-python
     rev: v1.1.361

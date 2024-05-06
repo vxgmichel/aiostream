@@ -5,8 +5,13 @@ addopts = "--strict-markers --cov aiostream"
 strict = []
 
 [tool.mypy]
-strict = true
 packages = ["aiostream", "examples"]
+
+[tool.mypy-aiostream]
+strict = true
+
+[tool.mypy-examples]
+strict = true
 
 [tool.black]
 line-length = 88
