@@ -1,3 +1,4 @@
+import inspect
 import pytest
 
 from aiostream.core import pipable_operator
@@ -128,3 +129,88 @@ def test_pipable_operator_with_variadic_args():
         @pipable_operator
         async def test1(*args):
             yield 1
+
+
+def test_introspection_for_operator():
+    # Extract original information
+    original = stream.range.original  # type: ignore
+    original_doc = original.__doc__
+    assert original_doc is not None
+    assert original_doc.splitlines()[0] == "Generate a given range of numbers."
+    assert (
+        str(inspect.signature(original))
+        == "(*args: 'int', interval: 'float' = 0.0) -> 'AsyncIterator[int]'"
+    )
+
+    # Check the stream operator
+    assert str(stream.range) == repr(stream.range) == "aiostream.stream.create.range"
+    assert stream.range.__module__ == "aiostream.stream.create"
+    assert stream.range.__doc__ == original_doc
+
+    # Check the raw method
+    assert stream.range.raw.__qualname__ == "range.raw"
+    assert stream.range.raw.__module__ == "aiostream.stream.create"
+    assert stream.range.raw.__doc__ == original_doc
+    assert (
+        str(inspect.signature(stream.range.raw))
+        == "(*args: 'int', interval: 'float' = 0.0) -> 'AsyncIterator[int]'"
+    )
+
+    # Check the __call__ method
+    assert stream.range.__call__.__qualname__ == "range.__call__"
+    assert stream.range.__call__.__module__ == "aiostream.stream.create"
+    assert stream.range.__call__.__doc__ == original_doc
+    assert (
+        str(inspect.signature(stream.range.__call__))
+        == "(*args: 'int', interval: 'float' = 0.0) -> 'Stream[int]'"
+    )
+
+
+def test_introspection_for_pipable_operator():
+    # Extract original information
+    original = stream.take.original  # type: ignore
+    original_doc = original.__doc__
+    assert original_doc is not None
+    assert (
+        original_doc.splitlines()[0]
+        == "Forward the first ``n`` elements from an asynchronous sequence."
+    )
+    assert (
+        str(inspect.signature(original))
+        == "(source: 'AsyncIterable[T]', n: 'int') -> 'AsyncIterator[T]'"
+    )
+
+    # Check the stream operator
+    assert str(stream.take) == repr(stream.take) == "aiostream.stream.select.take"
+    assert stream.take.__module__ == "aiostream.stream.select"
+    assert stream.take.__doc__ == original_doc
+
+    # Check the raw method
+    assert stream.take.raw.__qualname__ == "take.raw"
+    assert stream.take.raw.__module__ == "aiostream.stream.select"
+    assert stream.take.raw.__doc__ == original_doc
+    assert (
+        str(inspect.signature(stream.take.raw))
+        == "(source: 'AsyncIterable[T]', n: 'int') -> 'AsyncIterator[T]'"
+    )
+
+    # Check the __call__ method
+    assert stream.take.__call__.__qualname__ == "take.__call__"
+    assert stream.take.__call__.__module__ == "aiostream.stream.select"
+    assert stream.take.__call__.__doc__ == original_doc
+    assert (
+        str(inspect.signature(stream.take.__call__))
+        == "(source: 'AsyncIterable[T]', n: 'int') -> 'Stream[T]'"
+    )
+
+    # Check the pipe method
+    assert stream.take.pipe.__qualname__ == "take.pipe"
+    assert stream.take.pipe.__module__ == "aiostream.stream.select"
+    assert (
+        stream.take.pipe.__doc__
+        == 'Piped version of the "take" stream operator.\n\n    ' + original_doc
+    )
+    assert (
+        str(inspect.signature(stream.take.pipe))
+        == "(n: 'int') -> 'Callable[[AsyncIterable[X]], Stream[T]]'"
+    )

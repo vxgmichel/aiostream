@@ -22,8 +22,6 @@ from .combine import map, amap, smap
 
 __all__ = ["map", "enumerate", "starmap", "cycle", "chunks"]
 
-# map, amap and smap are also transform operators
-map, amap, smap
 
 T = TypeVar("T")
 U = TypeVar("U")
