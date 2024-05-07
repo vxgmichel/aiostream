@@ -47,89 +47,89 @@ Creation operators
 
 .. note:: Those operators do not have a pipe equivalent.
 
-.. autoclass:: iterate
+.. autofunction:: iterate
 
-.. autoclass:: preserve
+.. autofunction:: preserve
 
-.. autoclass:: just
+.. autofunction:: just
 
-.. autoclass:: call
+.. autofunction:: call
 
-.. autoclass:: empty
+.. autofunction:: empty
 
-.. autoclass:: throw
+.. autofunction:: throw
 
-.. autoclass:: never
+.. autofunction:: never
 
-.. autoclass:: repeat
+.. autofunction:: repeat
 
-.. autoclass:: range
+.. autofunction:: range
 
-.. autoclass:: count
+.. autofunction:: count
 
 
 Transformation operators
 ------------------------
 
-.. autoclass:: map
+.. autofunction:: map
 
    .. note:: :class:`map` is considered a combination operator
 	     if used with extra sources, and a transformation operator otherwise
 
-.. autoclass:: enumerate
+.. autofunction:: enumerate
 
-.. autoclass:: starmap
+.. autofunction:: starmap
 
-.. autoclass:: cycle
+.. autofunction:: cycle
 
-.. autoclass:: chunks
+.. autofunction:: chunks
 
 Selection operators
 -------------------
 
-.. autoclass:: take
+.. autofunction:: take
 
-.. autoclass:: takelast
+.. autofunction:: takelast
 
-.. autoclass:: skip
+.. autofunction:: skip
 
-.. autoclass:: skiplast
+.. autofunction:: skiplast
 
-.. autoclass:: getitem
+.. autofunction:: getitem
 
-.. autoclass:: filter
+.. autofunction:: filter
 
-.. autoclass:: until
+.. autofunction:: until
 
-.. autoclass:: takewhile
+.. autofunction:: takewhile
 
-.. autoclass:: dropwhile
+.. autofunction:: dropwhile
 
 Combination operators
 ---------------------
 
-.. autoclass:: map
+.. autofunction:: map
 
    .. note:: :class:`map` is considered a combination operator
 	     if used with extra sources, and a transformation operator otherwise
 
-.. autoclass:: zip
+.. autofunction:: zip
 
-.. autoclass:: merge
+.. autofunction:: merge
 
-.. autoclass:: chain
+.. autofunction:: chain
 
-.. autoclass:: ziplatest
+.. autofunction:: ziplatest
 
 
 Aggregatation operators
 -----------------------
 
-.. autoclass:: accumulate
+.. autofunction:: accumulate
 
-.. autoclass:: reduce
+.. autofunction:: reduce
 
-.. autoclass:: list
+.. autofunction:: list
 
 
 Advanced operators
@@ -140,35 +140,35 @@ Advanced operators
    higher order**) and return a flattened stream using their own merging
    strategy.
 
-.. autoclass:: concat
+.. autofunction:: concat
 
-.. autoclass:: flatten
+.. autofunction:: flatten
 
-.. autoclass:: switch
+.. autofunction:: switch
 
 .. note:: The :class:`concatmap`, :class:`flatmap` and :class:`switchmap` operators
    provide a simpler access to the three merging strategy listed above.
 
-.. autoclass:: concatmap
+.. autofunction:: concatmap
 
-.. autoclass:: flatmap
+.. autofunction:: flatmap
 
-.. autoclass:: switchmap
+.. autofunction:: switchmap
 
 
 Timing operators
 ----------------
 
-.. autoclass:: spaceout
+.. autofunction:: spaceout
 
-.. autoclass:: timeout
+.. autofunction:: timeout
 
-.. autoclass:: delay
+.. autofunction:: delay
 
 
 Miscellaneous operators
 -----------------------
 
-.. autoclass:: action
+.. autofunction:: action
 
-.. autoclass:: print
+.. autofunction:: print
