@@ -309,18 +309,18 @@ def operator(
             while True:
                 yield offset + width * random.random()
 
-    The return value is a dynamically created class.
-    It has the same name, module and doc as the original function.
+    The return value is a dynamically created callable.
+    It has the same name, module and documentation as the original function.
 
-    A new stream is created by simply instanciating the operator::
+    A new stream is created by simply calling the operator::
 
         xs = random()
 
-    The original function is called at instanciation to check that
-    signature match. Other methods are available:
+    The original function is called right away to check that the
+    signatures match. Other methods are available:
 
       - `original`: the original function as a static method
-      - `raw`: same as original but add extra checking
+      - `raw`: same as original with extra checking
 
     The `pipable` argument is deprecated, use `pipable_operator` instead.
     """
@@ -432,19 +432,19 @@ def pipable_operator(
     The first argument is expected to be the asynchronous iteratable used
     for piping.
 
-    The return value is a dynamically created class.
-    It has the same name, module and doc as the original function.
+    The return value is a dynamically created callable.
+    It has the same name, module and documentation as the original function.
 
-    A new stream is created by simply instanciating the operator::
+    A new stream is created by simply calling the operator::
 
         xs = random()
         ys = multiply(xs, 2)
 
-    The original function is called at instanciation to check that
-    signature match. The source is also checked for asynchronous iteration.
+    The original function is called right away (but not awaited) to check that
+    signatures match. The sources are also checked for asynchronous iteration.
 
-    The operator also have a pipe class method that can be used along
-    with the piping synthax::
+    The operator also have a `pipe` method that can be used with the pipe
+    synthax::
 
         xs = random()
         ys = xs | multiply.pipe(2)
@@ -454,7 +454,7 @@ def pipable_operator(
     Other methods are available:
 
       - `original`: the original function as a static method
-      - `raw`: same as original but add extra checking
+      - `raw`: same as original with extra checking
 
     The raw method is useful to create new operators from existing ones::
 
@@ -597,49 +597,47 @@ def sources_operator(
     Decorator usage::
 
         @sources_operator
-        async def chain(*sources):
-            for source in sources:
+        async def chain(*sources, repeat=1):
+            for source in (sources * repeat):
                 async with streamcontext(source) as streamer:
                     async for item in streamer:
                         yield item
 
-    Positional arguments are expected to be the asynchronous iteratables.
-
-    Keyword arguments are not supported at the moment.
+    Positional arguments are expected to be asynchronous iterables.
 
     When used in a pipable context, the asynchronous iterable injected by
     the pipe operator is used as the first argument.
 
-    The return value is a dynamically created class.
-    It has the same name, module and doc as the original function.
+    The return value is a dynamically created callable.
+    It has the same name, module and documentation as the original function.
 
-    A new stream is created by simply instanciating the operator::
+    A new stream is created by simply calling the operator::
 
-        empty_chained = chain()
-        single_chained = chain(random())
-        multiple_chained = chain(stream.just(0.0), stream.just(1.0), random())
+        xs = chain()
+        ys = chain(random())
+        zs = chain(stream.just(0.0), stream.just(1.0), random())
 
-    The original function is called at instanciation to check that
-    signature match. The source is also checked for asynchronous iteration.
+    The original function is called right away (but not awaited) to check that
+    signatures match. The sources are also checked for asynchronous iteration.
 
-    The operator also have a pipe class method that can be used along
-    with the piping synthax::
+    The operator also have a `pipe` method that can be used with the pipe
+    synthax::
 
         just_zero = stream.just(0.0)
-        multiple_chained = just_zero | chain.pipe(stream.just(1.0, random())
+        zs = just_zero | chain.pipe(stream.just(1.0), random())
 
-    This is strictly equivalent to the previous example.
+    This is strictly equivalent to the previous ``zs`` example.
 
     Other methods are available:
 
       - `original`: the original function as a static method
-      - `raw`: same as original but add extra checking
+      - `raw`: same as original with extra checking
 
     The raw method is useful to create new operators from existing ones::
 
-        @chain_operator
+        @sources_operator
         def chain_twice(*sources):
-            return chain.raw(*sources, *sources)
+            return chain.raw(*sources, repeat=2)
     """
     # First check for classmethod instance, to avoid more confusing errors later on
     if isinstance(func, classmethod):
