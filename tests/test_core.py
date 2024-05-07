@@ -1,7 +1,7 @@
 import inspect
 import pytest
 
-from aiostream.core import pipable_operator
+from aiostream.core import pipable_operator, sources_operator
 from aiostream.test_utils import add_resource
 from aiostream import stream, streamcontext, operator
 
@@ -25,7 +25,9 @@ async def test_streamcontext(assert_cleanup):
         assert loop.steps == [1]
 
 
-@pytest.mark.parametrize("operator_param", [operator, pipable_operator])
+@pytest.mark.parametrize(
+    "operator_param", [operator, pipable_operator, sources_operator]
+)
 def test_operator_from_method(operator_param):
     with pytest.raises(ValueError):
 
@@ -131,6 +133,14 @@ def test_pipable_operator_with_variadic_args():
             yield 1
 
 
+def test_sources_operator_with_postional_args():
+    with pytest.raises(ValueError):
+
+        @sources_operator
+        async def test1(source):
+            yield 1
+
+
 def test_introspection_for_operator():
     # Extract original information
     original = stream.range.original  # type: ignore
@@ -213,4 +223,54 @@ def test_introspection_for_pipable_operator():
     assert (
         str(inspect.signature(stream.take.pipe))
         == "(n: 'int') -> 'Callable[[AsyncIterable[X]], Stream[T]]'"
+    )
+
+
+def test_introspection_for_sources_operator():
+    # Extract original information
+    original = stream.zip.original  # type: ignore
+    original_doc = original.__doc__
+    assert original_doc is not None
+    assert (
+        original_doc.splitlines()[0]
+        == "Combine and forward the elements of several asynchronous sequences."
+    )
+    assert (
+        str(inspect.signature(original))
+        == "(*sources: 'AsyncIterable[T]') -> 'AsyncIterator[tuple[T, ...]]'"
+    )
+
+    # Check the stream operator
+    assert str(stream.zip) == repr(stream.zip) == "aiostream.stream.combine.zip"
+    assert stream.zip.__module__ == "aiostream.stream.combine"
+    assert stream.zip.__doc__ == original_doc
+
+    # Check the raw method
+    assert stream.zip.raw.__qualname__ == "zip.raw"
+    assert stream.zip.raw.__module__ == "aiostream.stream.combine"
+    assert stream.zip.raw.__doc__ == original_doc
+    assert (
+        str(inspect.signature(stream.zip.raw))
+        == "(*sources: 'AsyncIterable[T]') -> 'AsyncIterator[tuple[T, ...]]'"
+    )
+
+    # Check the __call__ method
+    assert stream.zip.__call__.__qualname__ == "zip.__call__"
+    assert stream.zip.__call__.__module__ == "aiostream.stream.combine"
+    assert stream.zip.__call__.__doc__ == original_doc
+    assert (
+        str(inspect.signature(stream.zip.__call__))
+        == "(*sources: 'AsyncIterable[T]') -> 'Stream[tuple[T, ...]]'"
+    )
+
+    # Check the pipe method
+    assert stream.zip.pipe.__qualname__ == "zip.pipe"
+    assert stream.zip.pipe.__module__ == "aiostream.stream.combine"
+    assert (
+        stream.zip.pipe.__doc__
+        == 'Piped version of the "zip" stream operator.\n\n    ' + original_doc
+    )
+    assert (
+        str(inspect.signature(stream.zip.pipe))
+        == "(*sources: 'AsyncIterable[T]') -> 'Callable[[AsyncIterable[Any]], Stream[tuple[T, ...]]]'"
     )
