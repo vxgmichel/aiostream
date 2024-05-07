@@ -360,7 +360,6 @@ def operator(
         __qualname__ = name
         __module__ = module
         __doc__ = doc
-        __signature__ = signature
 
         original = staticmethod(original_func)
 
