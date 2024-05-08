@@ -369,9 +369,6 @@ def operator(
 
     # Gather attributes
     class OperatorImplementation:
-        __qualname__ = name
-        __module__ = module
-        __doc__ = doc
 
         original = staticmethod(original_func)
 
@@ -411,8 +408,18 @@ def operator(
     OperatorImplementation.__call__.__module__ = module
     OperatorImplementation.__call__.__doc__ = doc
 
-    # Create operator class
-    return OperatorImplementation()
+    # Create operator singleton
+    properly_named_class = type(
+        name,
+        (OperatorImplementation,),
+        {
+            "__qualname__": name,
+            "__module__": module,
+            "__doc__": doc,
+        },
+    )
+    operator_instance = properly_named_class()
+    return operator_instance
 
 
 def pipable_operator(
@@ -507,9 +514,6 @@ def pipable_operator(
 
     # Gather attributes
     class PipableOperatorImplementation:
-        __qualname__ = name
-        __module__ = module
-        __doc__ = doc
 
         original = staticmethod(original_func)
 
@@ -582,8 +586,17 @@ def pipable_operator(
     if extra_doc:
         PipableOperatorImplementation.pipe.__doc__ += "\n\n    " + extra_doc
 
-    # Create operator class
-    operator_instance = PipableOperatorImplementation()
+    # Create operator singleton
+    properly_named_class = type(
+        name,
+        (PipableOperatorImplementation,),
+        {
+            "__qualname__": name,
+            "__module__": module,
+            "__doc__": doc,
+        },
+    )
+    operator_instance = properly_named_class()
     return operator_instance
 
 
@@ -674,9 +687,6 @@ def sources_operator(
 
     # Gather attributes
     class SourcesOperatorImplementation:
-        __qualname__ = name
-        __module__ = module
-        __doc__ = doc
 
         original = staticmethod(original_func)
 
@@ -741,6 +751,15 @@ def sources_operator(
     if extra_doc:
         SourcesOperatorImplementation.pipe.__doc__ += "\n\n    " + extra_doc
 
-    # Create operator class
-    operator_instance = SourcesOperatorImplementation()
+    # Create operator singleton
+    properly_named_class = type(
+        name,
+        (SourcesOperatorImplementation,),
+        {
+            "__qualname__": name,
+            "__module__": module,
+            "__doc__": doc,
+        },
+    )
+    operator_instance = properly_named_class()
     return operator_instance
