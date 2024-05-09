@@ -1,3 +1,39 @@
+[build-system]
+requires = ["setuptools >= 69.5"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aiostream"
+dynamic = ["version"]
+description = "Generator-based operators for asynchronous iteration"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+authors = [
+    { name = "Vincent Michel", email = "vxgmichel@gmail.com" },
+]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "typing-extensions",
+]
+
+[tool.setuptools]
+packages = ["aiostream", "aiostream.stream"]
+
+[tool.setuptools.dynamic]
+version = {attr = "aiostream.__version__"}
+
+[project.urls]
+Homepage = "https://github.com/vxgmichel/aiostream"
+
 [tool.pytest.ini_options]
 addopts = "--strict-markers --cov aiostream"
 

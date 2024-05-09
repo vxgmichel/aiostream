@@ -51,12 +51,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.8
-      - name: Build source distribution
-        run: python setup.py sdist
-      - name: Build wheel
+      - name: Build wheel and source distribution
         run: |
-          pip install wheel
-          python setup.py bdist_wheel
+          pip install build
+          python -m build --sdist --wheel
       - name: Publish source package on PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
