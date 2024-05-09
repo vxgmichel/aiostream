@@ -17,7 +17,7 @@ from typing import (
 from typing_extensions import ParamSpec
 
 from ..aiter_utils import AsyncExitStack, anext
-from ..core import streamcontext, pipable_operator
+from ..core import sources_operator, streamcontext, pipable_operator
 
 from . import create
 from . import select
@@ -32,27 +32,22 @@ K = TypeVar("K")
 P = ParamSpec("P")
 
 
-@pipable_operator
-async def chain(
-    source: AsyncIterable[T], *more_sources: AsyncIterable[T]
-) -> AsyncIterator[T]:
+@sources_operator
+async def chain(*sources: AsyncIterable[T]) -> AsyncIterator[T]:
     """Chain asynchronous sequences together, in the order they are given.
 
     Note: the sequences are not iterated until it is required,
     so if the operation is interrupted, the remaining sequences
     will be left untouched.
     """
-    sources = source, *more_sources
     for source in sources:
         async with streamcontext(source) as streamer:
             async for item in streamer:
                 yield item
 
 
-@pipable_operator
-async def zip(
-    source: AsyncIterable[T], *more_sources: AsyncIterable[T]
-) -> AsyncIterator[tuple[T, ...]]:
+@sources_operator
+async def zip(*sources: AsyncIterable[T]) -> AsyncIterator[tuple[T, ...]]:
     """Combine and forward the elements of several asynchronous sequences.
 
     Each generated value is a tuple of elements, using the same order as
@@ -62,7 +57,9 @@ async def zip(
     Note: the different sequences are awaited in parrallel, so that their
     waiting times don't add up.
     """
-    sources = source, *more_sources
+    # No sources
+    if not sources:
+        return
 
     # One sources
     if len(sources) == 1:
@@ -209,9 +206,9 @@ def map(
     return smap.raw(source, sync_func, *more_sources)
 
 
-@pipable_operator
+@sources_operator
 def merge(
-    source: AsyncIterable[T], *more_sources: AsyncIterable[T]
+    *sources: AsyncIterable[T],
 ) -> AsyncIterator[T]:
     """Merge several asynchronous sequences together.
 
@@ -219,15 +216,13 @@ def merge(
     are forwarded as soon as they're available. The generation continues
     until all the sequences are exhausted.
     """
-    sources = [source, *more_sources]
     source_stream: AsyncIterable[AsyncIterable[T]] = create.iterate.raw(sources)
     return advanced.flatten.raw(source_stream)
 
 
-@pipable_operator
+@sources_operator
 def ziplatest(
-    source: AsyncIterable[T],
-    *more_sources: AsyncIterable[T],
+    *sources: AsyncIterable[T],
     partial: bool = True,
     default: T | None = None,
 ) -> AsyncIterator[tuple[T | None, ...]]:
@@ -244,7 +239,6 @@ def ziplatest(
     are forwarded as soon as they're available. The generation continues
     until all the sequences are exhausted.
     """
-    sources = source, *more_sources
     n = len(sources)
 
     # Custom getter

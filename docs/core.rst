@@ -22,3 +22,5 @@ Operator decorators
 .. autofunction:: operator
 
 .. autofunction:: pipable_operator
+
+.. autofunction:: sources_operator
