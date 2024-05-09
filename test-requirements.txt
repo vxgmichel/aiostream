@@ -1,4 +1,0 @@
-pytest
-pytest-asyncio
-pytest-cov
-setuptools;python_version >= '3.12'

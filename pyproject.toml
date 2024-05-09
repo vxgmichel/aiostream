@@ -25,6 +25,13 @@ dependencies = [
     "typing-extensions",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+]
+
 [tool.setuptools]
 packages = ["aiostream", "aiostream.stream"]
 
