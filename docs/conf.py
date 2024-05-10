@@ -1,4 +1,6 @@
-VERSION = open("../setup.py").read().split('version="')[1].split('"')[0]
+VERSION = (
+    open("../aiostream/__init__.py").read().split('__version__ = "')[1].split('"')[0]
+)
 
 project = "aiostream"
 version = VERSION
