@@ -17,7 +17,14 @@ Some utility modules are also provided:
 
 from . import stream, pipe
 from .aiter_utils import async_, await_
-from .core import StreamEmpty, operator, pipable_operator, streamcontext
+from .core import (
+    Stream,
+    StreamEmpty,
+    operator,
+    pipable_operator,
+    sources_operator,
+    streamcontext,
+)
 
 __version__ = "0.6.1.dev0"
 
@@ -28,7 +35,9 @@ __all__ = [
     "await_",
     "operator",
     "pipable_operator",
+    "sources_operator",
     "streamcontext",
+    "Stream",
     "StreamEmpty",
     "__version__",
 ]
