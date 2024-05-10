@@ -19,7 +19,7 @@ from . import stream, pipe
 from .aiter_utils import async_, await_
 from .core import StreamEmpty, operator, pipable_operator, streamcontext
 
-__version__ = "0.6.0.dev0"
+__version__ = "0.6.0rc1"
 
 __all__ = [
     "stream",
