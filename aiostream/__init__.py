@@ -26,7 +26,7 @@ from .core import (
     streamcontext,
 )
 
-__version__ = "0.6.1"
+__version__ = "0.6.2.dev0"
 
 __all__ = [
     "stream",
