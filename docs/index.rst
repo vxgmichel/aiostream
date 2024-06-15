@@ -27,6 +27,7 @@ Generator-based operators for asynchronous iteration
 .. toctree::
    :maxdepth: 1
 
+   installation
    presentation
    operators
    core
