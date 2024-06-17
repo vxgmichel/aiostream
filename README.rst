@@ -100,6 +100,10 @@ The following example demonstrates most of the streams capabilities:
 
 More examples are available in the `example section`_ of the documentation.
 
+Installation
+-------
+
+You can install aiostream from PyPI as the `aiostream package`_.
 
 Contact
 -------
@@ -165,6 +169,8 @@ Vincent Michel: vxgmichel@gmail.com
 
 .. _action: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.action
 .. _print: http://aiostream.readthedocs.io/en/latest/operators.html#aiostream.stream.print
+
+.. _aiostream package: https://pypi.org/project/aiostream/
 
 .. |docs-badge| image:: https://readthedocs.org/projects/aiostream/badge/?version=latest
    :target: http://aiostream.readthedocs.io/en/latest/?badge=latest
