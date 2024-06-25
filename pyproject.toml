@@ -42,7 +42,7 @@ version = {attr = "aiostream.__version__"}
 Homepage = "https://github.com/vxgmichel/aiostream"
 
 [tool.pytest.ini_options]
-addopts = "--strict-markers --cov aiostream"
+addopts = "--strict-markers --cov tests"
 
 [tool.pyright]
 strict = [
