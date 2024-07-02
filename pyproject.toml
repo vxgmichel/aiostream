@@ -43,6 +43,7 @@ Homepage = "https://github.com/vxgmichel/aiostream"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers --cov aiostream"
+testpaths = ["tests"]
 
 [tool.pyright]
 strict = [
