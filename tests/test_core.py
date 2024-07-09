@@ -237,7 +237,7 @@ def test_introspection_for_sources_operator():
     )
     assert (
         str(inspect.signature(original))
-        == "(*sources: 'AsyncIterable[T]') -> 'AsyncIterator[tuple[T, ...]]'"
+        == "(*sources: 'AsyncIterable[T]', strict: 'bool' = False) -> 'AsyncIterator[tuple[T, ...]]'"
     )
 
     # Check the stream operator
@@ -251,7 +251,7 @@ def test_introspection_for_sources_operator():
     assert stream.zip.raw.__doc__ == original_doc
     assert (
         str(inspect.signature(stream.zip.raw))
-        == "(*sources: 'AsyncIterable[T]') -> 'AsyncIterator[tuple[T, ...]]'"
+        == "(*sources: 'AsyncIterable[T]', strict: 'bool' = False) -> 'AsyncIterator[tuple[T, ...]]'"
     )
 
     # Check the __call__ method
@@ -260,7 +260,7 @@ def test_introspection_for_sources_operator():
     assert stream.zip.__call__.__doc__ == original_doc
     assert (
         str(inspect.signature(stream.zip.__call__))
-        == "(*sources: 'AsyncIterable[T]') -> 'Stream[tuple[T, ...]]'"
+        == "(*sources: 'AsyncIterable[T]', strict: 'bool' = False) -> 'Stream[tuple[T, ...]]'"
     )
 
     # Check the pipe method
@@ -272,5 +272,5 @@ def test_introspection_for_sources_operator():
     )
     assert (
         str(inspect.signature(stream.zip.pipe))
-        == "(*sources: 'AsyncIterable[T]') -> 'Callable[[AsyncIterable[Any]], Stream[tuple[T, ...]]]'"
+        == "(*sources: 'AsyncIterable[T]', strict: 'bool' = False) -> 'Callable[[AsyncIterable[Any]], Stream[tuple[T, ...]]]'"
     )

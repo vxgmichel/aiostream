@@ -19,6 +19,7 @@ from typing import (
     AsyncIterator,
     Any,
     cast,
+    overload,
 )
 
 if TYPE_CHECKING:
@@ -46,16 +47,38 @@ __all__ = [
 # Magic method shorcuts
 
 
+UNSET = object()
+
+
 def aiter(obj: AsyncIterable[T]) -> AsyncIterator[T]:
     """Access aiter magic method."""
     assert_async_iterable(obj)
     return obj.__aiter__()
 
 
+@overload
 def anext(obj: AsyncIterator[T]) -> Awaitable[T]:
+    pass
+
+
+@overload
+def anext(obj: AsyncIterator[T], default: U) -> Awaitable[T] | U:
+    pass
+
+
+def anext(obj: AsyncIterator[T], default: Any = UNSET) -> Awaitable[T] | Any:
     """Access anext magic method."""
     assert_async_iterator(obj)
-    return obj.__anext__()
+
+    async def anext_default_handling_wrapper():
+        try:
+            return await obj.__anext__()
+        except StopAsyncIteration:
+            if default != UNSET:
+                return default
+            raise
+
+    return anext_default_handling_wrapper()
 
 
 # Async / await helper functions
@@ -109,6 +132,7 @@ def assert_async_iterator(obj: object) -> None:
 
 T = TypeVar("T", covariant=True)
 Self = TypeVar("Self", bound="AsyncIteratorContext[Any]")
+U = TypeVar("U")
 
 
 class AsyncIteratorContext(

@@ -33,6 +33,19 @@ async def test_zip(assert_run):
     xs = stream.zip()
     await assert_run(xs, [])
 
+    # Strict mode (issue #118): Iterable length mismatch raises
+    xs = stream.zip(stream.range(2), stream.range(1), strict=True)
+    with pytest.raises(ValueError):
+        await xs
+
+    # Strict mode (issue #118): No raise for matching-length iterables
+    xs = stream.zip(stream.range(2), stream.range(2), strict=True)
+    await assert_run(xs, [(0, 0), (1, 1)])
+
+    # Strict mode (issue #118): Non-strict mode works as before
+    xs = stream.zip(stream.range(2), stream.range(1))
+    await assert_run(xs, [(0, 0)])
+
 
 @pytest.mark.asyncio
 async def test_map(assert_run, assert_cleanup):

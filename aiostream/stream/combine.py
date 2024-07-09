@@ -47,7 +47,9 @@ async def chain(*sources: AsyncIterable[T]) -> AsyncIterator[T]:
 
 
 @sources_operator
-async def zip(*sources: AsyncIterable[T]) -> AsyncIterator[tuple[T, ...]]:
+async def zip(
+    *sources: AsyncIterable[T], strict: bool = False
+) -> AsyncIterator[tuple[T, ...]]:
     """Combine and forward the elements of several asynchronous sequences.
 
     Each generated value is a tuple of elements, using the same order as
@@ -76,12 +78,17 @@ async def zip(*sources: AsyncIterable[T]) -> AsyncIterator[tuple[T, ...]]:
             await stack.enter_async_context(streamcontext(source)) for source in sources
         ]
         # Loop over items
+        STOP_SENTINEL = object()
         while True:
-            try:
-                coros = builtins.map(anext, streamers)
-                items = await asyncio.gather(*coros)
-            except StopAsyncIteration:
+            coros = (anext(streamer, STOP_SENTINEL) for streamer in streamers)
+            items = await asyncio.gather(*coros)
+            if all(item == STOP_SENTINEL for item in items):
                 break
+            elif any(item == STOP_SENTINEL for item in items):
+                if strict:
+                    raise ValueError("iterables have different lengths")
+                else:
+                    break
             else:
                 yield tuple(items)
 
