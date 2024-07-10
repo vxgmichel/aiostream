@@ -56,6 +56,23 @@ async def test_zip(assert_run):
     xs = stream.zip(stream.range(2), stream.range(1))
     await assert_run(xs, [(0, 0)])
 
+    # Strict mode (issue #118): In particular, we stop immediately if any
+    # one iterable is exhausted, not waiting for the others
+    slow_iterable_continued_after_sleep = asyncio.Event()
+
+    async def fast_iterable():
+        yield 0
+        await asyncio.sleep(1)
+
+    async def slow_iterable():
+        yield 0
+        await asyncio.sleep(2)
+        slow_iterable_continued_after_sleep.set()
+
+    xs = stream.zip(fast_iterable(), slow_iterable())
+    await assert_run(xs, [(0, 0)])
+    assert not slow_iterable_continued_after_sleep.is_set()
+
 
 @pytest.mark.asyncio
 async def test_map(assert_run, assert_cleanup):
