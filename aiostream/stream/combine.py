@@ -78,19 +78,22 @@ async def zip(
             await stack.enter_async_context(streamcontext(source)) for source in sources
         ]
         # Loop over items
-        STOP_SENTINEL = object()
+        STOP_SENTINEL = object()  # only used in strict mode
         while True:
-            coros = (anext(streamer, STOP_SENTINEL) for streamer in streamers)
-            items = await asyncio.gather(*coros)
-            if all(item == STOP_SENTINEL for item in items):
+            coros = (
+                anext(streamer, STOP_SENTINEL) if strict else anext(streamer)
+                for streamer in streamers
+            )
+            try:
+                items = await asyncio.gather(*coros)
+            except StopAsyncIteration:  # can only happen in non-strict mode
                 break
-            elif any(item == STOP_SENTINEL for item in items):
-                if strict:
-                    raise ValueError("iterables have different lengths")
-                else:
+            if strict:
+                if all(item == STOP_SENTINEL for item in items):
                     break
-            else:
-                yield tuple(items)
+                elif any(item == STOP_SENTINEL for item in items):
+                    raise ValueError("iterables have different lengths")
+            yield tuple(items)
 
 
 X = TypeVar("X", contravariant=True)
