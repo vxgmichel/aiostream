@@ -29,6 +29,11 @@ async def test_zip(assert_run):
     expected = [(x,) * 3 for x in range(5)]
     await assert_run(ys, expected)
 
+    # Exceptions from iterables are propagated
+    xs = stream.zip(stream.range(2), stream.throw(AttributeError))
+    with pytest.raises(AttributeError):
+        await xs
+
     # Empty zip (issue #95)
     xs = stream.zip()
     await assert_run(xs, [])
@@ -41,6 +46,11 @@ async def test_zip(assert_run):
     # Strict mode (issue #118): No raise for matching-length iterables
     xs = stream.zip(stream.range(2), stream.range(2), strict=True)
     await assert_run(xs, [(0, 0), (1, 1)])
+
+    # Strict mode (issue #118): Exceptions from iterables are propagated
+    xs = stream.zip(stream.range(2), stream.throw(AttributeError), strict=True)
+    with pytest.raises(AttributeError):
+        await xs
 
     # Strict mode (issue #118): Non-strict mode works as before
     xs = stream.zip(stream.range(2), stream.range(1))
