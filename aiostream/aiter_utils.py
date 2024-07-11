@@ -47,7 +47,8 @@ __all__ = [
 # Magic method shorcuts
 
 
-UNSET = object()
+_UnsetType = enum.Enum("_UnsetType", "UNSET")
+UNSET = _UnsetType.UNSET
 
 
 def aiter(obj: AsyncIterable[T]) -> AsyncIterator[T]:
