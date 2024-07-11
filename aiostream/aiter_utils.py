@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from types import TracebackType
 
+import enum
 import warnings
 import functools
 from typing import (

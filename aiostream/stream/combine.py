@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import builtins
+import enum
 
 from typing import (
     Awaitable,
