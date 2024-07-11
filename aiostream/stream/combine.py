@@ -81,20 +81,23 @@ async def zip(
         # Loop over items
         _StopSentinelType = enum.Enum("_StopSentinelType", "STOP_SENTINEL")
         STOP_SENTINEL = _StopSentinelType.STOP_SENTINEL
+        items: list[T]
         while True:
-            coros = (
-                anext(streamer, STOP_SENTINEL) if strict else anext(streamer)
-                for streamer in streamers
-            )
-            try:
-                items = await asyncio.gather(*coros)
-            except StopAsyncIteration:  # can only happen in non-strict mode
-                break
             if strict:
-                if all(item == STOP_SENTINEL for item in items):
+                coros = (anext(streamer, STOP_SENTINEL) for streamer in streamers)
+                _items = await asyncio.gather(*coros)
+                if all(item == STOP_SENTINEL for item in _items):
                     break
-                elif any(item == STOP_SENTINEL for item in items):
+                elif any(item == STOP_SENTINEL for item in _items):
                     raise ValueError("iterables have different lengths")
+                # This holds because we've ruled out STOP_SENTINEL above:
+                items = cast(list[T], _items)
+            else:
+                coros = (anext(streamer) for streamer in streamers)
+                try:
+                    items = await asyncio.gather(*coros)
+                except StopAsyncIteration:
+                    break
             yield tuple(items)
 
 
