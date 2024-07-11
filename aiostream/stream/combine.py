@@ -78,7 +78,8 @@ async def zip(
             await stack.enter_async_context(streamcontext(source)) for source in sources
         ]
         # Loop over items
-        STOP_SENTINEL = object()  # only used in strict mode
+        _StopSentinelType = enum.Enum("_StopSentinelType", "STOP_SENTINEL")
+        STOP_SENTINEL = _StopSentinelType.STOP_SENTINEL
         while True:
             coros = (
                 anext(streamer, STOP_SENTINEL) if strict else anext(streamer)
