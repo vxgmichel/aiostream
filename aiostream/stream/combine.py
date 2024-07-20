@@ -47,6 +47,10 @@ async def chain(*sources: AsyncIterable[T]) -> AsyncIterator[T]:
                 yield item
 
 
+_StopSentinelType = enum.Enum("_StopSentinelType", "STOP_SENTINEL")
+STOP_SENTINEL = _StopSentinelType.STOP_SENTINEL
+
+
 @sources_operator
 async def zip(
     *sources: AsyncIterable[T], strict: bool = False
@@ -79,8 +83,6 @@ async def zip(
             await stack.enter_async_context(streamcontext(source)) for source in sources
         ]
         # Loop over items
-        _StopSentinelType = enum.Enum("_StopSentinelType", "STOP_SENTINEL")
-        STOP_SENTINEL = _StopSentinelType.STOP_SENTINEL
         items: list[T]
         while True:
             if strict:
