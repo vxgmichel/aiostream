@@ -91,7 +91,7 @@ async def zip(
                 elif any(item == STOP_SENTINEL for item in _items):
                     raise ValueError("iterables have different lengths")
                 # This holds because we've ruled out STOP_SENTINEL above:
-                items = cast(list[T], _items)
+                items = cast("list[T]", _items)
             else:
                 coros = (anext(streamer) for streamer in streamers)
                 try:
