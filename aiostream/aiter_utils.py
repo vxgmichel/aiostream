@@ -74,7 +74,7 @@ def anext(obj: AsyncIterator[T], default: Any = UNSET) -> Awaitable[T | Any]:
     if default is UNSET:
         return obj.__anext__()
 
-    async def anext_default_handling_wrapper():
+    async def anext_default_handling_wrapper() -> T | Any:
         try:
             return await obj.__anext__()
         except StopAsyncIteration:
