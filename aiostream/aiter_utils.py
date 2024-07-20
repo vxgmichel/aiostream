@@ -68,13 +68,13 @@ def anext(obj: AsyncIterator[T], default: U) -> Awaitable[T | U]:
     pass
 
 
-def anext(obj: AsyncIterator[T], default: Any = UNSET) -> Awaitable[T | Any]:
+def anext(obj: AsyncIterator[T], default: U | _UnsetType = UNSET) -> Awaitable[T | U]:
     """Access anext magic method."""
     assert_async_iterator(obj)
     if default is UNSET:
         return obj.__anext__()
 
-    async def anext_default_handling_wrapper() -> T | Any:
+    async def anext_default_handling_wrapper() -> T | U:
         try:
             return await obj.__anext__()
         except StopAsyncIteration:
