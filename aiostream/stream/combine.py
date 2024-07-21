@@ -61,6 +61,9 @@ async def zip(
     their respective sources. The generation continues until the shortest
     sequence is exhausted.
 
+    With the `strict` argument set to `True`, the operator makes sure that
+    all the sequences have the same length. If not, a `ValueError` is raised.
+
     Note: the different sequences are awaited in parrallel, so that their
     waiting times don't add up.
     """
@@ -91,7 +94,7 @@ async def zip(
                 if all(item == STOP_SENTINEL for item in _items):
                     break
                 elif any(item == STOP_SENTINEL for item in _items):
-                    raise ValueError("iterables have different lengths")
+                    raise ValueError("The provided sources have different lengths")
                 # This holds because we've ruled out STOP_SENTINEL above:
                 items = cast("list[T]", _items)
             else:
