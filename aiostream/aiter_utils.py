@@ -59,13 +59,11 @@ def aiter(obj: AsyncIterable[T]) -> AsyncIterator[T]:
 
 
 @overload
-def anext(obj: AsyncIterator[T]) -> Awaitable[T]:
-    pass
+def anext(obj: AsyncIterator[T]) -> Awaitable[T]: ...
 
 
 @overload
-def anext(obj: AsyncIterator[T], default: U) -> Awaitable[T | U]:
-    pass
+def anext(obj: AsyncIterator[T], default: U) -> Awaitable[T | U]: ...
 
 
 def anext(obj: AsyncIterator[T], default: U | _UnsetType = UNSET) -> Awaitable[T | U]:
