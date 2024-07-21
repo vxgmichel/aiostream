@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from types import TracebackType
 
+import enum
 import warnings
 import functools
 from typing import (
@@ -19,6 +20,7 @@ from typing import (
     AsyncIterator,
     Any,
     cast,
+    overload,
 )
 
 if TYPE_CHECKING:
@@ -46,16 +48,37 @@ __all__ = [
 # Magic method shorcuts
 
 
+_UnsetType = enum.Enum("_UnsetType", "UNSET")
+UNSET = _UnsetType.UNSET
+
+
 def aiter(obj: AsyncIterable[T]) -> AsyncIterator[T]:
     """Access aiter magic method."""
     assert_async_iterable(obj)
     return obj.__aiter__()
 
 
-def anext(obj: AsyncIterator[T]) -> Awaitable[T]:
+@overload
+def anext(obj: AsyncIterator[T]) -> Awaitable[T]: ...
+
+
+@overload
+def anext(obj: AsyncIterator[T], default: U) -> Awaitable[T | U]: ...
+
+
+def anext(obj: AsyncIterator[T], default: U | _UnsetType = UNSET) -> Awaitable[T | U]:
     """Access anext magic method."""
     assert_async_iterator(obj)
-    return obj.__anext__()
+    if default is UNSET:
+        return obj.__anext__()
+
+    async def anext_default_handling_wrapper() -> T | U:
+        try:
+            return await obj.__anext__()
+        except StopAsyncIteration:
+            return default
+
+    return anext_default_handling_wrapper()
 
 
 # Async / await helper functions
@@ -109,6 +132,7 @@ def assert_async_iterator(obj: object) -> None:
 
 T = TypeVar("T", covariant=True)
 Self = TypeVar("Self", bound="AsyncIteratorContext[Any]")
+U = TypeVar("U")
 
 
 class AsyncIteratorContext(

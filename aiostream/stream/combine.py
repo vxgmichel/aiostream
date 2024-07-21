@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import builtins
+import enum
 
 from typing import (
     Awaitable,
@@ -46,8 +47,14 @@ async def chain(*sources: AsyncIterable[T]) -> AsyncIterator[T]:
                 yield item
 
 
+_StopSentinelType = enum.Enum("_StopSentinelType", "STOP_SENTINEL")
+STOP_SENTINEL = _StopSentinelType.STOP_SENTINEL
+
+
 @sources_operator
-async def zip(*sources: AsyncIterable[T]) -> AsyncIterator[tuple[T, ...]]:
+async def zip(
+    *sources: AsyncIterable[T], strict: bool = False
+) -> AsyncIterator[tuple[T, ...]]:
     """Combine and forward the elements of several asynchronous sequences.
 
     Each generated value is a tuple of elements, using the same order as
@@ -76,14 +83,24 @@ async def zip(*sources: AsyncIterable[T]) -> AsyncIterator[tuple[T, ...]]:
             await stack.enter_async_context(streamcontext(source)) for source in sources
         ]
         # Loop over items
+        items: list[T]
         while True:
-            try:
-                coros = builtins.map(anext, streamers)
-                items = await asyncio.gather(*coros)
-            except StopAsyncIteration:
-                break
+            if strict:
+                coros = (anext(streamer, STOP_SENTINEL) for streamer in streamers)
+                _items = await asyncio.gather(*coros)
+                if all(item == STOP_SENTINEL for item in _items):
+                    break
+                elif any(item == STOP_SENTINEL for item in _items):
+                    raise ValueError("iterables have different lengths")
+                # This holds because we've ruled out STOP_SENTINEL above:
+                items = cast("list[T]", _items)
             else:
-                yield tuple(items)
+                coros = (anext(streamer) for streamer in streamers)
+                try:
+                    items = await asyncio.gather(*coros)
+                except StopAsyncIteration:
+                    break
+            yield tuple(items)
 
 
 X = TypeVar("X", contravariant=True)

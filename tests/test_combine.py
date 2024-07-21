@@ -29,9 +29,49 @@ async def test_zip(assert_run):
     expected = [(x,) * 3 for x in range(5)]
     await assert_run(ys, expected)
 
+    # Exceptions from iterables are propagated
+    xs = stream.zip(stream.range(2), stream.throw(AttributeError))
+    with pytest.raises(AttributeError):
+        await xs
+
     # Empty zip (issue #95)
     xs = stream.zip()
     await assert_run(xs, [])
+
+    # Strict mode (issue #118): Iterable length mismatch raises
+    xs = stream.zip(stream.range(2), stream.range(1), strict=True)
+    with pytest.raises(ValueError):
+        await xs
+
+    # Strict mode (issue #118): No raise for matching-length iterables
+    xs = stream.zip(stream.range(2), stream.range(2), strict=True)
+    await assert_run(xs, [(0, 0), (1, 1)])
+
+    # Strict mode (issue #118): Exceptions from iterables are propagated
+    xs = stream.zip(stream.range(2), stream.throw(AttributeError), strict=True)
+    with pytest.raises(AttributeError):
+        await xs
+
+    # Strict mode (issue #118): Non-strict mode works as before
+    xs = stream.zip(stream.range(2), stream.range(1))
+    await assert_run(xs, [(0, 0)])
+
+    # Strict mode (issue #118): In particular, we stop immediately if any
+    # one iterable is exhausted, not waiting for the others
+    slow_iterable_continued_after_sleep = asyncio.Event()
+
+    async def fast_iterable():
+        yield 0
+        await asyncio.sleep(1)
+
+    async def slow_iterable():
+        yield 0
+        await asyncio.sleep(2)
+        slow_iterable_continued_after_sleep.set()
+
+    xs = stream.zip(fast_iterable(), slow_iterable())
+    await assert_run(xs, [(0, 0)])
+    assert not slow_iterable_continued_after_sleep.is_set()
 
 
 @pytest.mark.asyncio
