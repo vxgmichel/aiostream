@@ -101,7 +101,7 @@ The following example demonstrates most of the streams capabilities:
 More examples are available in the `example section`_ of the documentation.
 
 Installation
--------
+------------
 
 You can install aiostream from PyPI as the `aiostream package`_.
 
