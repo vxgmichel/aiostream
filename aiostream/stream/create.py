@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 import asyncio
 import inspect
 import builtins
@@ -38,10 +37,6 @@ __all__ = [
 
 T = TypeVar("T")
 P = ParamSpec("P")
-
-# Hack for python 3.8 compatibility
-if sys.version_info < (3, 9):
-    P = TypeVar("P")
 
 # Convert regular iterables
 
