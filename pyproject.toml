@@ -8,18 +8,18 @@ dynamic = ["version"]
 description = "Generator-based operators for asynchronous iteration"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 license = {file = "LICENSE"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     { name = "Vincent Michel", email = "vxgmichel@gmail.com" },
 ]
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "typing-extensions",
@@ -65,7 +65,7 @@ strict = true
 
 [tool.black]
 line-length = 88
-target_version = ["py38", "py39", "py310", "py311", "py312"]
+target_version = ["py39", "py310", "py311", "py312", "py313"]
 
 [tool.coverage.report]
 exclude_also = ["if TYPE_CHECKING:", "assert False"]

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import inspect
 import functools
-import sys
 import warnings
 
 from .aiter_utils import AsyncIteratorContext, aiter, assert_async_iterable
@@ -43,10 +42,6 @@ X = TypeVar("X")
 A = TypeVar("A", contravariant=True)
 P = ParamSpec("P")
 Q = ParamSpec("Q")
-
-# Hack for python 3.8 compatibility
-if sys.version_info < (3, 9):
-    P = TypeVar("P")
 
 
 async def wait_stream(aiterable: BaseStream[T]) -> T:
