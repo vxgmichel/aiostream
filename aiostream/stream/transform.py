@@ -20,7 +20,7 @@ from . import create
 from . import aggregate
 from .combine import map, amap, smap
 
-__all__ = ["map", "enumerate", "starmap", "cycle", "chunks"]
+__all__ = ["map", "enumerate", "starmap", "cycle", "chunks", "prefetch"]
 
 
 T = TypeVar("T")
@@ -122,3 +122,41 @@ async def chunks(source: AsyncIterable[T], n: int) -> AsyncIterator[list[T]]:
         async for first in streamer:
             xs = select.take(create.preserve(streamer), n - 1)
             yield [first] + await aggregate.list(xs)
+
+
+@pipable_operator
+async def prefetch(source: AsyncIterable[T], buffer_size: int = 1) -> AsyncIterator[T]:
+    """Prefetch items from an asynchronous sequence into a buffer.
+
+    Args:
+        source: The source async iterable
+        buffer_size: Size of the prefetch buffer. <= 0 means unlimited buffer.
+    """
+    sentinel = object()
+    queue: asyncio.Queue[T] = asyncio.Queue(
+        maxsize=buffer_size if buffer_size > 0 else 0
+    )
+
+    async def _worker():
+        try:
+            async with streamcontext(source) as streamer:
+                async for item in streamer:
+                    await queue.put(item)
+        finally:
+            await queue.put(sentinel)  # Sentinel value
+
+    worker = asyncio.create_task(_worker())
+
+    try:
+        while True:
+            item = await queue.get()
+            if item is sentinel:  # End of stream
+                break
+            yield item
+
+    finally:
+        worker.cancel()
+        try:
+            await worker
+        except (asyncio.CancelledError, Exception):
+            pass
