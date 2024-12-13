@@ -158,5 +158,5 @@ async def prefetch(source: AsyncIterable[T], buffer_size: int = 1) -> AsyncItera
         worker.cancel()
         try:
             await worker
-        except (asyncio.CancelledError, Exception):
+        except asyncio.CancelledError:
             pass
