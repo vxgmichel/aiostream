@@ -7,7 +7,7 @@ from typing_extensions import ParamSpec
 
 from . import combine
 
-from ..core import Streamer, pipable_operator
+from ..core import Streamer, pipable_operator, streamcontext
 from ..manager import StreamerManager
 
 
@@ -40,10 +40,21 @@ async def base_combine(
     The items can either be generated in order or as soon as they're received,
     depending on the ``ordered`` argument.
     """
+    # Task limit is never provided in switch mode (should always be 2)
+    if switch:
+        assert task_limit is None
 
     # Task limit
     if task_limit is not None and not task_limit > 0:
         raise ValueError("The task limit must be None or greater than 0")
+
+    # Sequential case
+    if task_limit == 1:
+        async with streamcontext(source) as mainstreamer:
+            async for substream in mainstreamer:
+                async with streamcontext(substream) as substreamer:
+                    async for item in substreamer:
+                        yield item
 
     # Safe context
     async with StreamerManager[Union[AsyncIterable[T], T]]() as manager:
