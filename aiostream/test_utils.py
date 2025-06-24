@@ -129,11 +129,15 @@ def event_loop_policy() -> TimeTrackingTestLoopPolicy:
 
 
 @pytest.fixture  # type: ignore[misc]
-def assert_cleanup(
-    event_loop: TimeTrackingTestLoop,
-) -> Callable[[], ContextManager[TimeTrackingTestLoop]]:
+def assert_cleanup() -> Callable[[], ContextManager[TimeTrackingTestLoop]]:
     """Fixture to assert cleanup of resources."""
-    return event_loop.assert_cleanup
+
+    def _assert_cleanup() -> ContextManager[TimeTrackingTestLoop]:
+        loop = asyncio.get_running_loop()
+        assert isinstance(loop, TimeTrackingTestLoop)
+        return loop.assert_cleanup()
+
+    return _assert_cleanup
 
 
 class BaseEventLoopWithInternals(asyncio.BaseEventLoop):
