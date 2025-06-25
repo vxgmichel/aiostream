@@ -7,7 +7,7 @@ name = "aiostream"
 dynamic = ["version"]
 description = "Generator-based operators for asynchronous iteration"
 readme = {file = "README.rst", content-type = "text/x-rst"}
-license = {file = "LICENSE"}
+license = "GPL-3.0-or-later"
 requires-python = ">=3.9"
 authors = [
     { name = "Vincent Michel", email = "vxgmichel@gmail.com" },
