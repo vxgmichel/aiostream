@@ -196,14 +196,15 @@ def map(
     sequence is exhausted. The function can either be synchronous or
     asynchronous (coroutine function).
 
-    The results can either be returned in or out of order, depending on
-    the corresponding ``ordered`` argument. This argument is ignored if the
-    provided function is synchronous.
+    If the function is asynchronous, the results can either be returned in
+    or out of order, depending on the corresponding ``ordered`` argument.
+    A ``ValueError`` is raised if this argument is provided and the provided
+    function is synchronous.
 
-    The coroutines run concurrently but their amount can be limited using
-    the ``task_limit`` argument. A value of ``1`` will cause the coroutines
-    to run sequentially. This argument is ignored if the provided function
-    is synchronous.
+    If the function is asynchronous, the coroutines run concurrently but their
+    amount can be limited using the ``task_limit`` argument. A value of ``1``
+    will cause the coroutines to run sequentially. A ``ValueError`` is raised
+    if this argument is provided and the provided function is synchronous.
 
     If more than one sequence is provided, they're also awaited concurrently,
     so that their waiting times don't add up.
@@ -222,6 +223,17 @@ def map(
         return amap.raw(
             source, func, *more_sources, ordered=ordered, task_limit=task_limit
         )
+
+    if not ordered:
+        raise ValueError(
+            "The 'ordered' argument can only be used when the provided function is asynchronous."
+        )
+
+    if task_limit is not None:
+        raise ValueError(
+            "The 'task_limit' argument can only be used when the provided function is asynchronous."
+        )
+
     sync_func = cast("SmapCallable[T, U]", func)
     return smap.raw(source, sync_func, *more_sources)
 
