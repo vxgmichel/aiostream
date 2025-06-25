@@ -44,6 +44,7 @@ Homepage = "https://github.com/vxgmichel/aiostream"
 [tool.pytest.ini_options]
 addopts = "--strict-markers --cov aiostream"
 testpaths = ["tests"]
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.pyright]
 strict = [
