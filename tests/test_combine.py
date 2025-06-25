@@ -139,9 +139,13 @@ async def test_map(assert_run, assert_cleanup):
         await assert_run(ys, [1, 2, 3, 4, 5])
         assert loop.steps == [1, 1, 1, 1, 1]
 
-    # Invalid argument
+    # Invalid arguments
     with pytest.raises(ValueError):
         await (stream.range(1, 4) | pipe.map(sleep_only, task_limit=0))
+    with pytest.raises(ValueError):
+        await (stream.range(1, 4) | pipe.map(square_target, task_limit=3))
+    with pytest.raises(ValueError):
+        await (stream.range(1, 4) | pipe.map(square_target, ordered=False))
 
     # Break
     with assert_cleanup() as loop:
