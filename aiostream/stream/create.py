@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 import builtins
 import itertools
 
@@ -80,9 +79,9 @@ async def preserve(ait: AsyncIterable[T]) -> AsyncIterator[T]:
 
 
 @operator
-async def just(value: T) -> AsyncIterator[T]:
+async def just(value: Awaitable[T] | T) -> AsyncIterator[T]:
     """Await if possible, and generate a single value."""
-    if inspect.isawaitable(value):
+    if isinstance(value, Awaitable):
         yield await value
     else:
         yield value
