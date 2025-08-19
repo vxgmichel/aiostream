@@ -68,3 +68,66 @@ async def test_chunks(assert_run, assert_cleanup):
     with assert_cleanup():
         xs = stream.count(interval=1) | add_resource.pipe(1) | pipe.chunks(3)
         await assert_run(xs[:1], [[0, 1, 2]])
+
+
+@pytest.mark.asyncio
+async def test_prefetch(assert_run, assert_cleanup):
+    # Test basic prefetching
+    with assert_cleanup():
+        xs = stream.range(5, interval=1)
+        ys = xs | pipe.prefetch(1)  # Default buffer_size=1
+        await assert_run(ys, [0, 1, 2, 3, 4])
+
+    # Test with custom buffer size
+    with assert_cleanup():
+        xs = stream.range(5, interval=1)
+        ys = xs | pipe.prefetch(1)
+        await assert_run(ys, [0, 1, 2, 3, 4])
+
+    # Test with buffer_size=0
+    with assert_cleanup():
+        xs = stream.range(5, interval=1)
+        ys = xs | pipe.prefetch(0)
+        await assert_run(ys, [0, 1, 2, 3, 4])
+
+    # Test cleanup on early exit
+    with assert_cleanup():
+        xs = stream.range(100, interval=1)
+        ys = xs | pipe.prefetch(buffer_size=1) | pipe.take(3)
+        await assert_run(ys, [0, 1, 2])
+
+    # Test with empty stream
+    with assert_cleanup():
+        xs = stream.empty() | pipe.prefetch()
+        await assert_run(xs, [])
+
+    # Test with error propagation
+    with assert_cleanup():
+        xs = stream.throw(ValueError()) | pipe.prefetch()
+        await assert_run(xs, [], ValueError())
+
+
+@pytest.mark.asyncio
+async def test_prefetch_timing(assert_run, assert_cleanup):
+    async def slow_fetch(x: int) -> int:
+        await asyncio.sleep(0.1)
+        return x
+
+    async def slow_processor(x: int) -> int:
+        await asyncio.sleep(0.4)
+        return x
+
+    with assert_cleanup() as loop:
+        # Without prefetch (sequential):
+        xs = stream.range(3) | pipe.map(slow_fetch, task_limit=1)
+        ys = xs | pipe.map(slow_processor, task_limit=1)  # Process time
+        await assert_run(ys, [0, 1, 2])
+        assert loop.steps == pytest.approx([0.1, 0.4, 0.1, 0.4, 0.1, 0.4])
+
+    with assert_cleanup() as loop:
+        # With prefetch:
+        xs = stream.range(3) | pipe.map(slow_fetch, task_limit=1)
+        ys = xs | pipe.prefetch(1) | pipe.map(slow_processor, task_limit=1)
+        await assert_run(ys, [0, 1, 2])
+        # instead of taking 0.1 + 0.4 seconds per element, we should now just take max(0.1, 0.4) = 0.4
+        assert loop.steps == pytest.approx([0.1, 0.1, 0.1, 0.2, 0.4, 0.4])
