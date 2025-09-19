@@ -91,9 +91,9 @@ async def zip(
             if strict:
                 coros = (anext(streamer, STOP_SENTINEL) for streamer in streamers)
                 _items = await asyncio.gather(*coros)
-                if all(item == STOP_SENTINEL for item in _items):
+                if all(isinstance(item, _StopSentinelType) for item in _items):
                     break
-                elif any(item == STOP_SENTINEL for item in _items):
+                elif any(isinstance(item, _StopSentinelType) for item in _items):
                     raise ValueError("The provided sources have different lengths")
                 # This holds because we've ruled out STOP_SENTINEL above:
                 items = cast("list[T]", _items)

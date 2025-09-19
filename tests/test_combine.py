@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Awaitable
 import pytest
 import asyncio
@@ -20,6 +21,29 @@ async def test_chain(assert_run, assert_cleanup):
     # Empty chain (issue #95)
     xs = stream.chain()
     await assert_run(xs, [])
+
+
+class ThrowsInEquality:
+
+    def __eq__(self, other):
+        raise Exception("We should not reach this!")
+
+
+@pytest.fixture(
+    params=[stream.range, partial(stream.repeat, ThrowsInEquality())],
+    ids=["range", "iterator_of_items_that_throw"],
+)
+def make_range(request):
+    return request.param
+
+
+@pytest.mark.asyncio
+async def test_zip_strict(make_range):
+    xs = make_range(3)
+    ys = make_range(2)
+    zs = stream.zip(xs, ys, strict=True)
+    with pytest.raises(ValueError, match="The provided sources have different lengths"):
+        await zs
 
 
 @pytest.mark.asyncio
