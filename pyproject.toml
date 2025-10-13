@@ -20,6 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "typing-extensions",
@@ -66,7 +67,7 @@ strict = true
 
 [tool.black]
 line-length = 88
-target_version = ["py39", "py310", "py311", "py312", "py313"]
+target_version = ["py39", "py310", "py311", "py312", "py313", "py314"]
 
 [tool.coverage.report]
 exclude_also = ["if TYPE_CHECKING:", "assert False"]
