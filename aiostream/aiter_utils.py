@@ -15,6 +15,7 @@ from typing import (
     AsyncIterable,
     Awaitable,
     Callable,
+    Coroutine,
     Type,
     TypeVar,
     AsyncIterator,
@@ -89,7 +90,7 @@ async def await_(obj: Awaitable[T]) -> T:
     return await obj
 
 
-def async_(fn: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
+def async_(fn: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, T]]:
     """Wrap the given function into a coroutine function."""
 
     @functools.wraps(fn)
