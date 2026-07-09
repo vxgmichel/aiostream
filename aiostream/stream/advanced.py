@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from typing import AsyncIterator, AsyncIterable, TypeVar, Union, cast
 from typing_extensions import ParamSpec
 
@@ -17,6 +19,24 @@ __all__ = ["concat", "flatten", "switch", "concatmap", "flatmap", "switchmap"]
 T = TypeVar("T")
 U = TypeVar("U")
 P = ParamSpec("P")
+
+
+def _map_sources(
+    source: AsyncIterable[T],
+    func: combine.MapCallable[T, AsyncIterable[U]],
+    *more_sources: AsyncIterable[T],
+) -> AsyncIterator[AsyncIterable[U]]:
+    """Map ``func`` over the sources, awaiting it when it is a coroutine function.
+
+    The advanced ``*map`` operators expect ``func`` to produce an asynchronous
+    sequence. When ``func`` is a coroutine function, it must be awaited before
+    its result can be iterated, otherwise the un-awaited coroutine is passed
+    downstream and fails the ``AsyncIterable`` check (see issue #129).
+    """
+    if asyncio.iscoroutinefunction(func):
+        return combine.map.raw(source, func, *more_sources)
+    sync_func = cast("combine.SmapCallable[T, AsyncIterable[U]]", func)
+    return combine.smap.raw(source, sync_func, *more_sources)
 
 
 # Helper to manage stream of higher order
@@ -178,7 +198,7 @@ def switch(source: AsyncIterable[AsyncIterable[T]]) -> AsyncIterator[T]:
 @pipable_operator
 def concatmap(
     source: AsyncIterable[T],
-    func: combine.SmapCallable[T, AsyncIterable[U]],
+    func: combine.MapCallable[T, AsyncIterable[U]],
     *more_sources: AsyncIterable[T],
     task_limit: int | None = None,
 ) -> AsyncIterator[U]:
@@ -191,14 +211,14 @@ def concatmap(
     although it's possible to limit the amount of running sequences using
     the `task_limit` argument.
     """
-    mapped = combine.smap.raw(source, func, *more_sources)
+    mapped = _map_sources(source, func, *more_sources)
     return concat.raw(mapped, task_limit=task_limit)
 
 
 @pipable_operator
 def flatmap(
     source: AsyncIterable[T],
-    func: combine.SmapCallable[T, AsyncIterable[U]],
+    func: combine.MapCallable[T, AsyncIterable[U]],
     *more_sources: AsyncIterable[T],
     task_limit: int | None = None,
 ) -> AsyncIterator[U]:
@@ -213,14 +233,14 @@ def flatmap(
 
     Errors raised in a source or output sequence are propagated.
     """
-    mapped = combine.smap.raw(source, func, *more_sources)
+    mapped = _map_sources(source, func, *more_sources)
     return flatten.raw(mapped, task_limit=task_limit)
 
 
 @pipable_operator
 def switchmap(
     source: AsyncIterable[T],
-    func: combine.SmapCallable[T, AsyncIterable[U]],
+    func: combine.MapCallable[T, AsyncIterable[U]],
     *more_sources: AsyncIterable[T],
 ) -> AsyncIterator[U]:
     """Apply a given function that creates a sequence from the elements of one
@@ -231,5 +251,5 @@ def switchmap(
     asynchronous sequence. Errors raised in a source or output sequence (that
     was not already closed) are propagated.
     """
-    mapped = combine.smap.raw(source, func, *more_sources)
+    mapped = _map_sources(source, func, *more_sources)
     return switch.raw(mapped)
