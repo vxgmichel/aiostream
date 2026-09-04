@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
+import inspect
 import builtins
 
 from typing import TypeVar, Awaitable, Callable, AsyncIterable, AsyncIterator, Any
@@ -37,7 +37,7 @@ def action(
     to run sequentially. This argument is ignored if the provided function
     is synchronous.
     """
-    if asyncio.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
 
         async def ainnerfunc(arg: T, *_: object) -> T:
             awaitable = func(arg)

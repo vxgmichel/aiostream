@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
+import inspect
 import builtins
 import collections
 
@@ -199,7 +199,7 @@ async def filter(
     if it should be forwarded, ``False`` otherwise.
     The function can either be synchronous or asynchronous.
     """
-    iscorofunc = asyncio.iscoroutinefunction(func)
+    iscorofunc = inspect.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)
@@ -223,7 +223,7 @@ async def until(
     corresponding to the condition to meet. The function can either be
     synchronous or asynchronous.
     """
-    iscorofunc = asyncio.iscoroutinefunction(func)
+    iscorofunc = inspect.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)
@@ -248,7 +248,7 @@ async def takewhile(
     corresponding to the condition to meet. The function can either be
     synchronous or asynchronous.
     """
-    iscorofunc = asyncio.iscoroutinefunction(func)
+    iscorofunc = inspect.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)
@@ -271,7 +271,7 @@ async def dropwhile(
     corresponding to the condition to meet. The function can either be
     synchronous or asynchronous.
     """
-    iscorofunc = asyncio.iscoroutinefunction(func)
+    iscorofunc = inspect.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)

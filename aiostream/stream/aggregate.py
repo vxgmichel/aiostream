@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
+import inspect
 import builtins
 import operator as op
 from typing import AsyncIterator, Awaitable, Callable, TypeVar, AsyncIterable, cast
@@ -30,7 +30,7 @@ async def accumulate(
     of the sequence in the calculation, and serves as a default
     when the sequence is empty.
     """
-    iscorofunc = asyncio.iscoroutinefunction(func)
+    iscorofunc = inspect.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         # Initialize
         if initializer is None:

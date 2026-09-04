@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import asyncio
 import itertools
 from typing import (
@@ -76,7 +77,7 @@ def starmap(
     to run sequentially. This argument is ignored if the provided function
     is synchronous.
     """
-    if asyncio.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
         async_func = cast("AsyncStarmapCallable[T, U]", func)
 
         async def astarfunc(args: tuple[T, ...], *_: object) -> U:

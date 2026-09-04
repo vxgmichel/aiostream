@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import asyncio
 import builtins
 import itertools
@@ -106,7 +107,7 @@ async def call(
 
     Await if the provided function is asynchronous.
     """
-    if asyncio.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
         async_func = cast("AsyncCallable[P, T]", func)
         yield await async_func(*args, **kwargs)
     else:

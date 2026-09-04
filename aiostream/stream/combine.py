@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import asyncio
 import builtins
 import enum
@@ -219,7 +220,7 @@ def map(
         ...
         ys = stream.map(xs, async_(lambda ms: asyncio.sleep(ms / 1000)))
     """
-    if asyncio.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
         return amap.raw(
             source, func, *more_sources, ordered=ordered, task_limit=task_limit
         )
