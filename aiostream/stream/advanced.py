@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from typing import AsyncIterator, AsyncIterable, TypeVar, Union, cast
 from typing_extensions import ParamSpec
 
@@ -178,7 +179,7 @@ def switch(source: AsyncIterable[AsyncIterable[T]]) -> AsyncIterator[T]:
 @pipable_operator
 def concatmap(
     source: AsyncIterable[T],
-    func: combine.SmapCallable[T, AsyncIterable[U]],
+    func: combine.MapCallable[T, AsyncIterable[U]],
     *more_sources: AsyncIterable[T],
     task_limit: int | None = None,
 ) -> AsyncIterator[U]:
@@ -191,14 +192,15 @@ def concatmap(
     although it's possible to limit the amount of running sequences using
     the `task_limit` argument.
     """
-    mapped = combine.smap.raw(source, func, *more_sources)
+    target = wrap_map_callable_to_smap_callable(func)
+    mapped = combine.smap.raw(source, target, *more_sources)
     return concat.raw(mapped, task_limit=task_limit)
 
 
 @pipable_operator
 def flatmap(
     source: AsyncIterable[T],
-    func: combine.SmapCallable[T, AsyncIterable[U]],
+    func: combine.MapCallable[T, AsyncIterable[U]],
     *more_sources: AsyncIterable[T],
     task_limit: int | None = None,
 ) -> AsyncIterator[U]:
@@ -213,14 +215,15 @@ def flatmap(
 
     Errors raised in a source or output sequence are propagated.
     """
-    mapped = combine.smap.raw(source, func, *more_sources)
+    target = wrap_map_callable_to_smap_callable(func)
+    mapped = combine.smap.raw(source, target, *more_sources)
     return flatten.raw(mapped, task_limit=task_limit)
 
 
 @pipable_operator
 def switchmap(
     source: AsyncIterable[T],
-    func: combine.SmapCallable[T, AsyncIterable[U]],
+    func: combine.MapCallable[T, AsyncIterable[U]],
     *more_sources: AsyncIterable[T],
 ) -> AsyncIterator[U]:
     """Apply a given function that creates a sequence from the elements of one
@@ -231,5 +234,20 @@ def switchmap(
     asynchronous sequence. Errors raised in a source or output sequence (that
     was not already closed) are propagated.
     """
-    mapped = combine.smap.raw(source, func, *more_sources)
+    target = wrap_map_callable_to_smap_callable(func)
+    mapped = combine.smap.raw(source, target, *more_sources)
     return switch.raw(mapped)
+
+
+def wrap_map_callable_to_smap_callable(
+    func: combine.MapCallable[T, AsyncIterable[U]],
+) -> combine.SmapCallable[T, AsyncIterable[U]]:
+    if not inspect.iscoroutinefunction(func):
+        return cast("combine.SmapCallable[T, AsyncIterable[U]]", func)
+
+    async def target(arg: T, /, *args: T) -> AsyncIterable[U]:
+        async with streamcontext(await func(arg, *args)) as streamer:
+            async for item in streamer:
+                yield item
+
+    return target
