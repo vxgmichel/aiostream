@@ -101,3 +101,39 @@ async def test_switchmap(assert_run, assert_cleanup):
         ys = xs | pipe.switchmap(target2)
         await assert_run(ys[:3], [0, 1, 2])
         assert loop.steps == [1, 1]
+
+
+@pytest.mark.asyncio
+async def test_concatmap_with_coroutine_function(assert_run, assert_cleanup):
+
+    async def target(x: int, *_) -> Stream[int]:
+        return stream.range(x, x + 2)
+
+    with assert_cleanup():
+        xs = stream.range(0, 6, 2)
+        ys = xs | pipe.concatmap(target)
+        await assert_run(ys, [0, 1, 2, 3, 4, 5])
+
+
+@pytest.mark.asyncio
+async def test_flatmap_with_coroutine_function(assert_run, assert_cleanup):
+
+    async def target(x: int, *_) -> Stream[int]:
+        return stream.range(x, x + 2)
+
+    with assert_cleanup():
+        xs = stream.range(0, 6, 2)
+        ys = xs | pipe.flatmap(target)
+        await assert_run(ys, [0, 1, 2, 3, 4, 5])
+
+
+@pytest.mark.asyncio
+async def test_switchmap_with_coroutine_function(assert_run, assert_cleanup):
+
+    async def target(x: int, *_) -> Stream[int]:
+        return stream.range(x, x + 2)
+
+    with assert_cleanup():
+        xs = stream.range(0, 6, 2)
+        ys = xs | pipe.switchmap(target)
+        await assert_run(ys, [4, 5])
