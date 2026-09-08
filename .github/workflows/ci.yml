@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install test requirements
-        run: pip install -e .[dev]
+        run: pip install --group dev -e .
       - name: Run tests
         run: pytest
       - name: Upload coverage

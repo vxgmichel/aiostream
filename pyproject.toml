@@ -26,7 +26,7 @@ dependencies = [
     "typing-extensions",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest",
     "pytest-asyncio",
