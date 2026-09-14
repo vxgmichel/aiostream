@@ -139,24 +139,19 @@ async def test_zip_closes_pending_source(strict, error):
         finally:
             closed.set()
 
-    try:
-        async with stream.zip(
-            stopping_source(), pending_source(), strict=strict
-        ).stream() as streamer:
-            assert await streamer.__anext__() == (0, 1)
-            with pytest.raises(
-                type(error) if error is not None else StopAsyncIteration
-            ) as exc_info:
-                await streamer.__anext__()
-            if error is not None:
-                assert exc_info.value is error
-        assert closed.is_set()
-        assert all(task.done() for task in pending)
-    finally:
-        # Keep a failing regression from leaving a task behind in the test loop.
-        for task in pending:
-            task.cancel()
-        await asyncio.gather(*pending, return_exceptions=True)
+    async with stream.zip(
+        stopping_source(), pending_source(), strict=strict
+    ).stream() as streamer:
+        assert await streamer.__anext__() == (0, 1)
+        with pytest.raises(
+            type(error) if error is not None else StopAsyncIteration
+        ) as exc_info:
+            await streamer.__anext__()
+        if error is not None:
+            assert exc_info.value is error
+
+    assert closed.is_set()
+    assert all(task.done() for task in pending)
 
 
 @pytest.mark.asyncio
