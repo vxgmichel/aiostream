@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from _pytest.fixtures import SubRequest
     from aiostream.core import Stream
 
-__all__ = ["add_resource", "assert_run", "event_loop_policy", "assert_cleanup"]
+__all__ = ["add_resource", "assert_run", "TimeTrackingTestLoop", "assert_cleanup"]
 
 
 T = TypeVar("T")
@@ -113,19 +113,6 @@ class AssertRunProtocol(Protocol):
 def assert_run(request: SubRequest) -> AssertRunProtocol:
     """Parametrized fixture returning a stream runner."""
     return cast(AssertRunProtocol, request.param)
-
-
-@pytest.fixture  # type: ignore[misc]
-def event_loop_policy() -> TimeTrackingTestLoopPolicy:
-    """Fixture providing a test event loop.
-
-    The event loop simulate and records the sleep operation,
-    available as event_loop.steps
-
-    It also tracks simulated resources and make sure they are
-    all released before the loop is closed.
-    """
-    return TimeTrackingTestLoopPolicy()
 
 
 @pytest.fixture  # type: ignore[misc]
@@ -215,7 +202,3 @@ class TimeTrackingTestLoop(BaseEventLoopWithInternals):
         yield self
         assert self.open_resources == 0
         self.clear()
-
-
-class TimeTrackingTestLoopPolicy(asyncio.DefaultEventLoopPolicy):
-    _loop_factory = TimeTrackingTestLoop
