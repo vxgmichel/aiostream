@@ -12,13 +12,10 @@ from .core import streamcontext
 from typing import (
     TYPE_CHECKING,
     Awaitable,
-    List,
-    Set,
-    Tuple,
     Generic,
+    Literal,
+    Sequence,
     TypeVar,
-    Any,
-    Type,
     AsyncIterable,
 )
 from types import TracebackType
@@ -29,17 +26,19 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+RETURN_WHEN = Literal["ALL_COMPLETED", "FIRST_COMPLETED", "FIRST_EXCEPTION"]
 
-class TaskGroup:
+
+class TaskGroup(Generic[T]):
     def __init__(self) -> None:
-        self._pending: set[Task[Any]] = set()
+        self._pending: set[Task[T]] = set()
 
-    async def __aenter__(self) -> TaskGroup:
+    async def __aenter__(self) -> TaskGroup[T]:
         return self
 
     async def __aexit__(
         self,
-        typ: Type[BaseException] | None,
+        typ: type[BaseException] | None,
         value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
@@ -52,19 +51,25 @@ class TaskGroup:
         self._pending.add(task)
         return task
 
-    async def wait_any(self, tasks: List[Task[T]]) -> Set[Task[T]]:
-        done, _ = await asyncio.wait(tasks, return_when="FIRST_COMPLETED")
-        self._pending -= done
-        return done
-
-    async def wait_all(self, tasks: List[Task[T]]) -> Set[Task[T]]:
+    async def _wait(
+        self, tasks: Sequence[Task[T]], return_when: RETURN_WHEN
+    ) -> list[Task[T]]:
         if not tasks:
-            return set()
-        done, _ = await asyncio.wait(tasks)
+            return []
+        done, _ = await asyncio.wait(tasks, return_when=return_when)
         self._pending -= done
-        return done
+        return [task for task in tasks if task in done]
 
-    async def cancel_task(self, task: Task[Any]) -> None:
+    async def wait_any(self, tasks: Sequence[Task[T]]) -> list[Task[T]]:
+        return await self._wait(tasks, "FIRST_COMPLETED")
+
+    async def wait_first_exception(self, tasks: list[Task[T]]) -> list[Task[T]]:
+        return await self._wait(tasks, "FIRST_EXCEPTION")
+
+    async def wait_all(self, tasks: Sequence[Task[T]]) -> list[Task[T]]:
+        return await self._wait(tasks, "ALL_COMPLETED")
+
+    async def cancel_task(self, task: Task[T]) -> None:
         try:
             # The task is already cancelled
             if task.cancelled():
@@ -97,7 +102,7 @@ class StreamerManager(Generic[T]):
     def __init__(self) -> None:
         self.tasks: dict[Streamer[T], Task[T]] = {}
         self.streamers: list[Streamer[T]] = []
-        self.group: TaskGroup = TaskGroup()
+        self.group: TaskGroup[T] = TaskGroup()
         self.stack = AsyncExitStack()
 
     async def __aenter__(self) -> StreamerManager[T]:
@@ -107,7 +112,7 @@ class StreamerManager(Generic[T]):
 
     async def __aexit__(
         self,
-        typ: Type[BaseException] | None,
+        typ: type[BaseException] | None,
         value: BaseException | None,
         traceback: TracebackType | None,
     ) -> bool:
@@ -134,7 +139,7 @@ class StreamerManager(Generic[T]):
 
     async def wait_single_event(
         self, filters: list[Streamer[T]]
-    ) -> Tuple[Streamer[T], Task[T]]:
+    ) -> tuple[Streamer[T], Task[T]]:
         tasks = [self.tasks[streamer] for streamer in filters]
         done = await self.group.wait_any(tasks)
         for streamer in filters:
@@ -150,11 +155,12 @@ class StreamerManager(Generic[T]):
         self.streamers.remove(streamer)
 
     async def clean_streamers(self, streamers: list[Streamer[T]]) -> None:
-        tasks = [
-            self.group.create_task(self.clean_streamer(streamer))
-            for streamer in streamers
-        ]
-        done = await self.group.wait_all(tasks)
-        # Raise exception if any
-        for task in done:
-            task.result()
+        async with TaskGroup[None]() as task_group:
+            tasks = [
+                task_group.create_task(self.clean_streamer(streamer))
+                for streamer in streamers
+            ]
+            done = await task_group.wait_all(tasks)
+            # Raise exception if any
+            for task in done:
+                task.result()

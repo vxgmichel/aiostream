@@ -53,6 +53,18 @@ async def test_zip(assert_run):
     expected = [(x,) * 3 for x in range(5)]
     await assert_run(ys, expected)
 
+    # Zip with the same interval
+    xs = stream.range(5, interval=1) | add_resource.pipe(1.0)
+    ys = xs | pipe.zip(xs, xs)
+    expected = [(x,) * 3 for x in range(5)]
+    await assert_run(ys, expected)
+
+    # Zip with two different intervals
+    xs = stream.range(5, interval=1) | add_resource.pipe(1.0)
+    ys = xs | pipe.zip(stream.range(10, 15, interval=2))
+    expected = [(x, x + 10) for x in range(5)]
+    await assert_run(ys, expected)
+
     # Exceptions from iterables are propagated
     xs = stream.zip(stream.range(2), stream.throw(AttributeError))
     with pytest.raises(AttributeError):
@@ -127,24 +139,19 @@ async def test_zip_closes_pending_source(strict, error):
         finally:
             closed.set()
 
-    try:
-        async with stream.zip(
-            stopping_source(), pending_source(), strict=strict
-        ).stream() as streamer:
-            assert await streamer.__anext__() == (0, 1)
-            with pytest.raises(
-                type(error) if error is not None else StopAsyncIteration
-            ) as exc_info:
-                await streamer.__anext__()
-            if error is not None:
-                assert exc_info.value is error
-        assert closed.is_set()
-        assert all(task.done() for task in pending)
-    finally:
-        # Keep a failing regression from leaving a task behind in the test loop.
-        for task in pending:
-            task.cancel()
-        await asyncio.gather(*pending, return_exceptions=True)
+    async with stream.zip(
+        stopping_source(), pending_source(), strict=strict
+    ).stream() as streamer:
+        assert await streamer.__anext__() == (0, 1)
+        with pytest.raises(
+            type(error) if error is not None else StopAsyncIteration
+        ) as exc_info:
+            await streamer.__anext__()
+        if error is not None:
+            assert exc_info.value is error
+
+    assert closed.is_set()
+    assert all(task.done() for task in pending)
 
 
 @pytest.mark.asyncio
