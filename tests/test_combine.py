@@ -53,6 +53,18 @@ async def test_zip(assert_run):
     expected = [(x,) * 3 for x in range(5)]
     await assert_run(ys, expected)
 
+    # Zip with the same interval
+    xs = stream.range(5, interval=1) | add_resource.pipe(1.0)
+    ys = xs | pipe.zip(xs, xs)
+    expected = [(x,) * 3 for x in range(5)]
+    await assert_run(ys, expected)
+
+    # Zip with two different intervals
+    xs = stream.range(5, interval=1) | add_resource.pipe(1.0)
+    ys = xs | pipe.zip(stream.range(10, 15, interval=2))
+    expected = [(x, x + 10) for x in range(5)]
+    await assert_run(ys, expected)
+
     # Exceptions from iterables are propagated
     xs = stream.zip(stream.range(2), stream.throw(AttributeError))
     with pytest.raises(AttributeError):
