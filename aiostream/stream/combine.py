@@ -20,6 +20,7 @@ from typing_extensions import ParamSpec
 
 from ..aiter_utils import AsyncExitStack, anext
 from ..core import sources_operator, streamcontext, pipable_operator
+from ..manager import TaskGroup
 
 from . import create
 from . import select
@@ -89,21 +90,27 @@ async def zip(
         # Loop over items
         items: list[T]
         while True:
-            if strict:
-                coros = (anext(streamer, STOP_SENTINEL) for streamer in streamers)
-                _items = await asyncio.gather(*coros)
-                if all(item is STOP_SENTINEL for item in _items):
-                    break
-                elif any(item is STOP_SENTINEL for item in _items):
-                    raise ValueError("The provided sources have different lengths")
-                # This holds because we've ruled out STOP_SENTINEL above:
-                items = cast("list[T]", _items)
-            else:
-                coros = (anext(streamer) for streamer in streamers)
-                try:
-                    items = await asyncio.gather(*coros)
-                except StopAsyncIteration:
-                    break
+            # Cancel pending pulls before closing their stream contexts.
+            async with TaskGroup() as group:
+                if strict:
+                    coros = (anext(streamer, STOP_SENTINEL) for streamer in streamers)
+                    _items = await asyncio.gather(
+                        *(group.create_task(coro) for coro in coros)
+                    )
+                    if all(item is STOP_SENTINEL for item in _items):
+                        break
+                    elif any(item is STOP_SENTINEL for item in _items):
+                        raise ValueError("The provided sources have different lengths")
+                    # This holds because we've ruled out STOP_SENTINEL above:
+                    items = cast("list[T]", _items)
+                else:
+                    coros = (anext(streamer) for streamer in streamers)
+                    try:
+                        items = await asyncio.gather(
+                            *(group.create_task(coro) for coro in coros)
+                        )
+                    except StopAsyncIteration:
+                        break
             yield tuple(items)
 
 

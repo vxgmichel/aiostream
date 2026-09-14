@@ -99,6 +99,55 @@ async def test_zip(assert_run):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "strict, error",
+    [
+        (False, None),
+        (False, ValueError("source failed")),
+        (True, ValueError("source failed")),
+    ],
+)
+async def test_zip_closes_pending_source(strict, error):
+    started = asyncio.Event()
+    closed = asyncio.Event()
+    pending = []
+
+    async def stopping_source():
+        yield 0
+        await started.wait()
+        if error is not None:
+            raise error
+
+    async def pending_source():
+        try:
+            yield 1
+            pending.append(asyncio.current_task())
+            started.set()
+            await asyncio.Event().wait()
+        finally:
+            closed.set()
+
+    try:
+        async with stream.zip(
+            stopping_source(), pending_source(), strict=strict
+        ).stream() as streamer:
+            assert await streamer.__anext__() == (0, 1)
+            with pytest.raises(
+                type(error) if error is not None else StopAsyncIteration
+            ) as exc_info:
+                await streamer.__anext__()
+            if error is not None:
+                assert exc_info.value is error
+        assert closed.is_set()
+        assert all(task.done() for task in pending)
+    finally:
+        # Keep a failing regression from leaving a task behind in the test loop.
+        for task in pending:
+            task.cancel()
+        await asyncio.gather(*pending, return_exceptions=True)
+
+
+@pytest.mark.asyncio
 async def test_map(assert_run, assert_cleanup):
     def square_target(arg: int, *_) -> int:
         return arg**2
