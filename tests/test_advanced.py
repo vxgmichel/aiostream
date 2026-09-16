@@ -9,7 +9,7 @@ from aiostream.core import Stream
 async def test_sequential_combine_repeatable_source(combine, assert_run):
     visits = []
 
-    def record(substream):
+    def record(substream: Stream[int], *_) -> Stream[int]:
         visits.append(substream)
         return substream
 
