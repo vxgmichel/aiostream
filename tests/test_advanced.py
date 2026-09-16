@@ -5,7 +5,9 @@ from aiostream.core import Stream
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("combine", [stream.concat, stream.flatten])
+@pytest.mark.parametrize(
+    "combine", [stream.concat, stream.flatten], ids=("concat", "flatten")
+)
 async def test_sequential_combine_repeatable_source(combine, assert_run):
     visits = []
 

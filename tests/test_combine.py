@@ -118,6 +118,7 @@ async def test_zip(assert_run):
         (False, ValueError("source failed")),
         (True, ValueError("source failed")),
     ],
+    ids=("non_strict", "non_strict_with_error", "strict_with_error"),
 )
 async def test_zip_closes_pending_source(strict, error):
     started = asyncio.Event()
