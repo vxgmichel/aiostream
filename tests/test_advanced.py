@@ -5,6 +5,24 @@ from aiostream.core import Stream
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("combine", [stream.concat, stream.flatten])
+async def test_sequential_combine_repeatable_source(combine, assert_run):
+    visits = []
+
+    def record(substream):
+        visits.append(substream)
+        return substream
+
+    source = stream.iterate([stream.range(2), stream.range(2, 4)]) | pipe.map(record)
+    combined = combine(source, task_limit=1)
+    await assert_run(combined, [0, 1, 2, 3])
+    assert len(visits) == 2
+
+    await assert_run(combined, [0, 1, 2, 3])
+    assert len(visits) == 4
+
+
+@pytest.mark.asyncio
 async def test_concatmap(assert_run, assert_cleanup):
     def target1(x: int, *_) -> Stream[int]:
         return stream.range(x, x + 2, interval=5)
