@@ -56,6 +56,7 @@ async def base_combine(
                 async with streamcontext(substream) as substreamer:
                     async for item in substreamer:
                         yield item
+        return
 
     # Safe context
     async with StreamerManager[Union[AsyncIterable[T], T]]() as manager:
