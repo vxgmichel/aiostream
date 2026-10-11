@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import builtins
 import enum
 
@@ -17,7 +18,6 @@ from typing import (
 from typing_extensions import ParamSpec
 
 from ..aiter_utils import AsyncExitStack, anext
-from ..aiter_utils import is_async_callable
 from ..core import sources_operator, streamcontext, pipable_operator
 from ..manager import TaskGroup
 
@@ -230,19 +230,27 @@ def map(
     so that their waiting times don't add up.
 
     It might happen that the provided function returns a coroutine but is not
-    a coroutine function per se. In this case, one can wrap the function with
-    ``aiostream.async_`` in order to force ``map`` to await the resulting
-    coroutine. The following example illustrates the use ``async_`` with a
-    lambda function::
+    recognized as a coroutine function by ``inspect.iscoroutinefunction``.
+    In this case, one can wrap the function with ``aiostream.async_`` in order
+    to force ``map`` to await the resulting coroutine. The following example
+    illustrates the use of ``async_`` with a lambda function::
 
         from aiostream import stream, async_
         ...
         ys = stream.map(xs, async_(lambda ms: asyncio.sleep(ms / 1000)))
+
+    Instances with an asynchronous ``__call__`` method also need this explicit
+    wrapper::
+
+        class AsyncDouble:
+            async def __call__(self, value):
+                return value * 2
+
+        ys = stream.map(xs, async_(AsyncDouble()))
     """
-    if is_async_callable(func):
-        async_func = cast("AmapCallable[T, U]", func)
+    if inspect.iscoroutinefunction(func):
         return amap.raw(
-            source, async_func, *more_sources, ordered=ordered, task_limit=task_limit
+            source, func, *more_sources, ordered=ordered, task_limit=task_limit
         )
 
     if not ordered:

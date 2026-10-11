@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import inspect
 from typing import AsyncIterator, AsyncIterable, TypeVar, Union, cast
 from typing_extensions import ParamSpec
 
 from . import combine
 
-from ..aiter_utils import is_async_callable
 from ..core import Streamer, pipable_operator, streamcontext
 from ..manager import StreamerManager
 
@@ -243,13 +243,11 @@ def switchmap(
 def wrap_map_callable_to_smap_callable(
     func: combine.MapCallable[T, AsyncIterable[U]],
 ) -> combine.SmapCallable[T, AsyncIterable[U]]:
-    if not is_async_callable(func):
+    if not inspect.iscoroutinefunction(func):
         return cast("combine.SmapCallable[T, AsyncIterable[U]]", func)
 
-    async_func = cast("combine.AmapCallable[T, AsyncIterable[U]]", func)
-
     async def target(arg: T, /, *args: T) -> AsyncIterable[U]:
-        async with streamcontext(await async_func(arg, *args)) as streamer:
+        async with streamcontext(await func(arg, *args)) as streamer:
             async for item in streamer:
                 yield item
 

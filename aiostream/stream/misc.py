@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import inspect
 import builtins
 
 from typing import TypeVar, Awaitable, Callable, AsyncIterable, AsyncIterator, Any
 
 from .combine import amap, smap
-from ..aiter_utils import is_async_callable
 from ..core import pipable_operator
 
 __all__ = ["action", "print"]
@@ -37,7 +37,7 @@ def action(
     to run sequentially. This argument is ignored if the provided function
     is synchronous.
     """
-    if is_async_callable(func):
+    if inspect.iscoroutinefunction(func):
 
         async def ainnerfunc(arg: T, *_: object) -> T:
             awaitable = func(arg)

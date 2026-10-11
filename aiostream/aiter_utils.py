@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-import inspect
 from types import TracebackType
 
 import enum
@@ -37,7 +36,6 @@ __all__ = [
     "anext",
     "await_",
     "async_",
-    "is_async_callable",
     "is_async_iterable",
     "assert_async_iterable",
     "is_async_iterator",
@@ -93,26 +91,19 @@ async def await_(obj: Awaitable[T]) -> T:
 
 
 def async_(fn: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, T]]:
-    """Wrap the given function into a coroutine function."""
+    """Wrap the given function into a coroutine function.
+
+    Stream operators use ``inspect.iscoroutinefunction`` to decide whether
+    to await a callback. Wrap a callable that returns an awaitable but is not
+    recognized as a coroutine function, such as a lambda or an instance with
+    an asynchronous ``__call__`` method, to explicitly request awaiting.
+    """
 
     @functools.wraps(fn)
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         return await fn(*args, **kwargs)
 
     return wrapper
-
-
-def is_async_callable(func: object) -> bool:
-    """Recognize coroutine functions and objects with async call methods."""
-    while isinstance(func, functools.partial):
-        func = func.func
-    if inspect.iscoroutinefunction(func):
-        return True
-    # Special methods are looked up on the type, without instance attribute access.
-    call = inspect.getattr_static(type(func), "__call__", None)
-    if isinstance(call, (staticmethod, classmethod)):
-        call = cast(Any, call).__func__
-    return inspect.iscoroutinefunction(call)
 
 
 # Iterability helpers

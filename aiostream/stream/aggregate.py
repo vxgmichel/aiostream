@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import builtins
 import operator as op
 from typing import AsyncIterator, Awaitable, Callable, TypeVar, AsyncIterable, cast
@@ -9,7 +10,6 @@ from typing import AsyncIterator, Awaitable, Callable, TypeVar, AsyncIterable, c
 
 from . import select
 from ..aiter_utils import anext
-from ..aiter_utils import is_async_callable
 from ..core import pipable_operator, streamcontext
 
 __all__ = ["accumulate", "reduce", "list"]
@@ -30,7 +30,7 @@ async def accumulate(
     of the sequence in the calculation, and serves as a default
     when the sequence is empty.
     """
-    iscorofunc = is_async_callable(func)
+    iscorofunc = inspect.iscoroutinefunction(func)
     async with streamcontext(source) as streamer:
         # Initialize
         if initializer is None:
