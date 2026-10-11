@@ -38,3 +38,4 @@ timeout = stream.timeout.pipe
 until = stream.until.pipe
 zip = stream.zip.pipe
 ziplatest = stream.ziplatest.pipe
+prefetch = stream.prefetch.pipe
