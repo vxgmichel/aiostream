@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 import builtins
 import collections
 
@@ -10,6 +9,7 @@ from typing import Awaitable, Callable, TypeVar, AsyncIterable, AsyncIterator
 
 from . import transform
 from ..aiter_utils import aiter, anext
+from ..aiter_utils import is_async_callable
 from ..core import streamcontext, pipable_operator
 
 __all__ = [
@@ -201,7 +201,7 @@ async def filter(
     if it should be forwarded, ``False`` otherwise.
     The function can either be synchronous or asynchronous.
     """
-    iscorofunc = inspect.iscoroutinefunction(func)
+    iscorofunc = is_async_callable(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)
@@ -225,7 +225,7 @@ async def until(
     corresponding to the condition to meet. The function can either be
     synchronous or asynchronous.
     """
-    iscorofunc = inspect.iscoroutinefunction(func)
+    iscorofunc = is_async_callable(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)
@@ -250,7 +250,7 @@ async def takewhile(
     corresponding to the condition to meet. The function can either be
     synchronous or asynchronous.
     """
-    iscorofunc = inspect.iscoroutinefunction(func)
+    iscorofunc = is_async_callable(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)
@@ -273,7 +273,7 @@ async def dropwhile(
     corresponding to the condition to meet. The function can either be
     synchronous or asynchronous.
     """
-    iscorofunc = inspect.iscoroutinefunction(func)
+    iscorofunc = is_async_callable(func)
     async with streamcontext(source) as streamer:
         async for item in streamer:
             result = func(item)

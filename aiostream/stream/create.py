@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 import asyncio
 import builtins
 import itertools
@@ -20,6 +19,7 @@ from typing import (
 from typing_extensions import ParamSpec, Never
 
 from ..stream import time
+from ..aiter_utils import is_async_callable
 from ..core import operator, streamcontext
 
 __all__ = [
@@ -106,8 +106,9 @@ async def call(
     """Call the given function and generate a single value.
 
     Await if the provided function is asynchronous.
+    Callable objects with an asynchronous ``__call__`` method are supported.
     """
-    if inspect.iscoroutinefunction(func):
+    if is_async_callable(func):
         async_func = cast("AsyncCallable[P, T]", func)
         yield await async_func(*args, **kwargs)
     else:

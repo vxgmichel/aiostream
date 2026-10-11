@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 import asyncio
 import itertools
 from typing import (
@@ -14,6 +13,7 @@ from typing import (
     cast,
 )
 
+from ..aiter_utils import is_async_callable
 from ..core import streamcontext, pipable_operator
 
 from . import select
@@ -77,7 +77,7 @@ def starmap(
     to run sequentially. This argument is ignored if the provided function
     is synchronous.
     """
-    if inspect.iscoroutinefunction(func):
+    if is_async_callable(func):
         async_func = cast("AsyncStarmapCallable[T, U]", func)
 
         async def astarfunc(args: tuple[T, ...], *_: object) -> U:

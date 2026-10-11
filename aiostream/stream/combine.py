@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 import builtins
 import enum
 
@@ -18,6 +17,7 @@ from typing import (
 from typing_extensions import ParamSpec
 
 from ..aiter_utils import AsyncExitStack, anext
+from ..aiter_utils import is_async_callable
 from ..core import sources_operator, streamcontext, pipable_operator
 from ..manager import TaskGroup
 
@@ -239,9 +239,10 @@ def map(
         ...
         ys = stream.map(xs, async_(lambda ms: asyncio.sleep(ms / 1000)))
     """
-    if inspect.iscoroutinefunction(func):
+    if is_async_callable(func):
+        async_func = cast("AmapCallable[T, U]", func)
         return amap.raw(
-            source, func, *more_sources, ordered=ordered, task_limit=task_limit
+            source, async_func, *more_sources, ordered=ordered, task_limit=task_limit
         )
 
     if not ordered:

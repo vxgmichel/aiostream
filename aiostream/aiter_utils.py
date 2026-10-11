@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import inspect
 from types import TracebackType
 
 import enum
@@ -36,6 +37,7 @@ __all__ = [
     "anext",
     "await_",
     "async_",
+    "is_async_callable",
     "is_async_iterable",
     "assert_async_iterable",
     "is_async_iterator",
@@ -98,6 +100,19 @@ def async_(fn: Callable[P, Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, T]]
         return await fn(*args, **kwargs)
 
     return wrapper
+
+
+def is_async_callable(func: object) -> bool:
+    """Recognize coroutine functions and objects with async call methods."""
+    while isinstance(func, functools.partial):
+        func = func.func
+    if inspect.iscoroutinefunction(func):
+        return True
+    # Special methods are looked up on the type, without instance attribute access.
+    call = inspect.getattr_static(type(func), "__call__", None)
+    if isinstance(call, (staticmethod, classmethod)):
+        call = cast(Any, call).__func__
+    return inspect.iscoroutinefunction(call)
 
 
 # Iterability helpers
