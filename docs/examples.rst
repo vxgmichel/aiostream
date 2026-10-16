@@ -28,6 +28,20 @@ by the iteration context:
 .. literalinclude:: ../examples/preserve.py
 
 
+Identify merged sources
+-----------------------
+
+To keep track of which source produced each item, use :func:`~aiostream.stream.map`
+to attach a label before combining the streams with :func:`~aiostream.stream.merge`.
+This works even when different sources produce identical values:
+
+.. literalinclude:: ../examples/merge.py
+
+The order in which the two sources are interleaved is not guaranteed.
+Each item's label identifies its source without comparing it to earlier values.
+The stream context closes the iterators when iteration ends or the loop is exited early.
+
+
 Norm server
 -----------
 
