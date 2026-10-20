@@ -105,7 +105,18 @@ async def call(
 ) -> AsyncIterator[T]:
     """Call the given function and generate a single value.
 
-    Await if the provided function is asynchronous.
+    Await if the provided function is a coroutine function, as determined by
+    ``inspect.iscoroutinefunction``. To await the result of another callable
+    that returns an awaitable, wrap it with ``aiostream.async_``. This includes
+    instances with an asynchronous ``__call__`` method::
+
+        from aiostream import stream, async_
+
+        class AsyncDouble:
+            async def __call__(self, value):
+                return value * 2
+
+        result = await stream.call(async_(AsyncDouble()), 3)  # 6
     """
     if inspect.iscoroutinefunction(func):
         async_func = cast("AsyncCallable[P, T]", func)
