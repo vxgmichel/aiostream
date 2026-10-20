@@ -117,8 +117,10 @@ async def chunks(source: AsyncIterable[T], n: int) -> AsyncIterator[list[T]]:
     """Generate chunks of size ``n`` from an asynchronous sequence.
 
     The chunks are lists, and the last chunk might contain less than ``n``
-    elements.
+    elements. The size ``n`` must be greater than zero.
     """
+    if n <= 0:
+        raise ValueError("Chunk size must be greater than zero")
     async with streamcontext(source) as streamer:
         async for first in streamer:
             xs = select.take(create.preserve(streamer), n - 1)
