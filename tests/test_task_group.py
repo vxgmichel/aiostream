@@ -51,3 +51,27 @@ async def test_task_group_cleanup():
         # Task 4 and 5 are not finished
         assert not t4.done()
         assert not t5.done()
+
+
+@pytest.mark.asyncio
+async def test_wait_first_exception_empty():
+    async with TaskGroup() as group:
+        assert await group.wait_first_exception([]) == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("cancelled", [False, True])
+async def test_wait_first_exception_already_done(cancelled):
+    async def fail():
+        if cancelled:
+            raise asyncio.CancelledError("child cancelled")
+        raise ValueError("child failed")
+
+    async with TaskGroup() as group:
+        failed = group.create_task(fail())
+        await asyncio.gather(failed, return_exceptions=True)
+        pending = group.create_task(asyncio.Event().wait())
+        done = await asyncio.wait_for(group.wait_first_exception([pending, failed]), 1)
+        assert done == [failed]
+        assert not pending.done()
+    assert pending.cancelled()
