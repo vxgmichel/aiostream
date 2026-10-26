@@ -58,3 +58,5 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+config.bat
+node_modules

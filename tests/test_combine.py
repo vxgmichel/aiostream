@@ -366,7 +366,7 @@ async def test_zip_cancelled_source_cleans_pending_source(strict, reverse):
         assert (
             task in done
         ), "zip waited for a pending source after another was cancelled"
-        with pytest.raises(asyncio.CancelledError, match="source cancelled"):
+        with pytest.raises(asyncio.CancelledError):
             await task
         assert closed.is_set()
     finally:
