@@ -82,10 +82,10 @@ async def preserve(ait: AsyncIterable[T]) -> AsyncIterator[T]:
 @operator
 async def just(value: Awaitable[T] | T) -> AsyncIterator[T]:
     """Await if possible, and generate a single value."""
-    if isinstance(value, Awaitable):
+    if inspect.isawaitable(value):
         yield await value
     else:
-        yield value
+        yield cast("T", value)
 
 
 Y = TypeVar("Y", covariant=True)
