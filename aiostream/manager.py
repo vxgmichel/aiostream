@@ -64,7 +64,36 @@ class TaskGroup(Generic[T]):
         return await self._wait(tasks, "FIRST_COMPLETED")
 
     async def wait_first_exception(self, tasks: list[Task[T]]) -> list[Task[T]]:
-        return await self._wait(tasks, "FIRST_EXCEPTION")
+        if not tasks:
+            return []
+        waiter = asyncio.get_running_loop().create_future()
+        remaining = len(tasks)
+
+        def on_done(task: Task[T]) -> None:
+            nonlocal remaining
+            remaining -= 1
+            failed = task.cancelled() or task.exception() is not None
+            if not waiter.done() and (failed or not remaining):
+                waiter.set_result(None)
+
+        # FIRST_EXCEPTION ignores cancellation. Register once per task rather
+        # than repeatedly waiting on the remaining tasks after each success.
+        for task in tasks:
+            task.add_done_callback(on_done)
+        try:
+            await waiter
+        finally:
+            for task in tasks:
+                task.remove_done_callback(on_done)
+
+        done = [task for task in tasks if task.done()]
+        # Retrieve all simultaneous errors, even if the caller first encounters
+        # a cancelled task. Exceptions remain available through task.result().
+        for task in done:
+            if not task.cancelled():
+                task.exception()
+        self._pending.difference_update(done)
+        return done
 
     async def wait_all(self, tasks: Sequence[Task[T]]) -> list[Task[T]]:
         return await self._wait(tasks, "ALL_COMPLETED")

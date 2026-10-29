@@ -330,3 +330,45 @@ async def test_ziplatest(assert_run, assert_cleanup):
     # Empty ziplatest (issue #95)
     xs = stream.ziplatest()
     await assert_run(xs, [])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize("reverse", [False, True])
+async def test_zip_cancelled_source_cleans_pending_source(strict, reverse):
+    started = asyncio.Event()
+    closed = asyncio.Event()
+
+    async def pending_source():
+        try:
+            started.set()
+            await asyncio.Event().wait()
+            yield 1
+        finally:
+            closed.set()
+
+    async def cancelled_source():
+        await started.wait()
+        raise asyncio.CancelledError("source cancelled")
+        yield  # make this an async generator
+
+    async def consume():
+        sources = [cancelled_source(), pending_source()]
+        if reverse:
+            sources.reverse()
+        async with stream.zip(*sources, strict=strict).stream() as values:
+            return await anext(values)
+
+    task = asyncio.create_task(consume())
+    try:
+        await asyncio.wait_for(started.wait(), 1)
+        done, _ = await asyncio.wait([task], timeout=0.1)
+        assert (
+            task in done
+        ), "zip waited for a pending source after another was cancelled"
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert closed.is_set()
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
