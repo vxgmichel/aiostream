@@ -38,9 +38,11 @@ class StreamEmpty(Exception):
 
 T = TypeVar("T", covariant=True)
 X = TypeVar("X")
-A = TypeVar("A", contravariant=True)
 P = ParamSpec("P")
 Q = ParamSpec("Q")
+CallT = TypeVar("CallT", bound=Callable[..., Any])
+RawT = TypeVar("RawT", bound=Callable[..., Any])
+PipeT = TypeVar("PipeT", bound=Callable[..., Any])
 
 
 async def wait_stream(aiterable: BaseStream[T]) -> T:
@@ -258,20 +260,21 @@ class Operator(Protocol[P, T]):
     def raw(*args: P.args, **kwargs: P.kwargs) -> AsyncIterator[T]: ...
 
 
-class PipableOperator(Protocol[A, P, T]):
-    def __call__(
-        self, source: AsyncIterable[A], /, *args: P.args, **kwargs: P.kwargs
-    ) -> Stream[T]: ...
+class PipableOperator(Protocol[CallT, RawT, PipeT]):
+    # This protocol is parametrized by the type of its members, as opposed
+    # to the more natural `PipableOperator[A, P, T]` form. This is necessary
+    # since mypy (>= 1.7) solves the type variables of the decorated generic
+    # function as `Never` when they appear as bare type arguments (e.g `A`)
+    # instead of within callable types, where they're kept generic.
+    # See https://github.com/python/mypy/issues/17191 for more information.
+    # The arguments are expected to be:
+    # - CallT: `Callable[Concatenate[AsyncIterable[A], P], Stream[T]]`
+    # - RawT: `Callable[Concatenate[AsyncIterable[A], P], AsyncIterator[T]]`
+    # - PipeT: `Callable[P, Callable[[AsyncIterable[A]], Stream[T]]]`
 
-    @staticmethod
-    def raw(
-        source: AsyncIterable[A], /, *args: P.args, **kwargs: P.kwargs
-    ) -> AsyncIterator[T]: ...
-
-    @staticmethod
-    def pipe(
-        *args: P.args, **kwargs: P.kwargs
-    ) -> Callable[[AsyncIterable[A]], Stream[T]]: ...
+    __call__: CallT
+    raw: RawT
+    pipe: PipeT
 
 
 class SourcesOperator(Protocol[P, T]):
@@ -418,7 +421,11 @@ def operator(
 
 def pipable_operator(
     func: Callable[Concatenate[AsyncIterable[X], P], AsyncIterator[T]],
-) -> PipableOperator[X, P, T]:
+) -> PipableOperator[
+    Callable[Concatenate[AsyncIterable[X], P], Stream[T]],
+    Callable[Concatenate[AsyncIterable[X], P], AsyncIterator[T]],
+    Callable[P, Callable[[AsyncIterable[X]], Stream[T]]],
+]:
     """Create a pipable stream operator from an asynchronous generator
     (or any function returning an asynchronous iterable).
 
