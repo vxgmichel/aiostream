@@ -8,8 +8,8 @@ async def main() -> None:
     left = stream.iterate(["ready", "done"])
     right = stream.iterate(["ready", "done"])
     merged = stream.merge(
-        left | pipe.map(lambda value, *_: ("left", value)),
-        right | pipe.map(lambda value, *_: ("right", value)),
+        left | pipe.map(lambda value: ("left", value)),
+        right | pipe.map(lambda value: ("right", value)),
     )
 
     async with merged.stream() as streamer:

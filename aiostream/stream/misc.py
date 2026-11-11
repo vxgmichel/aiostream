@@ -38,7 +38,7 @@ def action(
     """
     if inspect.iscoroutinefunction(func):
 
-        async def ainnerfunc(arg: T, *_: object) -> T:
+        async def ainnerfunc(arg: T) -> T:
             awaitable = func(arg)
             assert isinstance(awaitable, Awaitable)
             await awaitable
@@ -48,7 +48,7 @@ def action(
 
     else:
 
-        def innerfunc(arg: T, *_: object) -> T:
+        def innerfunc(arg: T) -> T:
             func(arg)
             return arg
 

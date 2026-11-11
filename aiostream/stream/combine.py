@@ -371,7 +371,7 @@ def ziplatest(
 
     # Add source index to the items
     def make_func(i: int) -> SmapCallable[T, dict[int, T]]:
-        def func(x: T, *_: object) -> dict[int, T]:
+        def func(x: T) -> dict[int, T]:
             return {i: x}
 
         return func
@@ -392,7 +392,7 @@ def ziplatest(
     )
 
     # Convert the state dict to a tuple
-    def dict_to_tuple(x: dict[int, T], *_: object) -> tuple[T | None, ...]:
+    def dict_to_tuple(x: dict[int, T]) -> tuple[T | None, ...]:
         return tuple(builtins.map(getter(x), range(n)))
 
     return smap.raw(filtered, dict_to_tuple)

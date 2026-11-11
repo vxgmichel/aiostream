@@ -267,6 +267,12 @@ async def test_map_typing() -> None:
     def sync_func(value: int, *_: int) -> str:
         return str(value)
 
+    async def async_single(value: int) -> str:
+        return str(value)
+
+    def sync_single(value: int) -> str:
+        return str(value)
+
     xs = stream.range(3)
     expected = ["0", "1", "2"]
     for ys in [
@@ -279,6 +285,12 @@ async def test_map_typing() -> None:
         assert_type(xs | pipe.map(async_(async_func)), Stream[str]),
         assert_type(xs | pipe.map(async_func, task_limit=1), Stream[str]),
         assert_type(xs | pipe.amap(async_(async_func)), Stream[str]),
+        assert_type(stream.map(xs, async_single), Stream[str]),
+        assert_type(stream.map(xs, sync_single), Stream[str]),
+        assert_type(xs | pipe.map(async_single), Stream[str]),
+        assert_type(xs | pipe.map(sync_single), Stream[str]),
+        assert_type(xs | pipe.smap(sync_single), Stream[str]),
+        assert_type(xs | pipe.amap(async_single), Stream[str]),
     ]:
         assert sorted(await (ys | pipe.list())) == expected
 

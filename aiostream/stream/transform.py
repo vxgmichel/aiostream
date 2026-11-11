@@ -77,7 +77,7 @@ def starmap(
     if inspect.iscoroutinefunction(func):
         async_func = cast("AsyncStarmapCallable[T, U]", func)
 
-        async def astarfunc(args: tuple[T, ...], *_: object) -> U:
+        async def astarfunc(args: tuple[T, ...]) -> U:
             awaitable = async_func(*args)
             return await awaitable
 
@@ -86,7 +86,7 @@ def starmap(
     else:
         sync_func = cast("SyncStarmapCallable[T, U]", func)
 
-        def starfunc(args: tuple[T, ...], *_: object) -> U:
+        def starfunc(args: tuple[T, ...]) -> U:
             return sync_func(*args)
 
         return smap.raw(source, starfunc)
