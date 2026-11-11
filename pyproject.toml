@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 69.5"]
+requires = ["setuptools >= 77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -25,6 +25,9 @@ dependencies = [
     "typing-extensions",
 ]
 
+[project.urls]
+Homepage = "https://github.com/vxgmichel/aiostream"
+
 [dependency-groups]
 dev = [
     "pytest",
@@ -38,8 +41,6 @@ packages = ["aiostream", "aiostream.stream"]
 [tool.setuptools.dynamic]
 version = {attr = "aiostream.__version__"}
 
-[project.urls]
-Homepage = "https://github.com/vxgmichel/aiostream"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers --cov aiostream"
