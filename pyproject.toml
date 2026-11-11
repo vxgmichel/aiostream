@@ -58,12 +58,20 @@ strict = [
 
 [tool.mypy]
 packages = ["aiostream", "examples"]
-
-[tool.mypy-aiostream]
 strict = true
+# Name modules after their directory (e.g `tests.test_core`), even without `__init__.py`
+explicit_package_bases = true
 
-[tool.mypy-examples]
-strict = true
+[[tool.mypy.overrides]]
+# Tests are not fully annotated, keep mypy default checks for them
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+check_untyped_defs = false
+disallow_any_generics = false
+# Those are meant for pyright, which checks unannotated functions
+warn_unused_ignores = false
 
 [tool.black]
 line-length = 88

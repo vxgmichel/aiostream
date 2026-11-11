@@ -415,7 +415,7 @@ def operator(
             "__doc__": doc,
         },
     )
-    operator_instance = properly_named_class()
+    operator_instance: Operator[P, T] = properly_named_class()
     return operator_instance
 
 
@@ -597,7 +597,11 @@ def pipable_operator(
             "__doc__": doc,
         },
     )
-    operator_instance = properly_named_class()
+    operator_instance: PipableOperator[
+        Callable[Concatenate[AsyncIterable[X], P], Stream[T]],
+        Callable[Concatenate[AsyncIterable[X], P], AsyncIterator[T]],
+        Callable[P, Callable[[AsyncIterable[X]], Stream[T]]],
+    ] = properly_named_class()
     return operator_instance
 
 
@@ -762,5 +766,5 @@ def sources_operator(
             "__doc__": doc,
         },
     )
-    operator_instance = properly_named_class()
+    operator_instance: SourcesOperator[P, T] = properly_named_class()
     return operator_instance

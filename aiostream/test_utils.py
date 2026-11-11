@@ -110,13 +110,13 @@ class AssertRunProtocol(Protocol):
     ) -> Awaitable[None]: ...
 
 
-@pytest.fixture(params=[assert_aiter, assert_await], ids=["aiter", "await"])  # type: ignore[misc]
+@pytest.fixture(params=[assert_aiter, assert_await], ids=["aiter", "await"])
 def assert_run(request: SubRequest) -> AssertRunProtocol:
     """Parametrized fixture returning a stream runner."""
     return cast(AssertRunProtocol, request.param)
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def assert_cleanup() -> Callable[[], ContextManager[TimeTrackingTestLoop]]:
     """Fixture to assert cleanup of resources."""
 
@@ -149,7 +149,7 @@ class TimeTrackingTestLoop(BaseEventLoopWithInternals):
 
     # Loop internals
 
-    def _run_once(self) -> None:  # type: ignore
+    def _run_once(self) -> None:
         super()._run_once()
         # Update internals
         self.busy_count += 1

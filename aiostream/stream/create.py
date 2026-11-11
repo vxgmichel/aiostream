@@ -87,7 +87,7 @@ async def just(value: Awaitable[T] | T) -> AsyncIterator[T]:
     if inspect.isawaitable(value):
         yield await value
     else:
-        yield cast("T", value)
+        yield value
 
 
 Y = TypeVar("Y", covariant=True)
