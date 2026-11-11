@@ -22,7 +22,6 @@ from typing import (
 
 from typing_extensions import ParamSpec, Concatenate
 
-
 __all__ = ["Stream", "Streamer", "StreamEmpty", "operator", "streamcontext"]
 
 

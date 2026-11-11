@@ -11,7 +11,6 @@ from . import combine
 from ..core import Streamer, pipable_operator, streamcontext
 from ..manager import StreamerManager
 
-
 __all__ = ["concat", "flatten", "switch", "concatmap", "flatmap", "switchmap"]
 
 

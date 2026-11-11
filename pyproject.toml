@@ -66,10 +66,10 @@ strict = true
 
 [tool.black]
 line-length = 88
-target_version = ["py39", "py310", "py311", "py312", "py313", "py314"]
 
 [tool.coverage.report]
 exclude_also = ["if TYPE_CHECKING:", "assert False"]
 
-[tool.ruff]
+[tool.ruff.lint]
+select = ["E", "F"]
 ignore = ["E501", "F403"]
