@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Awaitable, Protocol, TypeVar
+from typing import Any, Awaitable, Coroutine, Protocol, TypeVar
 
 __all__ = ["SmapCallable", "AmapCallable", "MapCallable"]
 
@@ -15,7 +15,9 @@ class SmapCallable(Protocol[X, Y]):
 
 
 class AmapCallable(Protocol[X, Y]):
-    async def __call__(self, arg: X, /, *args: X) -> Y: ...
+    # Not declared as `async def`, since pyright would then expect the more
+    # specific `CoroutineType` instead of `Coroutine` (e.g for `async_`)
+    def __call__(self, arg: X, /, *args: X) -> Coroutine[Any, Any, Y]: ...
 
 
 class MapCallable(Protocol[X, Y]):

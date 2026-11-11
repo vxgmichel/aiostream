@@ -6,17 +6,20 @@ import builtins
 import enum
 import inspect
 from typing import (
+    Any,
     AsyncIterable,
     AsyncIterator,
     Callable,
+    Protocol,
     TypeVar,
     cast,
+    overload,
 )
 
 from typing_extensions import ParamSpec
 
 from ..aiter_utils import AsyncExitStack, anext
-from ..core import pipable_operator, sources_operator, streamcontext
+from ..core import Stream, pipable_operator, sources_operator, streamcontext
 from ..manager import TaskGroup
 from . import advanced, aggregate, create, select
 from ._callbacks import AmapCallable, MapCallable, SmapCallable
@@ -179,7 +182,88 @@ def amap(
     return advanced.flatmap.raw(source, func, *more_sources, task_limit=task_limit)
 
 
-@pipable_operator
+class MapOperator(Protocol):
+    """Explicit type for the `map` operator.
+
+    The generic `PipableOperator` type cannot be used here: the callback
+    return type `Awaitable[U] | U` is ambiguous for coroutine functions,
+    which leads mypy to infer `Never` for `U` (see issue #128). Instead,
+    an overload for coroutine functions is checked first, before falling
+    back to the original signature.
+
+    Note that the type checkers cannot distinguish a coroutine function from
+    a synchronous function returning a coroutine (which is not awaited by
+    `map`, unless it is wrapped with `aiostream.async_`).
+    """
+
+    @overload
+    def __call__(
+        self,
+        source: AsyncIterable[T],
+        /,
+        func: AmapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> Stream[U]: ...
+
+    @overload
+    def __call__(
+        self,
+        source: AsyncIterable[T],
+        /,
+        func: MapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> Stream[U]: ...
+
+    @overload
+    @staticmethod
+    def raw(
+        source: AsyncIterable[T],
+        /,
+        func: AmapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> AsyncIterator[U]: ...
+
+    @overload
+    @staticmethod
+    def raw(
+        source: AsyncIterable[T],
+        /,
+        func: MapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> AsyncIterator[U]: ...
+
+    @overload
+    @staticmethod
+    def pipe(
+        func: AmapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> Callable[[AsyncIterable[T]], Stream[U]]: ...
+
+    @overload
+    @staticmethod
+    def pipe(
+        func: MapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> Callable[[AsyncIterable[T]], Stream[U]]: ...
+
+
+def _map_operator(func: Callable[..., AsyncIterator[Any]]) -> MapOperator:
+    return cast("MapOperator", pipable_operator(func))
+
+
+@_map_operator
 def map(
     source: AsyncIterable[T],
     func: MapCallable[T, U],
