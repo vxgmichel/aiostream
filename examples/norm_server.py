@@ -14,8 +14,8 @@ Test using netcat client:
     [...]
 """
 
-import math
 import asyncio
+import math
 
 from aiostream import pipe, stream
 
@@ -45,22 +45,22 @@ async def euclidean_norm_handler(
     reader: asyncio.StreamReader, writer: asyncio.StreamWriter
 ) -> None:
     # Define lambdas
-    def strip(x: bytes, *_: object) -> str:
+    def strip(x: bytes) -> str:
         return x.decode().strip()
 
     def nonempty(x: str) -> bool:
         return x != ""
 
-    def to_float(x: str, *_: object) -> float:
+    def to_float(x: str) -> float:
         return float(x)
 
-    def square(x: float, *_: object) -> float:
+    def square(x: float) -> float:
         return x**2
 
     def write_cursor(_: float) -> None:
         return writer.write(b"> ")
 
-    def square_root(x: float, *_: object) -> float:
+    def square_root(x: float) -> float:
         return math.sqrt(x)
 
     # Create awaitable

@@ -1,8 +1,8 @@
 from aiostream.test_utils import (
-    add_resource,
-    assert_run,
-    assert_cleanup,
     TimeTrackingTestLoop,
+    add_resource,
+    assert_cleanup,
+    assert_run,
 )
 
 __all__ = [

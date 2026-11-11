@@ -1,4 +1,4 @@
-from aiostream import stream, pipe
+from aiostream import pipe, stream
 
 
 def test_pipe_module():

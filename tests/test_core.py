@@ -1,9 +1,10 @@
 import inspect
+
 import pytest
 
+from aiostream import operator, stream, streamcontext
 from aiostream.core import pipable_operator, sources_operator
 from aiostream.test_utils import add_resource
-from aiostream import stream, streamcontext, operator
 
 
 @pytest.mark.asyncio
@@ -58,13 +59,13 @@ async def test_error_on_sync_iteration():
 
     # Stream raises a TypeError
     with pytest.raises(TypeError):
-        for x in xs:
+        for x in xs:  # type: ignore
             assert False
 
     # Streamer raises a TypeError
     async with xs.stream() as streamer:
         with pytest.raises(TypeError):
-            for x in streamer:
+            for x in streamer:  # type: ignore
                 assert False
 
 

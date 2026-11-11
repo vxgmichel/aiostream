@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import inspect
 import builtins
 import collections
+import inspect
+from typing import AsyncIterable, AsyncIterator, Awaitable, Callable, TypeVar
 
-from typing import Awaitable, Callable, TypeVar, AsyncIterable, AsyncIterator
-
-from . import transform
 from ..aiter_utils import aiter, anext
-from ..core import streamcontext, pipable_operator
+from ..core import pipable_operator, streamcontext
+from . import transform
 
 __all__ = [
     "take",

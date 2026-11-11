@@ -3,7 +3,7 @@ import asyncio
 from aiostream import pipe, stream
 
 
-def square(x: int, *_: int) -> int:
+def square(x: int) -> int:
     return x**2
 
 

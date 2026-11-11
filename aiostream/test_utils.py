@@ -5,28 +5,29 @@ from __future__ import annotations
 import asyncio
 from collections import deque
 from contextlib import contextmanager
-from unittest.mock import Mock
 from typing import (
     TYPE_CHECKING,
+    Any,
+    AsyncIterable,
+    AsyncIterator,
     Awaitable,
     Callable,
+    ContextManager,
+    Generator,
     List,
     Protocol,
     TypeVar,
-    AsyncIterable,
-    AsyncIterator,
-    ContextManager,
-    Iterator,
     cast,
-    Any,
 )
+from unittest.mock import Mock
 
 import pytest
 
-from .core import StreamEmpty, streamcontext, pipable_operator
+from .core import StreamEmpty, pipable_operator, streamcontext
 
 if TYPE_CHECKING:
     from _pytest.fixtures import SubRequest
+
     from aiostream.core import Stream
 
 __all__ = ["add_resource", "assert_run", "TimeTrackingTestLoop", "assert_cleanup"]
@@ -109,13 +110,13 @@ class AssertRunProtocol(Protocol):
     ) -> Awaitable[None]: ...
 
 
-@pytest.fixture(params=[assert_aiter, assert_await], ids=["aiter", "await"])  # type: ignore[misc]
+@pytest.fixture(params=[assert_aiter, assert_await], ids=["aiter", "await"])
 def assert_run(request: SubRequest) -> AssertRunProtocol:
     """Parametrized fixture returning a stream runner."""
     return cast(AssertRunProtocol, request.param)
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def assert_cleanup() -> Callable[[], ContextManager[TimeTrackingTestLoop]]:
     """Fixture to assert cleanup of resources."""
 
@@ -148,7 +149,7 @@ class TimeTrackingTestLoop(BaseEventLoopWithInternals):
 
     # Loop internals
 
-    def _run_once(self) -> None:  # type: ignore
+    def _run_once(self) -> None:
         super()._run_once()
         # Update internals
         self.busy_count += 1
@@ -197,7 +198,7 @@ class TimeTrackingTestLoop(BaseEventLoopWithInternals):
         self.busy_count = 0
 
     @contextmanager
-    def assert_cleanup(self) -> Iterator[TimeTrackingTestLoop]:
+    def assert_cleanup(self) -> Generator[TimeTrackingTestLoop, None, None]:
         self.clear()
         yield self
         assert self.open_resources == 0

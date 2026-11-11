@@ -1,8 +1,9 @@
-import pytest
 import asyncio
 import operator
 
-from aiostream import stream, pipe
+import pytest
+
+from aiostream import pipe, stream
 from aiostream.test_utils import add_resource
 
 

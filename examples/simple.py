@@ -7,7 +7,7 @@ def is_odd(x: int) -> bool:
     return x % 2 == 1
 
 
-def square(x: int, *_: object) -> int:
+def square(x: int) -> int:
     return x**2
 
 

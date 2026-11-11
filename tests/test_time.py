@@ -1,7 +1,8 @@
-import pytest
 import asyncio
 
-from aiostream import stream, pipe
+import pytest
+
+from aiostream import pipe, stream
 
 
 @pytest.mark.asyncio

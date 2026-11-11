@@ -1,9 +1,11 @@
+import asyncio
 from functools import partial
 from typing import Awaitable
-import pytest
-import asyncio
 
-from aiostream import stream, pipe, async_, await_
+import pytest
+from typing_extensions import assert_type
+
+from aiostream import Stream, async_, await_, pipe, stream
 from aiostream.test_utils import add_resource
 
 
@@ -254,6 +256,43 @@ async def test_map(assert_run, assert_cleanup):
         ys = xs | pipe.map(await_)  # type: ignore
         await assert_run(ys, [1, 2, 3])
         assert loop.steps == [1, 1, 1]
+
+
+@pytest.mark.asyncio
+async def test_map_typing() -> None:
+    # Regression test for issue #128, statically checked by mypy and pyright
+    async def async_func(value: int, *_: int) -> str:
+        return str(value)
+
+    def sync_func(value: int, *_: int) -> str:
+        return str(value)
+
+    async def async_single(value: int) -> str:
+        return str(value)
+
+    def sync_single(value: int) -> str:
+        return str(value)
+
+    xs = stream.range(3)
+    expected = ["0", "1", "2"]
+    for ys in [
+        assert_type(stream.map(xs, async_func), Stream[str]),
+        assert_type(stream.map(xs, sync_func), Stream[str]),
+        assert_type(stream.map(xs, async_(async_func)), Stream[str]),
+        assert_type(stream.map(xs, async_func, ordered=False), Stream[str]),
+        assert_type(xs | pipe.map(async_func), Stream[str]),
+        assert_type(xs | pipe.map(sync_func), Stream[str]),
+        assert_type(xs | pipe.map(async_(async_func)), Stream[str]),
+        assert_type(xs | pipe.map(async_func, task_limit=1), Stream[str]),
+        assert_type(xs | pipe.amap(async_(async_func)), Stream[str]),
+        assert_type(stream.map(xs, async_single), Stream[str]),
+        assert_type(stream.map(xs, sync_single), Stream[str]),
+        assert_type(xs | pipe.map(async_single), Stream[str]),
+        assert_type(xs | pipe.map(sync_single), Stream[str]),
+        assert_type(xs | pipe.smap(sync_single), Stream[str]),
+        assert_type(xs | pipe.amap(async_single), Stream[str]),
+    ]:
+        assert sorted(await (ys | pipe.list())) == expected
 
 
 @pytest.mark.asyncio

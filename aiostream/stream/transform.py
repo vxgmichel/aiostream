@@ -2,24 +2,21 @@
 
 from __future__ import annotations
 
-import inspect
 import asyncio
+import inspect
 import itertools
 from typing import (
-    Protocol,
-    TypeVar,
     AsyncIterable,
     AsyncIterator,
     Awaitable,
+    Protocol,
+    TypeVar,
     cast,
 )
 
-from ..core import streamcontext, pipable_operator
-
-from . import select
-from . import create
-from . import aggregate
-from .combine import map, amap, smap
+from ..core import pipable_operator, streamcontext
+from . import aggregate, create, select
+from .combine import amap, map, smap
 
 __all__ = ["map", "enumerate", "starmap", "cycle", "chunks"]
 
@@ -80,7 +77,7 @@ def starmap(
     if inspect.iscoroutinefunction(func):
         async_func = cast("AsyncStarmapCallable[T, U]", func)
 
-        async def astarfunc(args: tuple[T, ...], *_: object) -> U:
+        async def astarfunc(args: tuple[T, ...]) -> U:
             awaitable = async_func(*args)
             return await awaitable
 
@@ -89,7 +86,7 @@ def starmap(
     else:
         sync_func = cast("SyncStarmapCallable[T, U]", func)
 
-        def starfunc(args: tuple[T, ...], *_: object) -> U:
+        def starfunc(args: tuple[T, ...]) -> U:
             return sync_func(*args)
 
         return smap.raw(source, starfunc)

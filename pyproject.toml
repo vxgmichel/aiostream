@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 69.5"]
+requires = ["setuptools >= 77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -25,6 +25,9 @@ dependencies = [
     "typing-extensions",
 ]
 
+[project.urls]
+Homepage = "https://github.com/vxgmichel/aiostream"
+
 [dependency-groups]
 dev = [
     "pytest",
@@ -38,8 +41,6 @@ packages = ["aiostream", "aiostream.stream"]
 [tool.setuptools.dynamic]
 version = {attr = "aiostream.__version__"}
 
-[project.urls]
-Homepage = "https://github.com/vxgmichel/aiostream"
 
 [tool.pytest.ini_options]
 addopts = "--strict-markers --cov aiostream"
@@ -57,19 +58,27 @@ strict = [
 
 [tool.mypy]
 packages = ["aiostream", "examples"]
-
-[tool.mypy-aiostream]
 strict = true
+# Name modules after their directory (e.g `tests.test_core`), even without `__init__.py`
+explicit_package_bases = true
 
-[tool.mypy-examples]
-strict = true
+[[tool.mypy.overrides]]
+# Tests are not fully annotated, keep mypy default checks for them
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+check_untyped_defs = false
+disallow_any_generics = false
+# Those are meant for pyright, which checks unannotated functions
+warn_unused_ignores = false
 
 [tool.black]
 line-length = 88
-target_version = ["py39", "py310", "py311", "py312", "py313", "py314"]
 
 [tool.coverage.report]
 exclude_also = ["if TYPE_CHECKING:", "assert False"]
 
-[tool.ruff]
+[tool.ruff.lint]
+select = ["E", "F", "I"]
 ignore = ["E501", "F403"]

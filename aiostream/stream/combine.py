@@ -2,29 +2,27 @@
 
 from __future__ import annotations
 
-import inspect
 import builtins
 import enum
-
+import inspect
 from typing import (
-    Awaitable,
-    Protocol,
-    TypeVar,
+    Any,
     AsyncIterable,
     AsyncIterator,
     Callable,
+    Protocol,
+    TypeVar,
     cast,
+    overload,
 )
+
 from typing_extensions import ParamSpec
 
 from ..aiter_utils import AsyncExitStack, anext
-from ..core import sources_operator, streamcontext, pipable_operator
+from ..core import Stream, pipable_operator, sources_operator, streamcontext
 from ..manager import TaskGroup
-
-from . import create
-from . import select
-from . import advanced
-from . import aggregate
+from . import advanced, aggregate, create, select
+from ._callbacks import AmapCallable, MapCallable, SmapCallable
 
 __all__ = ["chain", "zip", "map", "merge", "ziplatest", "amap", "smap"]
 
@@ -126,22 +124,6 @@ async def zip(
             yield cast("tuple[T, ...]", maybe_items)
 
 
-X = TypeVar("X", contravariant=True)
-Y = TypeVar("Y", covariant=True)
-
-
-class SmapCallable(Protocol[X, Y]):
-    def __call__(self, arg: X, /, *args: X) -> Y: ...
-
-
-class AmapCallable(Protocol[X, Y]):
-    async def __call__(self, arg: X, /, *args: X) -> Y: ...
-
-
-class MapCallable(Protocol[X, Y]):
-    def __call__(self, arg: X, /, *args: X) -> Awaitable[Y] | Y: ...
-
-
 @pipable_operator
 async def smap(
     source: AsyncIterable[T],
@@ -200,7 +182,88 @@ def amap(
     return advanced.flatmap.raw(source, func, *more_sources, task_limit=task_limit)
 
 
-@pipable_operator
+class MapOperator(Protocol):
+    """Explicit type for the `map` operator.
+
+    The generic `PipableOperator` type cannot be used here: the callback
+    return type `Awaitable[U] | U` is ambiguous for coroutine functions,
+    which leads mypy to infer `Never` for `U` (see issue #128). Instead,
+    an overload for coroutine functions is checked first, before falling
+    back to the original signature.
+
+    Note that the type checkers cannot distinguish a coroutine function from
+    a synchronous function returning a coroutine (which is not awaited by
+    `map`, unless it is wrapped with `aiostream.async_`).
+    """
+
+    @overload
+    def __call__(
+        self,
+        source: AsyncIterable[T],
+        /,
+        func: AmapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> Stream[U]: ...
+
+    @overload
+    def __call__(
+        self,
+        source: AsyncIterable[T],
+        /,
+        func: MapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> Stream[U]: ...
+
+    @overload
+    @staticmethod
+    def raw(
+        source: AsyncIterable[T],
+        /,
+        func: AmapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> AsyncIterator[U]: ...
+
+    @overload
+    @staticmethod
+    def raw(
+        source: AsyncIterable[T],
+        /,
+        func: MapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> AsyncIterator[U]: ...
+
+    @overload
+    @staticmethod
+    def pipe(
+        func: AmapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> Callable[[AsyncIterable[T]], Stream[U]]: ...
+
+    @overload
+    @staticmethod
+    def pipe(
+        func: MapCallable[T, U],
+        *more_sources: AsyncIterable[T],
+        ordered: bool = True,
+        task_limit: int | None = None,
+    ) -> Callable[[AsyncIterable[T]], Stream[U]]: ...
+
+
+def _map_operator(func: Callable[..., AsyncIterator[Any]]) -> MapOperator:
+    return cast("MapOperator", pipable_operator(func))
+
+
+@_map_operator
 def map(
     source: AsyncIterable[T],
     func: MapCallable[T, U],
@@ -308,7 +371,7 @@ def ziplatest(
 
     # Add source index to the items
     def make_func(i: int) -> SmapCallable[T, dict[int, T]]:
-        def func(x: T, *_: object) -> dict[int, T]:
+        def func(x: T) -> dict[int, T]:
             return {i: x}
 
         return func
@@ -329,7 +392,7 @@ def ziplatest(
     )
 
     # Convert the state dict to a tuple
-    def dict_to_tuple(x: dict[int, T], *_: object) -> tuple[T | None, ...]:
+    def dict_to_tuple(x: dict[int, T]) -> tuple[T | None, ...]:
         return tuple(builtins.map(getter(x), range(n)))
 
     return smap.raw(filtered, dict_to_tuple)
