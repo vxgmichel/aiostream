@@ -115,7 +115,7 @@ class StreamerManager(Generic[T]):
         typ: type[BaseException] | None,
         value: BaseException | None,
         traceback: TracebackType | None,
-    ) -> bool:
+    ) -> bool | None:
         for streamer in self.streamers:
             task = self.tasks.pop(streamer, None)
             if task is not None:

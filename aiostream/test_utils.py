@@ -13,7 +13,7 @@ from typing import (
     Awaitable,
     Callable,
     ContextManager,
-    Iterator,
+    Generator,
     List,
     Protocol,
     TypeVar,
@@ -198,7 +198,7 @@ class TimeTrackingTestLoop(BaseEventLoopWithInternals):
         self.busy_count = 0
 
     @contextmanager
-    def assert_cleanup(self) -> Iterator[TimeTrackingTestLoop]:
+    def assert_cleanup(self) -> Generator[TimeTrackingTestLoop, None, None]:
         self.clear()
         yield self
         assert self.open_resources == 0

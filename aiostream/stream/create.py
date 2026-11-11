@@ -7,9 +7,11 @@ import builtins
 import inspect
 import itertools
 from typing import (
+    Any,
     AsyncIterable,
     AsyncIterator,
     Awaitable,
+    Callable,
     Iterable,
     Protocol,
     Type,
@@ -19,7 +21,7 @@ from typing import (
 
 from typing_extensions import Never, ParamSpec
 
-from ..core import operator, streamcontext
+from ..core import Stream, operator, streamcontext
 from ..stream import time
 
 __all__ = [
@@ -99,7 +101,34 @@ class AsyncCallable(Protocol[P, Y]):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[Y]: ...
 
 
-@operator
+class CallOperator(Protocol):
+    """Explicit type for the `call` operator.
+
+    The generic `Operator[P, T]` type returned by `operator` cannot be
+    used here, since type checkers do not solve the nested `P` parameter
+    specification of `call` when the operator is called.
+    """
+
+    def __call__(
+        self,
+        func: SyncCallable[P, T] | AsyncCallable[P, T],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> Stream[T]: ...
+
+    @staticmethod
+    def raw(
+        func: SyncCallable[P, T] | AsyncCallable[P, T],
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> AsyncIterator[T]: ...
+
+
+def _call_operator(func: Callable[..., AsyncIterator[Any]]) -> CallOperator:
+    return cast("CallOperator", operator(func))
+
+
+@_call_operator
 async def call(
     func: SyncCallable[P, T] | AsyncCallable[P, T], *args: P.args, **kwargs: P.kwargs
 ) -> AsyncIterator[T]:

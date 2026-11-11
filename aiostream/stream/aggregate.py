@@ -5,7 +5,15 @@ from __future__ import annotations
 import builtins
 import inspect
 import operator as op
-from typing import AsyncIterable, AsyncIterator, Awaitable, Callable, TypeVar, cast
+from typing import (
+    AsyncIterable,
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Protocol,
+    TypeVar,
+    cast,
+)
 
 from ..aiter_utils import anext
 from ..core import pipable_operator, streamcontext
@@ -16,10 +24,21 @@ __all__ = ["accumulate", "reduce", "list"]
 T = TypeVar("T")
 
 
+class _AddCallable(Protocol):
+    def __call__(self, a: T, b: T, /) -> T: ...
+
+
+# Recent typeshed versions declare `operator.add` with overloads requiring
+# `SupportsAdd`, which can't be assigned to a callable over an unbounded `T`.
+# Typing it as `Callable[[Any, Any], Any]` instead would make pyright infer
+# `Any` items for `pipe.accumulate()`, since it solves `T` from the default.
+_add = cast("_AddCallable", op.add)
+
+
 @pipable_operator
 async def accumulate(
     source: AsyncIterable[T],
-    func: Callable[[T, T], Awaitable[T] | T] = op.add,
+    func: Callable[[T, T], Awaitable[T] | T] = _add,
     initializer: T | None = None,
 ) -> AsyncIterator[T]:
     """Generate a series of accumulated sums (or other binary function)
