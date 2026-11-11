@@ -5,23 +5,23 @@ concurrently.
 from __future__ import annotations
 
 import asyncio
-from .aiter_utils import AsyncExitStack
-
-from .aiter_utils import anext
-from .core import streamcontext
+from types import TracebackType
 from typing import (
     TYPE_CHECKING,
+    AsyncIterable,
     Awaitable,
     Generic,
     Literal,
     Sequence,
     TypeVar,
-    AsyncIterable,
 )
-from types import TracebackType
+
+from .aiter_utils import AsyncExitStack, anext
+from .core import streamcontext
 
 if TYPE_CHECKING:
     from asyncio import Task
+
     from aiostream.core import Streamer
 
 T = TypeVar("T")

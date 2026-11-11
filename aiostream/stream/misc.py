@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import inspect
 import builtins
+import inspect
+from typing import Any, AsyncIterable, AsyncIterator, Awaitable, Callable, TypeVar
 
-from typing import TypeVar, Awaitable, Callable, AsyncIterable, AsyncIterator, Any
-
-from .combine import amap, smap
 from ..core import pipable_operator
+from .combine import amap, smap
 
 __all__ = ["action", "print"]
 

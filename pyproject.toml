@@ -72,5 +72,5 @@ line-length = 88
 exclude_also = ["if TYPE_CHECKING:", "assert False"]
 
 [tool.ruff.lint]
-select = ["E", "F"]
+select = ["E", "F", "I"]
 ignore = ["E501", "F403"]

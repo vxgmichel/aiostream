@@ -14,8 +14,8 @@ Test using netcat client:
     [...]
 """
 
-import math
 import asyncio
+import math
 
 from aiostream import pipe, stream
 

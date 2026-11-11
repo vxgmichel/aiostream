@@ -1,6 +1,6 @@
 import pytest
 
-from aiostream import stream, pipe
+from aiostream import pipe, stream
 from aiostream.core import Stream
 
 

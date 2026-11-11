@@ -1,8 +1,9 @@
-import io
-import pytest
 import asyncio
+import io
 
-from aiostream import stream, pipe
+import pytest
+
+from aiostream import pipe, stream
 from aiostream.test_utils import add_resource
 
 

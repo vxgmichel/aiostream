@@ -5,28 +5,29 @@ from __future__ import annotations
 import asyncio
 from collections import deque
 from contextlib import contextmanager
-from unittest.mock import Mock
 from typing import (
     TYPE_CHECKING,
+    Any,
+    AsyncIterable,
+    AsyncIterator,
     Awaitable,
     Callable,
+    ContextManager,
+    Iterator,
     List,
     Protocol,
     TypeVar,
-    AsyncIterable,
-    AsyncIterator,
-    ContextManager,
-    Iterator,
     cast,
-    Any,
 )
+from unittest.mock import Mock
 
 import pytest
 
-from .core import StreamEmpty, streamcontext, pipable_operator
+from .core import StreamEmpty, pipable_operator, streamcontext
 
 if TYPE_CHECKING:
     from _pytest.fixtures import SubRequest
+
     from aiostream.core import Stream
 
 __all__ = ["add_resource", "assert_run", "TimeTrackingTestLoop", "assert_cleanup"]

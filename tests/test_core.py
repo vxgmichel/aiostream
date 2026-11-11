@@ -1,9 +1,10 @@
 import inspect
+
 import pytest
 
+from aiostream import operator, stream, streamcontext
 from aiostream.core import pipable_operator, sources_operator
 from aiostream.test_utils import add_resource
-from aiostream import stream, streamcontext, operator
 
 
 @pytest.mark.asyncio

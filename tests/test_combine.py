@@ -1,9 +1,10 @@
+import asyncio
 from functools import partial
 from typing import Awaitable
-import pytest
-import asyncio
 
-from aiostream import stream, pipe, async_, await_
+import pytest
+
+from aiostream import async_, await_, pipe, stream
 from aiostream.test_utils import add_resource
 
 

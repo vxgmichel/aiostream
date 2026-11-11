@@ -2,25 +2,25 @@
 
 from __future__ import annotations
 
-import inspect
 import functools
+import inspect
 import warnings
-
-from .aiter_utils import AsyncIteratorContext, aiter, assert_async_iterable
 from typing import (
     Any,
+    AsyncIterable,
     AsyncIterator,
+    Awaitable,
     Callable,
     Generator,
     Iterator,
     Protocol,
-    Union,
     TypeVar,
-    AsyncIterable,
-    Awaitable,
+    Union,
 )
 
-from typing_extensions import ParamSpec, Concatenate
+from typing_extensions import Concatenate, ParamSpec
+
+from .aiter_utils import AsyncIteratorContext, aiter, assert_async_iterable
 
 __all__ = ["Stream", "Streamer", "StreamEmpty", "operator", "streamcontext"]
 

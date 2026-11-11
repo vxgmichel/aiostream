@@ -1,6 +1,7 @@
 import asyncio
 
 import pytest
+
 from aiostream.manager import TaskGroup
 
 

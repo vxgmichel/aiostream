@@ -2,29 +2,24 @@
 
 from __future__ import annotations
 
-import inspect
 import builtins
 import enum
-
+import inspect
 from typing import (
-    Awaitable,
-    Protocol,
-    TypeVar,
     AsyncIterable,
     AsyncIterator,
     Callable,
+    TypeVar,
     cast,
 )
+
 from typing_extensions import ParamSpec
 
 from ..aiter_utils import AsyncExitStack, anext
-from ..core import sources_operator, streamcontext, pipable_operator
+from ..core import pipable_operator, sources_operator, streamcontext
 from ..manager import TaskGroup
-
-from . import create
-from . import select
-from . import advanced
-from . import aggregate
+from . import advanced, aggregate, create, select
+from ._callbacks import AmapCallable, MapCallable, SmapCallable
 
 __all__ = ["chain", "zip", "map", "merge", "ziplatest", "amap", "smap"]
 
@@ -124,22 +119,6 @@ async def zip(
 
             # This holds because we've ruled out STOP_SENTINEL above
             yield cast("tuple[T, ...]", maybe_items)
-
-
-X = TypeVar("X", contravariant=True)
-Y = TypeVar("Y", covariant=True)
-
-
-class SmapCallable(Protocol[X, Y]):
-    def __call__(self, arg: X, /, *args: X) -> Y: ...
-
-
-class AmapCallable(Protocol[X, Y]):
-    async def __call__(self, arg: X, /, *args: X) -> Y: ...
-
-
-class MapCallable(Protocol[X, Y]):
-    def __call__(self, arg: X, /, *args: X) -> Awaitable[Y] | Y: ...
 
 
 @pipable_operator

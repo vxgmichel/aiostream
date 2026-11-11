@@ -1,12 +1,12 @@
 """Time-specific operators."""
 
 from __future__ import annotations
+
 import asyncio
+from typing import AsyncIterable, AsyncIterator, TypeVar
 
 from ..aiter_utils import anext
-from ..core import streamcontext, pipable_operator
-
-from typing import TypeVar, AsyncIterable, AsyncIterator
+from ..core import pipable_operator, streamcontext
 
 __all__ = ["spaceout", "delay", "timeout"]
 

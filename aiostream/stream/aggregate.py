@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import inspect
 import builtins
+import inspect
 import operator as op
-from typing import AsyncIterator, Awaitable, Callable, TypeVar, AsyncIterable, cast
+from typing import AsyncIterable, AsyncIterator, Awaitable, Callable, TypeVar, cast
 
-
-from . import select
 from ..aiter_utils import anext
 from ..core import pipable_operator, streamcontext
+from . import select
 
 __all__ = ["accumulate", "reduce", "list"]
 

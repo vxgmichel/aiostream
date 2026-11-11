@@ -2,25 +2,25 @@
 
 from __future__ import annotations
 
-import inspect
 import asyncio
 import builtins
+import inspect
 import itertools
-
 from typing import (
     AsyncIterable,
+    AsyncIterator,
     Awaitable,
     Iterable,
     Protocol,
-    TypeVar,
-    AsyncIterator,
-    cast,
     Type,
+    TypeVar,
+    cast,
 )
-from typing_extensions import ParamSpec, Never
 
-from ..stream import time
+from typing_extensions import Never, ParamSpec
+
 from ..core import operator, streamcontext
+from ..stream import time
 
 __all__ = [
     "iterate",

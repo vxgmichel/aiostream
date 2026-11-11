@@ -32,5 +32,5 @@ repos:
   # Ruff version.
   rev: v0.17.4
   hooks:
-    - id: ruff
+    - id: ruff-check
       args: [ --fix, --exit-non-zero-on-fix]

@@ -2,24 +2,23 @@
 
 from __future__ import annotations
 
-import sys
-from types import TracebackType
-
 import enum
-import warnings
 import functools
+import sys
+import warnings
+from types import TracebackType
 from typing import (
     TYPE_CHECKING,
+    Any,
     AsyncContextManager,
     AsyncGenerator,
     AsyncIterable,
+    AsyncIterator,
     Awaitable,
     Callable,
     Coroutine,
     Type,
     TypeVar,
-    AsyncIterator,
-    Any,
     cast,
     overload,
 )

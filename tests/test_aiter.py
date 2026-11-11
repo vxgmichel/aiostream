@@ -1,5 +1,6 @@
-import pytest
 import asyncio
+
+import pytest
 
 from aiostream.aiter_utils import AsyncIteratorContext, aitercontext, anext
 
