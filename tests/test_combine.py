@@ -114,13 +114,13 @@ async def test_zip(assert_run):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "strict, error",
+    "strict, ending",
     [
-        (False, None),
-        (False, ValueError("source failed")),
-        (True, ValueError("source failed")),
-        (False, asyncio.CancelledError("source cancelled")),
-        (True, asyncio.CancelledError("source cancelled")),
+        (False, "stop"),
+        (False, "error"),
+        (True, "error"),
+        (False, "cancel"),
+        (True, "cancel"),
     ],
     ids=(
         "non_strict",
@@ -130,16 +130,22 @@ async def test_zip(assert_run):
         "strict_with_cancellation",
     ),
 )
-async def test_zip_closes_pending_source(strict, error):
+async def test_zip_closes_pending_source(strict, ending):
     started = asyncio.Event()
     closed = asyncio.Event()
+    error = ValueError("source failed")
+    stopping = []
     pending = []
 
     async def stopping_source():
         yield 0
+        stopping.append(asyncio.current_task())
         await started.wait()
-        if error is not None:
+        if ending == "error":
             raise error
+        if ending == "cancel":
+            # Only a cancellation can end this
+            await asyncio.Event().wait()
 
     async def pending_source():
         try:
@@ -150,18 +156,27 @@ async def test_zip_closes_pending_source(strict, error):
         finally:
             closed.set()
 
+    expected = {
+        "stop": StopAsyncIteration,
+        "error": ValueError,
+        "cancel": asyncio.CancelledError,
+    }[ending]
     async with stream.zip(
         stopping_source(), pending_source(), strict=strict
     ).stream() as streamer:
         assert await streamer.__anext__() == (0, 1)
-        with pytest.raises(
-            type(error) if error is not None else StopAsyncIteration
-        ) as exc_info:
-            await asyncio.wait_for(streamer.__anext__(), 1)
-        # A cancelled task raises a new `CancelledError` on python 3.10
-        if isinstance(error, Exception):
+        next_item = asyncio.ensure_future(streamer.__anext__())
+        await started.wait()
+        if ending == "cancel":
+            # Cancel the task running the stopping source
+            stopping[0].cancel()
+        with pytest.raises(expected) as exc_info:
+            await asyncio.wait_for(next_item, 1)
+        if ending == "error":
             assert exc_info.value is error
 
+    if ending == "cancel":
+        assert stopping[0].cancelled()
     assert closed.is_set()
     assert all(task.done() for task in pending)
 
