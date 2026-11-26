@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
-RETURN_WHEN = Literal["ALL_COMPLETED", "FIRST_COMPLETED", "FIRST_EXCEPTION"]
+RETURN_WHEN = Literal["ALL_COMPLETED", "FIRST_COMPLETED"]
 
 
 class TaskGroup(Generic[T]):
@@ -64,7 +64,14 @@ class TaskGroup(Generic[T]):
         return await self._wait(tasks, "FIRST_COMPLETED")
 
     async def wait_first_exception(self, tasks: list[Task[T]]) -> list[Task[T]]:
-        return await self._wait(tasks, "FIRST_EXCEPTION")
+        # `asyncio.wait` with `FIRST_EXCEPTION` does not return on cancelled tasks
+        pending: list[Task[T]] = tasks
+        while pending:
+            done = await self.wait_any(pending)
+            if any(task.cancelled() or task.exception() is not None for task in done):
+                break
+            pending = [task for task in pending if task not in done]
+        return [task for task in tasks if task.done()]
 
     async def wait_all(self, tasks: Sequence[Task[T]]) -> list[Task[T]]:
         return await self._wait(tasks, "ALL_COMPLETED")

@@ -119,8 +119,16 @@ async def test_zip(assert_run):
         (False, None),
         (False, ValueError("source failed")),
         (True, ValueError("source failed")),
+        (False, asyncio.CancelledError("source cancelled")),
+        (True, asyncio.CancelledError("source cancelled")),
     ],
-    ids=("non_strict", "non_strict_with_error", "strict_with_error"),
+    ids=(
+        "non_strict",
+        "non_strict_with_error",
+        "strict_with_error",
+        "non_strict_with_cancellation",
+        "strict_with_cancellation",
+    ),
 )
 async def test_zip_closes_pending_source(strict, error):
     started = asyncio.Event()
@@ -149,8 +157,9 @@ async def test_zip_closes_pending_source(strict, error):
         with pytest.raises(
             type(error) if error is not None else StopAsyncIteration
         ) as exc_info:
-            await streamer.__anext__()
-        if error is not None:
+            await asyncio.wait_for(streamer.__anext__(), 1)
+        # A cancelled task raises a new `CancelledError` on python 3.10
+        if isinstance(error, Exception):
             assert exc_info.value is error
 
     assert closed.is_set()
